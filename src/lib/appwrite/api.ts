@@ -1,6 +1,8 @@
-import { INewPost, INewUser } from "@/types";
+import { INewPost, INewUser, IUpdatePost } from "@/types";
 import { account, appwriteConfig, avatars, databases, storage } from "./config";
 import { ID, ImageGravity, Query } from 'appwrite';
+import { ImageDownIcon } from "lucide-react";
+import { StringifyOptions } from "querystring";
 
 export async function createUserAccount(user: INewUser) {
     try {
@@ -107,8 +109,8 @@ export async function createPost(post: INewPost) {
 
         // process tags
         const tags = post.tags?.replace(/ /g, '').split(',') || [];
-        console.log('fileUrl');
-        console.log(fileUrl);
+        //console.log('fileUrl');
+        //console.log(fileUrl);
 
         // create post
         const newPost = await databases.createDocument(
@@ -245,3 +247,90 @@ export async function deleteSavePost(savedRecordId: string) {
     }
 }
 
+export async function getPostById(postId: string) {
+    try {
+        const post = await databases.getDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.postCollectionId,
+            postId
+        )
+        if (!post) throw Error;
+        return post;
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export async function updatePost(post: IUpdatePost) {
+    console.log('api:updatePost')
+
+    const hasFileToUpdate = post.file.length > 0;
+    try {
+
+        let image = {
+            imageUrl: post.imageUrl,
+            imageId: post.imageId
+        }
+        console.log('api:updatePost2')
+        if (hasFileToUpdate) {
+            console.log('api:updatePost3')
+            // upload image
+            const uploadedFile = await uploadFile(post.file[0]);
+            if (!uploadedFile) throw Error;
+
+            // image url
+            const fileUrl = getFilePreview(uploadedFile.$id);
+            if (!fileUrl) {
+                deleteFile(uploadedFile.$id);
+                throw Error;
+            }
+            image = { ...image, imageUrl: fileUrl, imageId: uploadedFile.$id };
+        }
+
+    
+        // process tags
+        const tags = post.tags?.replace(/ /g, '').split(',') || [];
+
+        console.log('api:updatePost4')
+        // update post
+        const updatedPost = await databases.updateDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.postCollectionId,
+            post.postId,
+            {
+                caption: post.caption,
+                imageUrl: image.imageUrl,
+                imageId: image.imageId,
+                location: post.location,
+                tags: tags,
+            }
+        );
+        console.log('api:updatePost5')
+        if (!updatedPost) {
+            if (hasFileToUpdate) await deleteFile(post.imageId);
+            throw Error;
+        }
+        if (hasFileToUpdate) await deleteFile(post.imageId);
+        
+        return updatedPost;
+
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export async function deletePost(postId:string, imageId:string) {
+    if (!postId || !imageId ) throw Error;
+    try {
+        await databases.deleteDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.postCollectionId,
+            postId
+        );
+        return {status: 'ok'};
+
+    } catch (error) {
+        console.log(error);
+    }
+    
+}

@@ -22,7 +22,7 @@ const LeftSidebar = () => {
       <div className='flex flex-col gap-11'>
         <Link to="/" className="flex gap-3 items-center">
           <div className='flex items-center justify-start gap-3'>
-            <img src='public/assets/images/logo.svg' alt='logo' />
+            <img src='/assets/images/logo.svg' alt='logo' />
             <h2 className="h3-bold md:h2-bold">StudySphere</h2>
           </div>
         </Link>
