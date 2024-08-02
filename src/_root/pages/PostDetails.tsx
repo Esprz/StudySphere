@@ -37,7 +37,7 @@ const PostDetails = () => {
               </Link>
               <div className='flex-center gap-1'>
 
-                <Link to={`update-post/${post?.$id}`} className={`${user.id !== post?.creator.$id && 'hidden'}`}>
+                <Link to={`/update-post/${post?.$id}`} className={`${user.id !== post?.creator.$id && 'hidden'}`}>
                   <img src='/assets/icons/edit.svg' alt='edit' width={24} height={24} />
                 </Link>
 
