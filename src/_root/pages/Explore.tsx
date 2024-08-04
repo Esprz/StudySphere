@@ -1,7 +1,6 @@
 import { Input } from "@/components/ui/input"
 import GridPostList from "@/components/ui/shared/GridPostList";
 import Loader from "@/components/ui/shared/Loader";
-import PostStats from "@/components/ui/shared/PostStats";
 import SearchResults from "@/components/ui/shared/SearchResults";
 import useDebounce from "@/hooks/useDebounce";
 import { useGetPosts, useSearchPosts } from "@/lib/react-query/queriesAndMutations";
@@ -10,7 +9,6 @@ import { useInView } from "react-intersection-observer";
 
 
 const Explore = () => {
-  //const posts = [];
   const { ref: inView } = useInView();
   const { data: posts, fetchNextPage, hasNextPage } = useGetPosts();
   const [searchValue, setSearchValue] = useState('');
@@ -68,8 +66,8 @@ const Explore = () => {
             <Loader />
           </div>
         )}
-
       </div>
+
     </div>
   )
 }
