@@ -50,18 +50,19 @@ const PostDetails = () => {
             <hr className='border w-full border-dark-4/80' />
 
             <div className='flex flex-col flex-1 w-full small-medium lg:base-regular'>
-              <p>{post?.caption}</p>
+              <p className='text-light-1'>{post?.caption}</p>
               <ul className='flex gap-1 mt-2'>
                 {post?.tags.map((tag: string) => (
-                  <li key={tag} className='text-light-3'>#{tag}</li>
+                  tag === "" ? null :
+                    <li key={tag} className='text-light-3'>#{tag}</li>
                 ))}
               </ul>
             </div>
 
             <div className='w-full'>
-                <PostStats post = {post} userId={user.id}/>
+              <PostStats post={post} userId={user.id} />
             </div>
-            
+
           </div>
         </div>}
     </div>

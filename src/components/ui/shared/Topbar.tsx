@@ -20,7 +20,7 @@ const Topbar = () => {
         <Link to="/" className="flex gap-3 items-center">
         <div className='flex items-center justify-start gap-3'>
             <img src='public/assets/images/logo.svg' alt='logo' width={45} />
-            <h2 className="h3-bold md:h2-bold">StudySphere</h2>
+            <h2 className="h3-bold md:h2-bold text-primary-500">StudySphere</h2>
           </div>
         </Link>
 

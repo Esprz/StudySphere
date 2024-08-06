@@ -56,10 +56,10 @@ const SigninForm = () => {
       <div className="sm:w-420 flex-center flex-col">
         <div className='flex items-center justify-start gap-3'>
           <img src='public/assets/images/logo.svg' alt='logo' />
-          <h2 className="h3-bold md:h2-bold">StudySphere</h2>
+          <h2 className="h3-bold md:h2-bold text-primary-500">StudySphere</h2>
         </div>
 
-        <h2 className="h3-bold md:h2-bold pt-5 sm:pt-12">
+        <h2 className="h3-bold md:h2-bold pt-5 sm:pt-12 text-light-2">
           Log in to your account.
         </h2>
 
@@ -72,7 +72,7 @@ const SigninForm = () => {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel className="shad-form_label">Email</FormLabel>
                 <FormControl>
                   <Input type="email" className="shad-input" {...field} />
                 </FormControl>
@@ -85,7 +85,7 @@ const SigninForm = () => {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel className="shad-form_label">Password</FormLabel>
                 <FormControl>
                   <Input type="password" className="shad-input" {...field} />
                 </FormControl>
@@ -93,7 +93,7 @@ const SigninForm = () => {
               </FormItem>
             )}
           />
-          <Button type="submit" className="shad-button_primary">
+          <Button type="submit" className="shad-button_primary mt-10">
             {isUserLoading ? (
               <div className="flex-center gap-2">
                 <Loader />

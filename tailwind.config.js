@@ -20,34 +20,20 @@ module.exports = {
     },
     extend: {
       colors: {
-        /*
-        'primary-500': '#877EFF',
-        'primary-600': '#5D5FEF',
-        'secondary-500': '#FFB620',
-        'off-white': '#D0DFFF',
-        'red': '#FF5A5A',
-        'dark-1': '#000000',
-        'dark-2': '#09090A',
-        'dark-3': '#101012',
-        'dark-4': '#1F1F22',
-        'light-1': '#FFFFFF',
-        'light-2': '#EFEFEF',
-        'light-3': '#7878A3',
-        'light-4': '#5C5C7B',
-        */
         'primary-500': '#204035',
         'primary-600': '#0C382E',
         'secondary-500': '#FFB620',
         'off-white': '#4A7169',
         'red': '#FF5A5A',
-        'dark-1': '#000000',
-        'dark-2': '#09090A',
-        'dark-3': '#101012',
-        'dark-4': '#1F1F22',
-        'light-1': '#FFFFFF',
-        'light-2': '#EFEFEF',
-        'light-3': '#ebeddf',
-        'light-4': '#c7c6b6',
+        'dark-1': '#FFFFFF',
+        'dark-12': '#e4e1d8',
+        'dark-2': '#e4e1d8',
+        'dark-3': '#d9d5c9',
+        'dark-4': '#cac3b2',
+        'light-1': '#000000',
+        'light-2': '#2f251d',
+        'light-3': '#5F4B3B',
+        'light-4': '#7e6e62',
       },
       screens: {
         'xs': '480px',
@@ -58,7 +44,10 @@ module.exports = {
         '465': '465px',
       },
       fontFamily: {
-        inter: ['Inter', 'sans-serif'],
+        'mono': ['Menlo','Monaco'],
+        letterSpacing: {
+          wider: '0.5em',  // 自定义的字间距
+        }
 
       },
       keyframes: {

@@ -1,8 +1,6 @@
 import { INewPost, INewUser, IUpdatePost } from "@/types";
 import { account, appwriteConfig, avatars, databases, storage } from "./config";
 import { ID, ImageGravity, Query } from 'appwrite';
-import { ImageDownIcon } from "lucide-react";
-import { StringifyOptions } from "querystring";
 
 export async function createUserAccount(user: INewUser) {
     try {

@@ -8,9 +8,9 @@ const Bottombar = () => {
       {bottombarLinks.map((link) => {
         const isActive = pathname === link.route;
         return (
-          <Link to={link.route} key={link.label} className={`bottombar-link group ${isActive && 'bg-primary-500 rounded-[10px] flex-center flex-col gap-1 p-2 transition'}`}>
-            <img src={link.imgURL} alt={link.label} width={16} height={16} className={`${isActive && 'invert-white'}`} />
-            <p className='tiny-medium text-light-2'>{link.label}</p>
+          <Link to={link.route} key={link.label} className={`bottombar-link flex-col flex-center gap-1 group ${isActive && 'bg-primary-500 rounded-[10px]  p-2 transition'}`}>
+            <img src={link.imgURL} alt={link.label} width={20} height={20} className={`${isActive && 'invert-white'}`} />
+            <p className={`small-regular ${isActive && 'text-white'} ${!isActive && 'text-primary-500'}`}>{link.label}</p>
           </Link>
 
         )
