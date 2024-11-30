@@ -23,17 +23,17 @@ CREATE TABLE Posts(
 CREATE TABLE Likes(
     like_id SERIAL PRIMARY KEY UNIQUE,
     created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-    user INTEGER NOT NULL UNIQUE,
+    creator INTEGER NOT NULL UNIQUE,
     post INTEGER NOT NULL UNIQUE,
-    FOREIGN KEY (user) REFERENCES Users(user_id),
+    FOREIGN KEY (creator) REFERENCES Users(user_id),
     FOREIGN KEY (post) REFERENCES Posts(post_id)
 );
 CREATE TABLE Saves(
     save_id SERIAL PRIMARY KEY UNIQUE,
     created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-    user INTEGER NOT NULL UNIQUE,
+    creator INTEGER NOT NULL UNIQUE,
     post INTEGER NOT NULL UNIQUE,
-    FOREIGN KEY (user) REFERENCES Users(user_id),
+    FOREIGN KEY (creator) REFERENCES Users(user_id),
     FOREIGN KEY (post) REFERENCES Posts(post_id)
 );
 CREATE TABLE Comments(
@@ -42,7 +42,7 @@ CREATE TABLE Comments(
     author INTEGER NOT NULL UNIQUE,
     post INTEGER NOT NULL UNIQUE,
     comment TEXT NOT NULL,
-    FOREIGN KEY (author) REFERENCES Users(user_id).,
+    FOREIGN KEY (author) REFERENCES Users(user_id),
     FOREIGN KEY (post) REFERENCES Posts(post_id)
 );
 CREATE TABLE Follows(
@@ -50,6 +50,6 @@ CREATE TABLE Follows(
     created_at TIMESTAMP DEFAULT NOW() NOT NULL,
     follower INTEGER NOT NULL UNIQUE,
     followee INTEGER NOT NULL UNIQUE,
-    FOREIGN KEY (user) REFERENCES Users(user_id),
-    FOREIGN KEY (post) REFERENCES Posts(post_id)
+    FOREIGN KEY (follower) REFERENCES Users(user_id),
+    FOREIGN KEY (followee) REFERENCES Posts(post_id)
 );
