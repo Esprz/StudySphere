@@ -9,17 +9,18 @@ import { INewPost, INewUser, IUpdatePost, IUpdateUser } from "@/types";
 import { QUERY_KEYS } from './queryKey';
 import { string } from 'zod';
 import exp from 'constants';
+import { signIn, signUp } from '@/api';
 
 
 export const useCreateUSerAccount = () => {
     return useMutation({
-        mutationFn: (user: INewUser) => createUserAccount(user)
+        mutationFn: (user: INewUser) => signUp(user)
     })
 }
 
 export const useSignInAccount = () => {
     return useMutation({
-        mutationFn: (user: { email: string; password: string; }) => signInAccount(user)
+        mutationFn: (user: { email: string; password: string; }) => signIn(user)
     })
 }
 
