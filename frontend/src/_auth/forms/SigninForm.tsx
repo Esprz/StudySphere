@@ -55,7 +55,7 @@ const SigninForm = () => {
     <Form {...form}>
       <div className="sm:w-420 flex-center flex-col">
         <div className='flex items-center justify-start gap-3'>
-          <img src='public/assets/images/logo.svg' alt='logo' />
+          <img src='/assets/images/logo.svg' alt='logo' />
           <h2 className="h3-bold md:h2-bold text-primary-500">StudySphere</h2>
         </div>
 
