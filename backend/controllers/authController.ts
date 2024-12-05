@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 
+// return sign in and returns user and token
 export const signIn = async (req: any, res: any) => {
     try {
         const { email, password } = req.body;
@@ -19,7 +20,7 @@ export const signIn = async (req: any, res: any) => {
         }
         //console.log('after password check');
 
-        const token = jwt.sign({ email: currentUser.email, id: currentUser.user_id }, 'test', { expiresIn: "1h" });
+        const token = jwt.sign({ email: currentUser.email, user_id: currentUser.user_id }, 'test', { expiresIn: "1h" });
         res.status(200).json({ result: currentUser, token });
 
     } catch (error: any) {
@@ -27,7 +28,7 @@ export const signIn = async (req: any, res: any) => {
     }
 };
 
-
+// sign up and returns user and token
 export const signUp = async (req: any, res: any) => {
     try {
         const { username, display_name, email, password, bio = null, avatar_url = null } = req.body;
@@ -43,7 +44,7 @@ export const signUp = async (req: any, res: any) => {
             RETURNING *`,
             [username, display_name, email, hashedPassword, bio, avatar_url]);
 
-        const token = jwt.sign({ email: newUser.rows[0].email, id: newUser.rows[0].id }, 'test', { expiresIn: "1h" });
+        const token = jwt.sign({ email: newUser.rows[0].email, user_id: newUser.rows[0].user_id }, 'test', { expiresIn: "1h" });
         res.status(200).json({ result: existingUser.rows[0], token });
 
     } catch (error: any) {
@@ -51,3 +52,13 @@ export const signUp = async (req: any, res: any) => {
     }
 };
 
+export const getCurrentUser = async (req: any, res: any) => {
+    try {
+        //console.log('reach getCurrentUser');
+        //console.log('req.userId:',req.userId);        
+        const user = await pool.query("SELECT FROM users WHERE user_id = $1", [req.userId]);
+        res.status(200).json(user.rows[0]);
+    } catch (error) {
+        res.status(500).json({ message: "Something went wrong" });
+    }
+}
