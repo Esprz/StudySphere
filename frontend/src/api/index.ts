@@ -1,16 +1,24 @@
-import { INewUser } from '@/types';
+import { PNewUser } from '@/types/postgresTypes';
 import axios from 'axios';
 
 const url = 'http://localhost:5000';
 const API = axios.create({ baseURL: url });
+API.interceptors.request.use((config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+        config.headers.Authorization = token;
+    }
+    return config;
+});
 
 /*-------------------Auth API calls-------------------*/
-export const signIn = async (user:any) => {
+export const signIn = async (user: any) => {
     try {
         const response = await API.post('/auth/sign-in', {
             email: user.email,
             password: user.password,
         });
+        localStorage.setItem("token", response.data.token);
         return response.data;
     } catch (error: any) {
         console.error('Sign-in failed:', error.response?.data || error.message);
@@ -18,14 +26,15 @@ export const signIn = async (user:any) => {
     }
 };
 
-export const signUp = async (user: INewUser) => {
+export const signUp = async (user: PNewUser) => {
     try {
         const response = await API.post('/auth/sign-up', {
             email: user.email,
             password: user.password,
             display_name: user.name,
-            username: user.username,
+            username: user.name,
         });
+        localStorage.setItem("token", response.data.token);
         return response.data;
     } catch (error: any) {
         console.error('Sign-up failed:', error.response?.data || error.message);
@@ -33,9 +42,32 @@ export const signUp = async (user: INewUser) => {
     }
 };
 
+export const getCurrentUser = async () => {
+    try {
+        const response = await API.get("/auth/user");
+        return response.data;
+    } catch (error: any) {
+        console.error("Token verification failed:", error.response?.data || error.message);
+        throw error;
+    }
+};
+
 /*-------------------Post API calls-------------------*/
 
-export const createPost = (newPost: any) => API.post('/posts', newPost);
+export const createPost = async (newPost: any) => {
+    try {
+        const response = await API.post('/posts', {
+            title: newPost.title,
+            content: newPost.caption,
+            images: newPost.file,
+            author: newPost.userId,
+        });
+        return response.data;
+    } catch (error: any) {
+        console.error('Create post failed:', error.response?.data || error.message);
+        throw error;
+    }
+}
 export const updatePost = (post_id: Number, updatedPost: any) => API.patch(`/posts/${post_id}`, updatedPost);
 export const deletePost = (post_id: Number) => API.delete(`/posts/${post_id}`);
 export const getAllPosts = () => API.get('/posts');

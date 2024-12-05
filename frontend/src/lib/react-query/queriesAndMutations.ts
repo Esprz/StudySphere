@@ -4,17 +4,17 @@ import {
     useQueryClient,
     useInfiniteQuery,
 } from '@tanstack/react-query'
-import { createPost, createUserAccount, deletePost, deleteSavePost, getCurrentUser, getInfinitePosts, getPostById, getRecentPosts, getUsers, likePost, savePost, searchPosts, signInAccount, signOutAccount, updatePost } from '../appwrite/api'
-import { INewPost, INewUser, IUpdatePost, IUpdateUser } from "@/types";
+import { deletePost, deleteSavePost, getCurrentUser, getInfinitePosts, getPostById, getRecentPosts, getUsers, likePost, savePost, searchPosts, updatePost } from '../appwrite/api'
+import { INewPost, IUpdatePost } from "@/types";
 import { QUERY_KEYS } from './queryKey';
-import { string } from 'zod';
-import exp from 'constants';
-import { signIn, signUp } from '@/api';
+import { signIn, signUp, createPost } from '@/api';
+import { PNewUser } from '@/types/postgresTypes';
+import { useUserContext } from '@/context/AuthContext';
 
 
 export const useCreateUSerAccount = () => {
     return useMutation({
-        mutationFn: (user: INewUser) => signUp(user)
+        mutationFn: (user: PNewUser) => signUp(user)
     })
 }
 
@@ -25,8 +25,9 @@ export const useSignInAccount = () => {
 }
 
 export const useSignOutAccount = () => {
+    const { logout } = useUserContext();
     return useMutation({
-        mutationFn: () => signOutAccount()
+        mutationFn: () => logout()
     })
 }
 

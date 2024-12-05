@@ -1,14 +1,13 @@
-import { getCurrentUser } from '@/lib/appwrite/api';
-import { IUser } from '@/types';
+import { getCurrentUser } from '@/api';
+import { PUser } from '@/types/postgresTypes';
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 export const INITIAL_USER = {
-    id: "",
+    user_id: "",
     name: "",
-    username: "",
     email: "",
-    imageUrl: "",
+    avatarUrl: "",
     bio: "",
 };
 
@@ -16,71 +15,73 @@ export const INITIAL_STATE = {
     user: INITIAL_USER,
     isLoading: false,
     isAuthenticated: false,
-    setUser: () => { },
-    setIsAuthenticated: () => { },
+    logout: async () => { },
     checkAuthUser: async () => false as boolean,
 }
 
-type IContextType = {
-    user: IUser;
+type AuthContextType = {
+    user: PUser;
     isLoading: boolean;
-    setUser: React.Dispatch<React.SetStateAction<IUser>>;
     isAuthenticated: boolean;
-    setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
+    logout: () => Promise<void>;
     checkAuthUser: () => Promise<boolean>;
-  };
+}
 
-const AuthContext = createContext<IContextType>(INITIAL_STATE)
 
-export function AuthProvider ({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<IUser>(INITIAL_USER);
+const AuthContext = createContext<AuthContextType>(INITIAL_STATE)
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+    const [user, setUser] = useState<PUser>(INITIAL_USER);
     const [isLoading, setisLoading] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const navigate = useNavigate();
 
     const checkAuthUser = async () => {
-        try {
-            const currentAccount = await getCurrentUser();
-            if (currentAccount){
-                setUser({
-                    id: currentAccount.$id,
-                    name: currentAccount.name,
-                    username: currentAccount.username,
-                    email: currentAccount.email,
-                    imageUrl: currentAccount.imageUrl,
-                    bio: currentAccount.bio,
-            });
+        try {            
+            const token = localStorage.getItem("token");
+            if (!token) {
+                navigate("/sign-in");
+                return false;
             }
+            setisLoading(true);
+            const currentUser = await getCurrentUser();
+            setUser({
+                user_id: currentUser.user_id,
+                name: currentUser.username,
+                email: currentUser.email,
+                avatarUrl: currentUser.avatar_url,
+                bio: currentUser.bio,
+            });
             setIsAuthenticated(true);
+            navigate("/");
             return true;
 
         } catch (error) {
-            console.log(error);
+            console.error("Auth check failed:", error);
             return false;
         } finally {
             setisLoading(false);
         }
     };
 
-    useEffect(() => {
-        const cookieFallback = localStorage.getItem("cookieFallback");
-        if (
-          cookieFallback === "[]" ||
-          cookieFallback === null //||
-          //cookieFallback === undefined
-        ) {
-          navigate("/sign-in");
-        }    
-        checkAuthUser();        
-      }, []);
+    const logout = async () => {
+        //console.log('logout');
+        localStorage.removeItem("token");
+        setUser(INITIAL_USER);
+        setIsAuthenticated(false);
+        navigate("/sign-in");
+    }
 
+    useEffect(() => {
+        //console.log('authcontext useeffect');
+        checkAuthUser();
+    }, []);
 
     const value = {
         user,
-        setUser,
         isLoading,
         isAuthenticated,
-        setIsAuthenticated,
+        logout,
         checkAuthUser,
     };
 
