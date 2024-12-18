@@ -14,9 +14,8 @@ CREATE TABLE Posts(
     post_id SERIAL PRIMARY KEY UNIQUE,
     created_at TIMESTAMP DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
-    title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
-    images TEXT[],
+    image TEXT,
     author INTEGER NOT NULL,
     FOREIGN KEY (author) REFERENCES Users(user_id)
 );

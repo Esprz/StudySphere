@@ -54,9 +54,10 @@ export const signUp = async (req: any, res: any) => {
 
 export const getCurrentUser = async (req: any, res: any) => {
     try {
-        //console.log('reach getCurrentUser');
+        console.log('reach getCurrentUser');
         //console.log('req.userId:',req.userId);        
-        const user = await pool.query("SELECT FROM users WHERE user_id = $1", [req.userId]);
+        const user = await pool.query("SELECT * FROM users WHERE user_id = $1", [req.userId]);
+        //console.log('server: getCurrentUser: user:',user);
         res.status(200).json(user.rows[0]);
     } catch (error) {
         res.status(500).json({ message: "Something went wrong" });

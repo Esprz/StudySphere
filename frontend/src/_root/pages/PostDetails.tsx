@@ -18,30 +18,29 @@ const PostDetails = () => {
       {isPending
         ? <Loader />
         : <div className='post_details-card'>
-          <img src={post?.imageUrl} alt='post' className='post_details-img' />
+          <img src={post?.image} alt='post' className='post_details-img' />
           <div className='post_details-info'>
             <div className='flex-between w-full'>
-              <Link to={`/profile/${post?.creator.$id}`} className='flex items-center gap-3'>
-                <img src={post?.creator?.imageUrl || '/assets/icons/profile-placeholder.svg'}
+              <Link to={`/profile/${post?.author}`} className='flex items-center gap-3'>
+                <img src={post?.author_avatar || '/assets/icons/profile-placeholder.svg'}
                   alt='creator'
                   className='rounded-full w-8 h-8 lg:w-12 lg:h-12' />
 
                 <div className='flex flex-col'>
-                  <p className='base-medium lg:body-bold text-light-1'>{post?.creator.name}</p>
+                  <p className='base-medium lg:body-bold text-light-1'>{post?.author_name}</p>
                   <div className='flex-center gap-2 text-light-3'>
-                    <p className='subtle-semibold lg:small-regular'>{formatTime(post?.$createdAt || '')}</p>
-                    -
-                    <p className='subtle-semibold lg:small-regular'>{post?.location}</p>
+                    <p className='subtle-semibold lg:small-regular'>{formatTime(post?.$updated_at || '')}</p>
+                    
                   </div>
                 </div>
               </Link>
               <div className='flex-center gap-1'>
 
-                <Link to={`/update-post/${post?.$id}`} className={`${user.id !== post?.creator.$id && 'hidden'}`}>
+                <Link to={`/update-post/${post?.post_id}`} className={`${user.user_id !== post?.author && 'hidden'}`}>
                   <img src='/assets/icons/edit.svg' alt='edit' width={24} height={24} />
                 </Link>
 
-                <Button onClick={handleDeletePost} variant="ghost" className={`ghost_details-delete_btn ${user.id !== post?.creator.$id && 'hidden'}`}>
+                <Button onClick={handleDeletePost} variant="ghost" className={`ghost_details-delete_btn ${user.user_id !== post?.author && 'hidden'}`}>
                   <img src='/assets/icons/delete.svg' alt='delete' width={24} height={24} />
                 </Button>
 
@@ -50,17 +49,12 @@ const PostDetails = () => {
             <hr className='border w-full border-dark-4/80' />
 
             <div className='flex flex-col flex-1 w-full small-medium lg:base-regular'>
-              <p className='text-light-1'>{post?.caption}</p>
-              <ul className='flex gap-1 mt-2'>
-                {post?.tags.map((tag: string) => (
-                  tag === "" ? null :
-                    <li key={tag} className='text-light-3'>#{tag}</li>
-                ))}
-              </ul>
+              <p className='text-light-1'>{post?.content}</p>
+              
             </div>
 
             <div className='w-full'>
-              <PostStats post={post} userId={user.id} />
+              {/*<PostStats post={post} userId={user.user_id} />*/}
             </div>
 
           </div>

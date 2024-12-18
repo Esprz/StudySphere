@@ -4,10 +4,10 @@ import pool from '../config/db';
 
 export const createPost = async (req: any, res: any) => {
     try {
-        const { title, content, images, author } = req.body;
+        const { content, image, author } = req.body;
         const newPost = await pool.query(
-            "INSERT INTO posts (title, content, images, author) VALUES($1, $2, $3, $4) RETURNING *",
-            [title, content, images, author]
+            "INSERT INTO posts (content, image, author) VALUES($1, $2, $3) RETURNING *",
+            [content, image, author]
         );
         res.status(201).json(newPost.rows[0]); // Return created post
     } catch (error: any) {
@@ -16,15 +16,16 @@ export const createPost = async (req: any, res: any) => {
 };
 
 export const updatePost = async (req: any, res: any) => {
+    console.log('reach updatePost')
     try {
         const { post_id } = req.params;
-        const { title, content, images, author } = req.body;
+        const { content, image, author } = req.body;
         const updatedPost = await pool.query(
             `UPDATE posts 
-             SET title = $1, content = $2, images = $3, updated_at = NOW() 
-             WHERE post_id = $5
+             SET content = $1, image = $2, updated_at = NOW() 
+             WHERE post_id = $3
              RETURNING *`,
-            [title, content, images, post_id]
+            [content, image, post_id]
         );
 
         res.status(200).json(updatedPost.rows[0]); // Return updated post
@@ -34,6 +35,7 @@ export const updatePost = async (req: any, res: any) => {
 };
 
 export const deletePost = async (req: any, res: any) => {
+    console.log('reach deletePost')
     try {
         const { post_id } = req.params;
 
@@ -49,12 +51,15 @@ export const deletePost = async (req: any, res: any) => {
 };
 
 export const getPostById = async (req: any, res: any) => {
+    console.log('reach getPostById')
     try {
         const { post_id } = req.params;
         const post = await pool.query(
-            "SELECT FROM posts WHERE post_id = $1*",
+            "SELECT * FROM Posts WHERE post_id = $1;",
             [post_id]
         );
+        //console.log('getPostById post_id:', post_id)
+        //console.log('getPostById post:', post)
         res.status(200).json(post.rows[0]);
     } catch (error: any) {
         res.status(404).json({ message: error.message });
@@ -70,12 +75,43 @@ export const getAllPosts = async (req: any, res: any) => {
     }
 };
 
+export const getRecentPosts = async (req: any, res: any) => {
+    console.log('reach getRecentPosts')
+    try {
+        const query = `
+            SELECT 
+                p.*, 
+                u.avatar_url AS author_avatar, 
+                u.display_name AS author_name 
+            FROM 
+                Posts p
+            JOIN 
+                Users u 
+            ON 
+                p.author = u.user_id 
+            ORDER BY 
+                p.updated_at DESC 
+            LIMIT 20
+        `;
+        const posts = await pool.query(query);
+        res.status(200).json(posts.rows);
+    } catch (error: any) {
+        res.status(404).json({ message: error.message });
+    }
+};
+
 /*------------------- Like Actions -------------------*/
 
 export const likePost = async (req: any, res: any) => {
     try {
         const { post_id } = req.params;
         const { user_id } = req.body;
+
+        if (!req.userId) {
+            return res.status(401).json({ message: 'Unauthenticated' });
+        }
+
+        const ifLiked = await pool.query("SELECT * FROM likes WHERE post = $1 AND creator = $2", [post_id, user_id]);
 
         const like = await pool.query(
             "INSERT INTO likes (post, creator) VALUES($1, $2) RETURNING *",
@@ -165,6 +201,3 @@ export const getSavedPosts = async (req: any, res: any) => {
         res.status(404).json({ message: error.message });
     }
 };
-
-/*------------------- Comment Actions -------------------*/
-const commentPost = async (req: any, res: any) => { };

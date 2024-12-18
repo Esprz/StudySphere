@@ -1,11 +1,12 @@
 import PostForm from '@/_auth/forms/PostForm'
 import Loader from '@/components/ui/shared/Loader';
+import { useUserContext } from '@/context/AuthContext';
 import { useGetPostById } from '@/lib/react-query/queriesAndMutations';
 import { useParams } from 'react-router-dom'
 
 const EditPost = () => {
   const { id } = useParams();
-  const { data: post, isPending } = useGetPostById(id || '');
+  const { data: post, isPending } = useGetPostById(id || "");
   if ( isPending ) return <Loader/>
   else 
 

@@ -4,11 +4,11 @@ import {
     useQueryClient,
     useInfiniteQuery,
 } from '@tanstack/react-query'
-import { deletePost, deleteSavePost, getCurrentUser, getInfinitePosts, getPostById, getRecentPosts, getUsers, likePost, savePost, searchPosts, updatePost } from '../appwrite/api'
+import { deletePost, deleteSavePost, getCurrentUser, getInfinitePosts,  getUsers, likePost, savePost, searchPosts } from '../appwrite/api'
 import { INewPost, IUpdatePost } from "@/types";
 import { QUERY_KEYS } from './queryKey';
-import { signIn, signUp, createPost } from '@/api';
-import { PNewUser } from '@/types/postgresTypes';
+import { signIn, signUp, createPost, getRecentPosts, updatePost,  getPostById,} from '@/api';
+import { PNewPost, PNewUser, PUpdatedPost } from '@/types/postgresTypes';
 import { useUserContext } from '@/context/AuthContext';
 
 
@@ -34,7 +34,7 @@ export const useSignOutAccount = () => {
 export const useCreatePost = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (post: INewPost) => createPost(post),
+        mutationFn: (post: PNewPost) => createPost(post),
         // if successfully create post, 
         // invalidate the recent post, so that next time it wont able get posts from cache but need to request from server
         onSuccess: () => {
@@ -44,6 +44,18 @@ export const useCreatePost = () => {
         }
     });
 };
+
+export const useUpdatePost = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (post: PUpdatedPost) => updatePost(post.post_id,post),
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.GET_POST_BY_ID, data?.$id]
+            })
+        }
+    })
+}
 
 export const useGetRecentPosts = () => {
     return useQuery({
@@ -127,17 +139,6 @@ export const useGetPostById = (postId: string) => {
     })
 }
 
-export const useUpdatePost = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: (post: IUpdatePost) => updatePost(post),
-        onSuccess: (data) => {
-            queryClient.invalidateQueries({
-                queryKey: [QUERY_KEYS.GET_POST_BY_ID, data?.$id]
-            })
-        }
-    })
-}
 
 export const useDeletePost = () => {
     const queryClient = useQueryClient();

@@ -4,7 +4,7 @@ import { Button } from '../button';
 
 type FileUploaderProps = {
     fieldChange: (FILES: File) => void;
-    mediaUrl: string
+    mediaUrl: any
 }
 
 
@@ -39,7 +39,7 @@ const FileUploader = ({ fieldChange, mediaUrl }: FileUploaderProps) => {
                         <h3 className='base-medium text-light-2 mb-2 mt-6'>Drag Photos here</h3>
                         <img src='/assets/icons/file-upload.svg' width={96} height={77} alt='file-upload' />
                         <h3 className='text-light-4 small-regular mb-6'> SVG,PNG,JPG</h3>
-                        <Button className='shad-button_dark_4'>Select from computer</Button>
+                        <Button type='button' className='shad-button_dark_4'>Select from computer</Button>
                     </div>
                 )
             }
