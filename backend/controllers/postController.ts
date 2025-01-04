@@ -100,6 +100,64 @@ export const getRecentPosts = async (req: any, res: any) => {
     }
 };
 
+export const getInfinitePosts = async (req: any, res: any) => {
+    console.log('reach getInfinitePosts');
+    const { page } = req.body;
+    console.log('page:', page);
+    const limit = 10;
+    const offset = page ? page * limit : 0;
+
+    try {
+        const query = `
+            SELECT 
+                p.*, 
+                u.avatar_url AS author_avatar, 
+                u.display_name AS author_name 
+            FROM 
+                Posts p
+            JOIN 
+                Users u 
+            ON 
+                p.author = u.user_id 
+            ORDER BY 
+                p.updated_at DESC 
+            LIMIT $1 OFFSET $2
+        `;
+        const posts = await pool.query(query, [limit, offset]);
+        res.status(200).json(posts.rows);
+    } catch (error: any) {
+        res.status(404).json({ message: error.message });
+    }
+};
+
+export const searchPosts = async (req: any, res: any) => {
+    const { searchTerm } = req.body;
+    console.log('searchTerm:', searchTerm);
+
+    try {
+        const query = `
+            SELECT 
+                p.*, 
+                u.avatar_url AS author_avatar, 
+                u.display_name AS author_name 
+            FROM 
+                Posts p
+            JOIN 
+                Users u 
+            ON 
+                p.author = u.user_id 
+            WHERE 
+                p.content ILIKE $1
+            ORDER BY 
+                p.updated_at DESC
+        `;
+        const posts = await pool.query(query, [`%${searchTerm}%`]);
+        res.status(200).json(posts.rows);
+    } catch (error: any) {
+        res.status(404).json({ message: error.message });
+    }
+};
+
 /*------------------- Like Actions -------------------*/
 
 export const likePost = async (req: any, res: any) => {

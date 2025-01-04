@@ -152,6 +152,26 @@ export const getPostById = async (post_id: String) => {
     }
 }
 
+export const getInfinitePosts = async ({ page }: { page: number }) => {
+    try {
+        const response = await API.post('/posts/infinite', { page });
+        return response.data;
+    } catch (error: any) {
+        console.error('Get infinite posts failed:', error.response?.data || error.message);
+        throw error;
+    }
+};
+
+export const searchPosts = async (searchTerm: string) => {
+    try {
+        const response = await API.post('/posts/search', { searchTerm });
+        return response.data;
+    } catch (error: any) {
+        console.error('Search posts failed:', error.response?.data || error.message);
+        throw error;
+    }
+};
+
 export const likePost = (post_id: Number) => API.post(`/posts/${post_id}/like`);
 export const deleteLike = (post_id: Number, like_id: Number) => API.delete(`/posts/${post_id}/like/${like_id}`);
 

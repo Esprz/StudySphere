@@ -51,6 +51,8 @@ export async function saveUserToDB(user: {
     }
 }
 
+
+
 export async function signInAccount(user: { email: string; password: string; }) {
     try {
         const sesstion = await account.createEmailPasswordSession(user.email, user.password);
@@ -81,6 +83,7 @@ export async function getCurrentUser() {
 
     }
 }
+    
 
 export async function signOutAccount() {
     try {

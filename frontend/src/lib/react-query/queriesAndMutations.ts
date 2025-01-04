@@ -4,10 +4,10 @@ import {
     useQueryClient,
     useInfiniteQuery,
 } from '@tanstack/react-query'
-import { deletePost, deleteSavePost, getCurrentUser, getInfinitePosts,  getUsers, likePost, savePost, searchPosts } from '../appwrite/api'
+import { deletePost, deleteSavePost, getCurrentUser, getUsers, likePost, savePost } from '../appwrite/api'
 import { INewPost, IUpdatePost } from "@/types";
 import { QUERY_KEYS } from './queryKey';
-import { signIn, signUp, createPost, getRecentPosts, updatePost,  getPostById,} from '@/api';
+import { signIn, signUp, createPost, getRecentPosts, updatePost, getPostById, getInfinitePosts, searchPosts } from '@/api';
 import { PNewPost, PNewUser, PUpdatedPost } from '@/types/postgresTypes';
 import { useUserContext } from '@/context/AuthContext';
 
@@ -48,7 +48,7 @@ export const useCreatePost = () => {
 export const useUpdatePost = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (post: PUpdatedPost) => updatePost(post.post_id,post),
+        mutationFn: (post: PUpdatedPost) => updatePost(post.post_id, post),
         onSuccess: (data) => {
             queryClient.invalidateQueries({
                 queryKey: [QUERY_KEYS.GET_POST_BY_ID, data?.$id]
@@ -152,17 +152,19 @@ export const useDeletePost = () => {
     })
 }
 
+
 export const useGetPosts = () => {
     return useInfiniteQuery({
         queryKey: [QUERY_KEYS.GET_INFINITE_POSTS],
-        queryFn: getInfinitePosts,
+        queryFn: ({ pageParam = 0 }) => getInfinitePosts({ page: pageParam }),
+        initialPageParam: 0,
         getNextPageParam: (lastPage) => {
-            if (lastPage && lastPage.documents.length === 0) return null;
-
-            const lastId = lastPage?.documents[lastPage.documents.length - 1].$id;
+            if (lastPage && lastPage.length === 0) return null;
+            const lastId = lastPage?.[lastPage.length - 1].$id;
             return lastId;
         },
     })
+
 }
 
 export const useSearchPosts = (searchTerm: string) => {
