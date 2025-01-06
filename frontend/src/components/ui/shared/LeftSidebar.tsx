@@ -27,9 +27,9 @@ const LeftSidebar = () => {
           </div>
         </Link>
 
-        <Link to={`/profile/${user.id}`} className='flex gap-3 items-center'>
+        <Link to={`/profile/${user.user_id}`} className='flex gap-3 items-center'>
 
-          <img src={user.imageUrl || '/assets/icons/profile-placeholder.svg'}
+          <img src={user.avatarUrl || '/assets/icons/profile-placeholder.svg'}
             alt='profile'
             className='h-14 w-14 rounded-full' />
 
@@ -37,10 +37,6 @@ const LeftSidebar = () => {
 
             <p className='body-bold text-light-1'>
               {user.name}
-            </p>
-
-            <p className='small-regular text-light-3'>
-              @{user.username}
             </p>
 
           </div>
