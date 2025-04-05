@@ -1,0 +1,152 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// New Accelerate connection string with generated API_KEY
+// DATABASE_URL="prisma://accelerate.prisma-data.net/?api_key=__API_KEY__"
+
+// Previous (direct) database connection string
+// DATABASE_URL="postgresql://user:password@host:port/db_name?schema=public"
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum GoalStatus {
+  ONGOING
+  ARCHIVED
+  DELETED
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id       String    @id @default(uuid())
+  username      String    @unique
+  display_name  String    @unique @db.VarChar(255)
+  email         String    @unique @db.VarChar(255)
+  password_hash String
+  bio           String?
+  avatar_url    String?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  posts         Post[]
+  comments      Comment[]
+  likes         Like[]
+  saves         Save[]
+  goals         Goal[]
+  focus_times   FocusTime[]
+  followers     Follow[]  @relation("followers")
+  following     Follow[]  @relation("following")
+}
+
+model Post {
+  post_id     String    @id @default(uuid())
+  title       String
+  content     String
+  user_id     String
+  image       Json?
+  extra       Json?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  user        User      @relation(fields: [user_id], references: [user_id])
+  comments    Comment[]
+  likes       Like[]
+  saves       Save[]
+
+  @@index([user_id])
+}
+
+model Comment {
+  comment_id   String    @id @default(uuid())
+  content      String
+  user_id      String
+  post_id      String
+  parent_id    String?
+
+  user         User      @relation(fields: [user_id], references: [user_id])
+  post         Post      @relation(fields: [post_id], references: [post_id])
+  parent       Comment?  @relation("CommentToParent", fields: [parent_id], references: [comment_id])
+  children     Comment[] @relation("CommentToParent")
+
+  created_at   DateTime  @default(now())
+
+  @@index([post_id])
+}
+
+model Like {
+  like_id     String   @id @default(uuid())
+  post_id     String
+  user_id     String
+
+  post        Post     @relation(fields: [post_id], references: [post_id])
+  user        User     @relation(fields: [user_id], references: [user_id])
+  created_at  DateTime @default(now())
+
+  @@index([post_id])
+  @@index([user_id])
+  @@unique([user_id, post_id]) // 防止重复点赞
+}
+
+model Save {
+  save_id     String   @id @default(uuid())
+  post_id     String
+  user_id     String
+
+  post        Post     @relation(fields: [post_id], references: [post_id])
+  user        User     @relation(fields: [user_id], references: [user_id])
+  created_at  DateTime @default(now())
+
+  @@index([post_id])
+  @@index([user_id])
+  @@unique([user_id, post_id]) // 防止重复收藏
+}
+
+model Follow {
+  follow_id    String   @id @default(uuid())    
+  follower_id  String
+  followee_id  String
+
+  follower     User     @relation("following", fields: [follower_id], references: [user_id])
+  followee     User     @relation("followers", fields: [followee_id], references: [user_id])
+  created_at   DateTime @default(now())
+
+  @@index([follower_id])
+  @@index([followee_id])
+  @@unique([follower_id, followee_id]) // 防止重复关注
+}
+
+model Goal {
+  goal_id     String      @id @default(uuid())   
+  content     String
+  user_id     String
+  status      GoalStatus  @default(ONGOING)
+  created_at  DateTime    @default(now())
+
+  user        User        @relation(fields: [user_id], references: [user_id])
+  focus_times FocusTime[]
+
+  @@index([user_id, status])
+}
+
+model FocusTime {
+  ft_id      String   @id @default(uuid())  
+  start      DateTime
+  end        DateTime
+  user_id    String
+  goal_id    String?
+
+  user       User     @relation(fields: [user_id], references: [user_id])
+  goal       Goal?    @relation(fields: [goal_id], references: [goal_id])
+  created_at DateTime @default(now())
+
+  @@index([user_id])
+  @@index([goal_id])
+}
