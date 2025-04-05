@@ -27,14 +27,14 @@ datasource db {
 
 model User {
   user_id       String    @id @default(uuid())
-  username      String    @unique
-  display_name  String    @unique @db.VarChar(255)
+  username      String    @unique @db.VarChar(255)
+  display_name  String    @db.VarChar(255)
   email         String    @unique @db.VarChar(255)
-  password_hash String
+  password_hash String    @db.VarChar(255)
   bio           String?
   avatar_url    String?
   created_at    DateTime  @default(now())
-  updated_at    DateTime  @updatedAt
+  updated_at    DateTime  @default(now())
 
   posts         Post[]
   comments      Comment[]
@@ -54,7 +54,7 @@ model Post {
   image       Json?
   extra       Json?
   created_at  DateTime  @default(now())
-  updated_at  DateTime  @updatedAt
+  updated_at  DateTime  @default(now())
 
   user        User      @relation(fields: [user_id], references: [user_id])
   comments    Comment[]
@@ -92,7 +92,7 @@ model Like {
 
   @@index([post_id])
   @@index([user_id])
-  @@unique([user_id, post_id]) // 防止重复点赞
+  @@unique([user_id, post_id])
 }
 
 model Save {
@@ -106,7 +106,7 @@ model Save {
 
   @@index([post_id])
   @@index([user_id])
-  @@unique([user_id, post_id]) // 防止重复收藏
+  @@unique([user_id, post_id])
 }
 
 model Follow {
@@ -120,7 +120,7 @@ model Follow {
 
   @@index([follower_id])
   @@index([followee_id])
-  @@unique([follower_id, followee_id]) // 防止重复关注
+  @@unique([follower_id, followee_id])
 }
 
 model Goal {
