@@ -25,3 +25,12 @@ export const SAVE_ERRORS = {
   ALREADY_SAVED: 'Post already saved.',
   NOT_FOUND: 'Save not found.',
 };
+
+export const FOLLOW_ERRORS = {
+  ALREADY_FOLLOWED: 'User already followed.',
+  NOT_FOUND: 'Follow not found.',
+};
+
+export const COMMENT_ERRORS = {
+  NOT_FOUND: 'Comment not found.',
+};
