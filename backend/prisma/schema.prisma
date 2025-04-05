@@ -44,6 +44,19 @@ model User {
   focus_times   FocusTime[]
   followers     Follow[]  @relation("followers")
   following     Follow[]  @relation("following")
+  tokens        Token[]
+}
+
+model Token {
+  token_id   String   @id @default(uuid())
+  user_id    String
+  token      String   @unique
+  created_at DateTime @default(now())
+  expires_at DateTime
+
+  user       User     @relation(fields: [user_id], references: [user_id])
+
+  @@index([user_id])
 }
 
 model Post {
