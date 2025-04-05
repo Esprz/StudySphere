@@ -20,6 +20,7 @@ export const getPostById = async (req: Request, res: Response) => {
 
         if (!post) {
             res.status(HTTP.NOT_FOUND.code).json({ message: POST_ERRORS.NOT_FOUND });
+            return;
         }
 
         res.status(HTTP.OK.code).json(post);
@@ -54,6 +55,7 @@ export const createPost = async (req: Request, res: Response) => {
 
         if (!title || !content || !user_id) {
             res.status(HTTP.BAD_REQUEST.code).json({ message: POST_ERRORS.MISSING_FIELDS });
+            return;
         }
 
         const post = await postService.createPost({ title, content, image, extra, user_id });
