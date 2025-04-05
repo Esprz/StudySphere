@@ -1,261 +1,86 @@
-import pool from '../config/db';
+import { Request, Response } from 'express';
+import * as postService from '../services/postService';
+import { HTTP } from '../constants/httpStatus';
+import { POST_ERRORS, GENERAL_ERRORS } from '../constants/errorMessages';
 
-/*------------------- Post Actions -------------------*/
 
-export const createPost = async (req: any, res: any) => {
+export const getAllPosts = async (req: Request, res: Response) => {
     try {
-        const { content, image, author } = req.body;
-        const newPost = await pool.query(
-            "INSERT INTO posts (content, image, author) VALUES($1, $2, $3) RETURNING *",
-            [content, image, author]
-        );
-        res.status(201).json(newPost.rows[0]); // Return created post
-    } catch (error: any) {
-        res.status(409).json({ message: error.message });
+        const posts = await postService.getAllPosts();
+        res.status(HTTP.OK.code).json(posts);
+    } catch {
+        res.status(HTTP.INTERNAL_ERROR.code).json({ message: GENERAL_ERRORS.UNKNOWN });
     }
 };
 
-export const updatePost = async (req: any, res: any) => {
-    console.log('reach updatePost')
+export const getPostById = async (req: Request, res: Response) => {
     try {
         const { post_id } = req.params;
-        const { content, image, author } = req.body;
-        const updatedPost = await pool.query(
-            `UPDATE posts 
-             SET content = $1, image = $2, updated_at = NOW() 
-             WHERE post_id = $3
-             RETURNING *`,
-            [content, image, post_id]
-        );
+        const post = await postService.getPostById(post_id);
 
-        res.status(200).json(updatedPost.rows[0]); // Return updated post
-    } catch (error: any) {
-        res.status(404).json({ message: error.message });
-    }
-};
-
-export const deletePost = async (req: any, res: any) => {
-    console.log('reach deletePost')
-    try {
-        const { post_id } = req.params;
-
-        await pool.query(
-            "DELETE FROM posts WHERE post_id = $1",
-            [post_id]
-        );
-
-        res.status(200).json({ message: 'Post deleted successfully!' });
-    } catch (error: any) {
-        res.status(404).json({ message: error.message });
-    }
-};
-
-export const getPostById = async (req: any, res: any) => {
-    console.log('reach getPostById')
-    try {
-        const { post_id } = req.params;
-        const post = await pool.query(
-            "SELECT * FROM Posts WHERE post_id = $1;",
-            [post_id]
-        );
-        //console.log('getPostById post_id:', post_id)
-        //console.log('getPostById post:', post)
-        res.status(200).json(post.rows[0]);
-    } catch (error: any) {
-        res.status(404).json({ message: error.message });
-    }
-};
-
-export const getAllPosts = async (req: any, res: any) => {
-    try {
-        const posts = await pool.query("SELECT * FROM posts");
-        res.status(200).json(posts.rows);
-    } catch (error: any) {
-        res.status(404).json({ message: error.message });
-    }
-};
-
-export const getRecentPosts = async (req: any, res: any) => {
-    console.log('reach getRecentPosts')
-    try {
-        const query = `
-            SELECT 
-                p.*, 
-                u.avatar_url AS author_avatar, 
-                u.display_name AS author_name 
-            FROM 
-                Posts p
-            JOIN 
-                Users u 
-            ON 
-                p.author = u.user_id 
-            ORDER BY 
-                p.updated_at DESC 
-            LIMIT 20
-        `;
-        const posts = await pool.query(query);
-        res.status(200).json(posts.rows);
-    } catch (error: any) {
-        res.status(404).json({ message: error.message });
-    }
-};
-
-export const getInfinitePosts = async (req: any, res: any) => {
-    console.log('reach getInfinitePosts');
-    const { page } = req.body;
-    console.log('page:', page);
-    const limit = 10;
-    const offset = page ? page * limit : 0;
-
-    try {
-        const query = `
-            SELECT 
-                p.*, 
-                u.avatar_url AS author_avatar, 
-                u.display_name AS author_name 
-            FROM 
-                Posts p
-            JOIN 
-                Users u 
-            ON 
-                p.author = u.user_id 
-            ORDER BY 
-                p.updated_at DESC 
-            LIMIT $1 OFFSET $2
-        `;
-        const posts = await pool.query(query, [limit, offset]);
-        res.status(200).json(posts.rows);
-    } catch (error: any) {
-        res.status(404).json({ message: error.message });
-    }
-};
-
-export const searchPosts = async (req: any, res: any) => {
-    const { searchTerm } = req.body;
-    console.log('searchTerm:', searchTerm);
-
-    try {
-        const query = `
-            SELECT 
-                p.*, 
-                u.avatar_url AS author_avatar, 
-                u.display_name AS author_name 
-            FROM 
-                Posts p
-            JOIN 
-                Users u 
-            ON 
-                p.author = u.user_id 
-            WHERE 
-                p.content ILIKE $1
-            ORDER BY 
-                p.updated_at DESC
-        `;
-        const posts = await pool.query(query, [`%${searchTerm}%`]);
-        res.status(200).json(posts.rows);
-    } catch (error: any) {
-        res.status(404).json({ message: error.message });
-    }
-};
-
-/*------------------- Like Actions -------------------*/
-
-export const likePost = async (req: any, res: any) => {
-    try {
-        const { post_id } = req.params;
-        const { user_id } = req.body;
-
-        if (!req.userId) {
-            return res.status(401).json({ message: 'Unauthenticated' });
+        if (!post) {
+            res.status(HTTP.NOT_FOUND.code).json({ message: POST_ERRORS.NOT_FOUND });
         }
 
-        const ifLiked = await pool.query("SELECT * FROM likes WHERE post = $1 AND creator = $2", [post_id, user_id]);
-
-        const like = await pool.query(
-            "INSERT INTO likes (post, creator) VALUES($1, $2) RETURNING *",
-            [post_id, user_id]
-        );
-
-        res.status(201).json(like.rows[0]); // Return created like
-    } catch (error: any) {
-        res.status(409).json({ message: error.message });
+        res.status(HTTP.OK.code).json(post);
+    } catch {
+        res.status(HTTP.INTERNAL_ERROR.code).json({ message: GENERAL_ERRORS.UNKNOWN });
     }
 };
 
-export const deleteLike = async (req: any, res: any) => {
+export const getRecentPosts = async (req: Request, res: Response) => {
     try {
-        const { post_id, like_id } = req.params;
-
-        await pool.query(
-            "DELETE FROM likes WHERE like_id = $1",
-            [like_id]
-        );
-
-        res.status(200).json({ message: 'Like deleted successfully!' });
-    } catch (error: any) {
-        res.status(404).json({ message: error.message });
+        const posts = await postService.getRecentPosts();
+        res.status(HTTP.OK.code).json(posts);
+    } catch {
+        res.status(HTTP.INTERNAL_ERROR.code).json({ message: GENERAL_ERRORS.UNKNOWN });
     }
 };
 
-export const getLikedPosts = async (req: any, res: any) => {
+export const getPaginatedPosts = async (req: Request, res: Response) => {
     try {
-        const { user_id } = req.params;
-        const likedPosts = await pool.query(
-            `SELECT * FROM posts As p
-             JOIN likes As l ON p.post_id = l.post
-             WHERE l.creator = $1;`,
-            [user_id]
-        );
-        res.status(200).json(likedPosts.rows);
-    } catch (error: any) {
-        res.status(404).json({ message: error.message });
+        const page = parseInt(req.query.page as string) || 0;
+        const posts = await postService.getPaginatedPosts(page);
+        res.status(HTTP.OK.code).json(posts);
+    } catch {
+        res.status(HTTP.INTERNAL_ERROR.code).json({ message: GENERAL_ERRORS.UNKNOWN });
     }
 };
 
-/*------------------- Save Actions -------------------*/
 
-export const savePost = async (req: any, res: any) => {
+export const createPost = async (req: Request, res: Response) => {
+    try {
+        const { title, content, image, extra, user_id } = req.body;
+
+        if (!title || !content || !user_id) {
+            res.status(HTTP.BAD_REQUEST.code).json({ message: POST_ERRORS.MISSING_FIELDS });
+        }
+
+        const post = await postService.createPost({ title, content, image, extra, user_id });
+        res.status(HTTP.CREATED.code).json(post);
+    } catch {
+        res.status(HTTP.INTERNAL_ERROR.code).json({ message: GENERAL_ERRORS.UNKNOWN });
+    }
+};
+
+export const updatePost = async (req: Request, res: Response) => {
     try {
         const { post_id } = req.params;
-        const { user_id } = req.body;
-
-        const save = await pool.query(
-            "INSERT INTO saves (post, creator) VALUES($1, $2) RETURNING *",
-            [post_id, user_id]
-        );
-
-        res.status(201).json(save.rows[0]); // Return created save
-    } catch (error: any) {
-        res.status(409).json({ message: error.message });
+        const post = await postService.updatePost(post_id, req.body);
+        res.status(HTTP.OK.code).json(post);
+    } catch {
+        res.status(HTTP.INTERNAL_ERROR.code).json({ message: GENERAL_ERRORS.UNKNOWN });
     }
 };
 
-export const deleteSave = async (req: any, res: any) => {
+export const deletePost = async (req: Request, res: Response) => {
     try {
-        const { post_id, save_id } = req.params;
-
-        await pool.query(
-            "DELETE FROM saves WHERE save_id = $1",
-            [save_id]
-        );
-
-        res.status(200).json({ message: 'Save deleted successfully!' });
-    } catch (error: any) {
-        res.status(404).json({ message: error.message });
-    };
-};
-
-export const getSavedPosts = async (req: any, res: any) => {
-    try {
-        const { user_id } = req.params;
-        const savedPosts = await pool.query(
-            `SELECT * FROM posts As p
-            JOIN Saves As s ON p.post_id = s.post
-            WHERE l.creator = $1;`,
-            [user_id]
-        );
-        res.status(200).json(savedPosts.rows);
-    } catch (error: any) {
-        res.status(404).json({ message: error.message });
+        const { post_id } = req.params;
+        await postService.deletePost(post_id);
+        res.status(HTTP.OK.code).json({ message: 'Post deleted successfully.' });
+    } catch {
+        res.status(HTTP.INTERNAL_ERROR.code).json({ message: GENERAL_ERRORS.UNKNOWN });
     }
 };
+
+
