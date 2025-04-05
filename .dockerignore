@@ -1,0 +1,7 @@
+node_modules
+tests
+migrations
+.env*
+.dockerignore
+.vscode
+.git
