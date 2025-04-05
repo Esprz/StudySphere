@@ -2,11 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import prisma from './utils/prisma';
-import postsRouter from './routes/postRouter';
-import authRouter from './routes/authRouter';
-import saveRouter from './routes/saveRouter';
-import likeRouter from './routes/likeRouter'
-import searchRouter from './routes/searchRouter'
+import router from './routes';
 
 // Configure dotenv
 dotenv.config();
@@ -20,11 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use('/posts', postsRouter);
-app.use('/auth', authRouter);
-app.use('/save', saveRouter);
-app.use('/like', likeRouter);
-app.use('/search', searchRouter);
+app.use('/api', router);
 
 // Example route to test the server
 app.get('/', (req: Request, res: any) => {
