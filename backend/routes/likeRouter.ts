@@ -4,7 +4,7 @@ import {
     deleteLike,
     getLikedPosts,
   } from '../controllers/likeController';
-import auth from '../middleware/auth';
+import auth from '../middleware/authMiddleware';
 
 const router = Router();
 

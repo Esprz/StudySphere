@@ -4,7 +4,7 @@ import {
     deleteSave,
     getSavedPosts,
   } from '../controllers/saveController';
-  import auth from '../middleware/auth';
+  import auth from '../middleware/authMiddleware';
 
 const router = Router();
 
