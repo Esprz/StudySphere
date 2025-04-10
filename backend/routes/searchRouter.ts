@@ -1,10 +1,9 @@
 import { Router } from 'express';
-import { createPost, updatePost, deletePost, getPostById, getAllPosts, getRecentPosts, } from '../controllers/postController';
-import auth from '../middleware/authMiddleware';
+import { searchPosts } from '../controllers/searchController';
 
 const router = Router();
 
-router.post('/search', searchPosts);
+router.get('/', searchPosts);
 
 
 
