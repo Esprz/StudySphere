@@ -1,4 +1,4 @@
-import { API } from './config';
+import { API, setAccessToken } from './config';
 import { PNewUser } from '@/types/postgresTypes';
 
 export const signIn = async (user: { email: string; password: string }) => {
@@ -10,9 +10,12 @@ export const signIn = async (user: { email: string; password: string }) => {
         /*
         response.data = { user, accessToken }
         */
-        localStorage.setItem("accessToken", response.data.accessToken);
-        
-        return response.data;
+        if (!response.data || !response.data.accessToken) {
+            throw new Error('No access token received');
+        }
+        setAccessToken(response.data.accessToken);
+
+        return response.data.user;
 
     } catch (error: any) {
         console.error('Sign-in failed:', error.response?.data || error.message);
@@ -31,10 +34,12 @@ export const signUp = async (user: PNewUser) => {
         /*
         response.data = { user, accessToken }
         */
-        localStorage.setItem("accessToken", response.data.accessToken);
+        if (!response.data || !response.data.accessToken) {
+            throw new Error('No access token received');
+        }
+        setAccessToken(response.data.accessToken);
         
-        
-        return response.data;
+        return response.data.user;
 
     } catch (error: any) {
         console.error('Sign-up failed:', error.response?.data || error.message);
@@ -60,8 +65,11 @@ export const refreshToken = async () => {
         /*
         response.data = { accessToken }
         */
-        localStorage.setItem("accessToken", response.data.accessToken);
-        return response.data;
+        if (!response.data || !response.data.accessToken) {
+            throw new Error('No access token received');
+        }
+        setAccessToken(response.data.accessToken);
+        
     } catch (error: any) {
         console.error('Refresh token failed:', error.response?.data || error.message);
         throw error;
@@ -70,12 +78,9 @@ export const refreshToken = async () => {
 
 export const logOut = async () => {
     try {
-        const response = await API.get('/auth/logout');
-        // Clear tokens from localStorage
-        localStorage.removeItem("accessToken");
+        await API.get('/auth/logout');
+        setAccessToken(null);
         window.location.href = '/login';
-
-        return response.data;
 
     } catch (error: any) {
         console.error('Log out failed:', error.response?.data || error.message);
