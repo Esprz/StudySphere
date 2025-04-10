@@ -6,7 +6,7 @@ export const signIn = async (user: { email: string; password: string }) => {
         const response = await API.post('/auth/sign-in', {
             email: user.email,
             password: user.password,
-        });
+        }, { withCredentials: true });
         /*
         response.data = { user, accessToken }
         */
@@ -14,7 +14,6 @@ export const signIn = async (user: { email: string; password: string }) => {
             throw new Error('No access token received');
         }
         setAccessToken(response.data.accessToken);
-
         return response.data.user;
 
     } catch (error: any) {
@@ -30,7 +29,7 @@ export const signUp = async (user: PNewUser) => {
             password: user.password,
             display_name: user.name,
             username: user.name,
-        });
+        }, { withCredentials: true });
         /*
         response.data = { user, accessToken }
         */
@@ -38,7 +37,7 @@ export const signUp = async (user: PNewUser) => {
             throw new Error('No access token received');
         }
         setAccessToken(response.data.accessToken);
-        
+
         return response.data.user;
 
     } catch (error: any) {
@@ -49,7 +48,7 @@ export const signUp = async (user: PNewUser) => {
 
 export const getCurrentUser = async () => {
     try {
-        const response = await API.get("/auth/user");
+        const response = await API.get("/auth/user", { withCredentials: true });
         //console.log('server:currentUser:', response);
         return response.data;
 
@@ -61,7 +60,7 @@ export const getCurrentUser = async () => {
 
 export const refreshToken = async () => {
     try {
-        const response = await API.get('/auth/refresh-token');
+        const response = await API.get('/auth/refresh-token', { withCredentials: true });
         /*
         response.data = { accessToken }
         */
@@ -69,7 +68,7 @@ export const refreshToken = async () => {
             throw new Error('No access token received');
         }
         setAccessToken(response.data.accessToken);
-        
+
     } catch (error: any) {
         console.error('Refresh token failed:', error.response?.data || error.message);
         throw error;
@@ -78,9 +77,9 @@ export const refreshToken = async () => {
 
 export const logOut = async () => {
     try {
-        await API.get('/auth/logout');
+        await API.get('/auth/logout', { withCredentials: true });
+        console.log('Logged out successfully');
         setAccessToken(null);
-        window.location.href = '/login';
 
     } catch (error: any) {
         console.error('Log out failed:', error.response?.data || error.message);
