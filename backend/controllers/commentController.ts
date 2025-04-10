@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import * as commentService from '../services/commentService';
 import { HTTP } from '../constants/httpStatus';
 import { GENERAL_ERRORS } from '../constants/errorMessages';
+import { COMMENT_SUCCESS } from '../constants/successMessages';
 export const createComment = async (req: Request, res: Response): Promise<void> => {
     try {
       const { post_id } = req.params;
@@ -9,6 +10,7 @@ export const createComment = async (req: Request, res: Response): Promise<void> 
   
       if (!post_id || !user_id || !content) {
         res.status(HTTP.BAD_REQUEST.code).json({ message: GENERAL_ERRORS.MISSING_FIELDS });
+        return;
       }
   
       const comment = await commentService.createComment(post_id, user_id, content, parent_id);
@@ -22,7 +24,7 @@ export const createComment = async (req: Request, res: Response): Promise<void> 
     try {
       const { comment_id } = req.params;
       await commentService.deleteComment(comment_id);
-      res.status(HTTP.OK.code).json({ message: 'Comment deleted.' });
+      res.status(HTTP.OK.code).json({ message: COMMENT_SUCCESS.DELETED });
     } catch {
       res.status(HTTP.INTERNAL_ERROR.code).json({ message: GENERAL_ERRORS.UNKNOWN });
     }
