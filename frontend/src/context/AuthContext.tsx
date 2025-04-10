@@ -1,4 +1,5 @@
-import { getCurrentUser } from '@/api';
+import { getCurrentUser, logOut } from '@/api';
+import { getAccessToken } from '@/api/config';
 import { PUser } from '@/types/postgresTypes';
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -38,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const checkAuthUser = async () => {
         try {            
-            const token = localStorage.getItem("token");
+            const token = getAccessToken();
             if (!token) {
                 navigate("/sign-in");
                 return false;
@@ -58,6 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         } catch (error) {
             console.error("Auth check failed:", error);
+            setIsAuthenticated(false);
             return false;
         } finally {
             setisLoading(false);
@@ -65,12 +67,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const logout = async () => {
-        //console.log('logout');
-        localStorage.removeItem("token");
-        setUser(INITIAL_USER);
-        setIsAuthenticated(false);
-        navigate("/sign-in");
-    }
+        try {
+            console.log("Logging out...");
+            await logOut(); 
+            setUser(INITIAL_USER); 
+            setIsAuthenticated(false); 
+            navigate("/sign-in"); 
+        } catch (error) {
+            console.error("Logout failed:", error);
+        }
+    };
 
     useEffect(() => {
         //console.log('authcontext useeffect');

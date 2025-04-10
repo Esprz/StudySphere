@@ -1,3 +1,3 @@
-export * as authApi from './auth';
-export * as postApi from './post';
+export * from './auth';
+export * from './post';
 
