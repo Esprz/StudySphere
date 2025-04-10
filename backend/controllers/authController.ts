@@ -53,6 +53,8 @@ export const signUp = async (req: any, res: any) => {
         if (error.message === USER_ERRORS.ALREADY_EXISTS) {
             res.status(HTTP.CONFLICT.code).json({ message: error.message });
         } else {
+            console.error('Error in signUp:', error);
+            console.log('Error message:', error.message);
             res.status(HTTP.INTERNAL_ERROR.code).json({ message: GENERAL_ERRORS.UNKNOWN });
         }
     }
@@ -82,19 +84,26 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
 
 export const logout = async (req: Request, res: Response) => {
     try {
+        //console.log('Logout request received'); // Debugging line
         const refreshToken = req.cookies.refreshToken; // Get refresh token from httpOnly cookie
+        //console.log('Logout refreshToken:', refreshToken); // Debugging line
         if (!refreshToken) {
-            res.status(HTTP.UNAUTHORIZED.code).json({ message: USER_ERRORS.NOT_FOUND });
+            res.status(HTTP.UNAUTHORIZED.code).json({ message: USER_ERRORS.REFRESHTOKEN_NOT_FOUND });
             return;
         }
+        //console.log('Logout refreshToken:', refreshToken); // Debugging line
 
         await authService.logout(refreshToken);
+
+        //console.log('Logout successful'); // Debugging line
 
         res.clearCookie('refreshToken', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
         });
+
+        //console.log('Cookie cleared'); // Debugging line
 
         res.status(HTTP.NO_CONTENT.code).send();
 
@@ -107,18 +116,12 @@ export const refreshTokens = async (req: Request, res: Response) => {
     try {
         const refreshToken = req.cookies.refreshToken; // Get refresh token from httpOnly cookie
         if (!refreshToken) {
-            res.status(HTTP.UNAUTHORIZED.code).json({ message: USER_ERRORS.NOT_FOUND });
+            res.status(HTTP.UNAUTHORIZED.code).json({ message: USER_ERRORS.REFRESHTOKEN_NOT_FOUND });
             return;
         }
 
         const { accessToken, refreshToken: newRefreshToken } = await authService.refreshTokens(refreshToken);
 
-        res.clearCookie('refreshToken', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-        });
-        
         res.cookie('refreshToken', newRefreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',

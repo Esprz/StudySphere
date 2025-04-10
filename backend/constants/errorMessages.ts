@@ -9,6 +9,9 @@ export const POST_ERRORS = {
 export const USER_ERRORS = {
   NOT_FOUND: 'User not found.',
   ALREADY_EXISTS: 'User already exists.',
+  REFRESHTOKEN_NOT_FOUND: 'Refresh token not found.',
+  INVALID_CREDENTIALS: 'Invalid email or password.',
+  INVALID_REFRESH_TOKEN: 'Invalid or expired refresh token.',
 };
 
 export const GENERAL_ERRORS = {
