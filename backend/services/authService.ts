@@ -75,6 +75,7 @@ export const signIn = async (email: string, password: string) => {
 
 export const logout = async (refreshToken: string) => {
     try {
+        //console.log('Service Logout called with refreshToken:', refreshToken);
         await prisma.token.delete({ where: { token: refreshToken } });
     } catch (error: any) {
         console.error('Error in logout:', error);

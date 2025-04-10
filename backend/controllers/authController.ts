@@ -17,11 +17,11 @@ export const signIn = async (req: any, res: any) => {
             httpOnly: true,
             //secure: process.env.NODE_ENV === 'production',
             secure: false,
-            sameSite: 'none',
+            sameSite: 'lax',
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         });
-
-        console.log('Cookies:', req.cookies);
+        //console.log('Sign in refreshToken:', refreshToken);
+        //console.log('Sign in Cookies:', req.cookies);
 
         // Return user data and accessToken
         res.status(HTTP.OK.code).json({ user, accessToken });
@@ -46,10 +46,10 @@ export const signUp = async (req: any, res: any) => {
             httpOnly: true,
             //secure: process.env.NODE_ENV === 'production',
             secure: false,
-            sameSite: 'none',
+            sameSite: 'lax',
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         });
-        console.log('Cookies:', req.cookies);
+        //console.log('Sign up Cookies:', req.cookies);
 
         // Return user data and accessToken
         res.status(HTTP.OK.code).json({ user, accessToken });
@@ -90,9 +90,9 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
 export const logout = async (req: Request, res: Response) => {
     try {
         
-        console.log('Logout request received'); // Debugging line
-        console.log('Cookies:', req.cookies);
-        const refreshToken = req.cookies.refreshToken; // Get refresh token from httpOnly cookie
+        //console.log('Logout request received'); // Debugging line
+        //console.log('Log out Cookies:', req.cookies);
+        const refreshToken = req.cookies.refreshToken; // Get refresh token from //httpOnly cookie
         //console.log('Logout refreshToken:', refreshToken); // Debugging line
         if (!refreshToken) {
             res.status(HTTP.UNAUTHORIZED.code).json({ message: USER_ERRORS.REFRESHTOKEN_NOT_FOUND });
@@ -108,7 +108,7 @@ export const logout = async (req: Request, res: Response) => {
             httpOnly: true,
             //secure: process.env.NODE_ENV === 'production',
             secure: false,
-            sameSite: 'none',
+            sameSite: 'lax',
         });
 
         //console.log('Cookie cleared'); // Debugging line
@@ -134,7 +134,7 @@ export const refreshTokens = async (req: Request, res: Response) => {
             httpOnly: true,
             //secure: process.env.NODE_ENV === 'production',
             secure: false,
-            sameSite: 'none',
+            sameSite: 'lax',
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         });
 

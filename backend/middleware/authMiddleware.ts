@@ -2,7 +2,7 @@ import { verifyAccessToken } from '../utils/jwt';
 
 const auth = async (req: any, res: any, next: any) => {
     try {
-        console.log('reach middleware auth', req.headers);
+        //console.log('reach middleware auth', req.headers);
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             return res.status(401).json({ message: 'Unauthorized' });
