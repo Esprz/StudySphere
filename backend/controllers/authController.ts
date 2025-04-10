@@ -6,12 +6,23 @@ import * as authService from '../services/authService';
 import { HTTP } from '../constants/httpStatus';
 import { USER_ERRORS, GENERAL_ERRORS } from '../constants/errorMessages';
 
-// return sign in and returns user and token
+// Handles user sign-in, generates tokens, and sets the refresh token as an httpOnly cookie
 export const signIn = async (req: any, res: any) => {
     try {
         const { email, password } = req.body;
-        const result = await authService.signIn(email, password);
-        res.status(HTTP.OK.code).json(result);
+        const { user, accessToken, refreshToken } = await authService.signIn(email, password);
+
+        // Set refreshToken in httpOnly cookie for security
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
+
+        // Return user data and accessToken
+        res.status(HTTP.OK.code).json({ user, accessToken });
+
     } catch (error: any) {
         if (error.message === USER_ERRORS.NOT_FOUND || error.message === GENERAL_ERRORS.MISSING_FIELDS) {
             res.status(HTTP.BAD_REQUEST.code).json({ message: error.message });
@@ -25,8 +36,19 @@ export const signIn = async (req: any, res: any) => {
 export const signUp = async (req: any, res: any) => {
     try {
         const { username, display_name, email, password, bio = null, avatar_url = null } = req.body;
-        const result = await authService.signUp(username, display_name, email, password, bio, avatar_url);
-        res.status(HTTP.CREATED.code).json(result);
+        const { user, accessToken, refreshToken } = await authService.signUp(username, display_name, email, password, bio, avatar_url);
+
+        // Set refreshToken in httpOnly cookie for security
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
+
+        // Return user data and accessToken
+        res.status(HTTP.OK.code).json({ user, accessToken });
+
     } catch (error: any) {
         if (error.message === USER_ERRORS.ALREADY_EXISTS) {
             res.status(HTTP.CONFLICT.code).json({ message: error.message });
@@ -60,9 +82,22 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
 
 export const logout = async (req: Request, res: Response) => {
     try {
-        const { refreshToken } = req.body;
+        const refreshToken = req.cookies.refreshToken; // Get refresh token from httpOnly cookie
+        if (!refreshToken) {
+            res.status(HTTP.UNAUTHORIZED.code).json({ message: USER_ERRORS.NOT_FOUND });
+            return;
+        }
+
         await authService.logout(refreshToken);
+
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+        });
+
         res.status(HTTP.NO_CONTENT.code).send();
+
     } catch (error: any) {
         res.status(HTTP.INTERNAL_ERROR.code).json({ message: GENERAL_ERRORS.UNKNOWN });
     }
@@ -70,9 +105,29 @@ export const logout = async (req: Request, res: Response) => {
 
 export const refreshTokens = async (req: Request, res: Response) => {
     try {
-        const { refreshToken } = req.body;
-        const result = await authService.refreshTokens(refreshToken);
-        res.status(HTTP.OK.code).json(result);
+        const refreshToken = req.cookies.refreshToken; // Get refresh token from httpOnly cookie
+        if (!refreshToken) {
+            res.status(HTTP.UNAUTHORIZED.code).json({ message: USER_ERRORS.NOT_FOUND });
+            return;
+        }
+
+        const { accessToken, refreshToken: newRefreshToken } = await authService.refreshTokens(refreshToken);
+
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+        });
+        
+        res.cookie('refreshToken', newRefreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
+
+        res.status(HTTP.OK.code).json({ accessToken });
+
     } catch (error: any) {
         res.status(HTTP.UNAUTHORIZED.code).json({ message: error.message });
     }

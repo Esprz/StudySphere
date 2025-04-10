@@ -8,10 +8,10 @@ export const signIn = async (user: { email: string; password: string }) => {
             password: user.password,
         });
         /*
-        response.data = { user, accessToken, refreshToken }
+        response.data = { user, accessToken }
         */
         localStorage.setItem("accessToken", response.data.accessToken);
-        localStorage.setItem("refreshToken", response.data.refreshToken);
+        
         return response.data;
 
     } catch (error: any) {
@@ -29,10 +29,10 @@ export const signUp = async (user: PNewUser) => {
             username: user.name,
         });
         /*
-        response.data = { user, accessToken, refreshToken }
+        response.data = { user, accessToken }
         */
         localStorage.setItem("accessToken", response.data.accessToken);
-        localStorage.setItem("refreshToken", response.data.refreshToken);
+        
         
         return response.data;
 
@@ -56,18 +56,11 @@ export const getCurrentUser = async () => {
 
 export const refreshToken = async () => {
     try {
-        const refreshToken = localStorage.getItem("refreshToken");
-        if (!refreshToken) {
-            throw new Error("Refresh token not found");
-        }
-        const response = await API.post('/auth/refresh-token', {
-            refreshToken: refreshToken,
-        });
+        const response = await API.get('/auth/refresh-token');
         /*
-        response.data = { accessToken, refreshToken }
+        response.data = { accessToken }
         */
         localStorage.setItem("accessToken", response.data.accessToken);
-        localStorage.setItem("refreshToken", response.data.refreshToken);
         return response.data;
     } catch (error: any) {
         console.error('Refresh token failed:', error.response?.data || error.message);
@@ -77,17 +70,10 @@ export const refreshToken = async () => {
 
 export const logOut = async () => {
     try {
-        const refreshToken = localStorage.getItem("refreshToken");
-        if (!refreshToken) {
-            throw new Error("Refresh token not found");
-        }
-        const response = await API.post('/auth/logout', {
-            refreshToken: refreshToken,
-        });
-        
+        const response = await API.get('/auth/logout');
         // Clear tokens from localStorage
         localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
+        window.location.href = '/login';
 
         return response.data;
 
