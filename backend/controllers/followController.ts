@@ -10,12 +10,14 @@ export const createFollow = async (req: Request, res: Response): Promise<void> =
 
     if (!followee_id || !user_id) {
       res.status(HTTP.BAD_REQUEST.code).json({ message: GENERAL_ERRORS.MISSING_FIELDS });
+      return;
     }
 
     const follow = await followService.createFollow(followee_id, user_id);
 
     if (!follow) {
       res.status(HTTP.CONFLICT.code).json({ message: FOLLOW_ERRORS.ALREADY_FOLLOWED });
+      return;
     }
 
     res.status(HTTP.CREATED.code).json(follow);
