@@ -2,7 +2,7 @@ import axios from 'axios';
 import { refreshToken } from './auth';
 
 // Define the base URL for the API. Use environment variables for flexibility across environments.
-const baseURL = import.meta.env.SERVER_BASE_URL || 'http://localhost:5000';
+const baseURL = `${import.meta.env.SERVER_BASE_URL || 'http://localhost:5000'}/api`;
 
 // Create an Axios instance with default configurations.
 export const API = axios.create({
