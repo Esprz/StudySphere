@@ -10,12 +10,14 @@ export const savePost = async (req: Request, res: Response): Promise<void> => {
 
     if (!post_id || !user_id) {
       res.status(HTTP.BAD_REQUEST.code).json({ message: GENERAL_ERRORS.MISSING_FIELDS });
+      return;
     }
 
     const save = await saveService.savePost(post_id, user_id);
 
     if (!save) {
       res.status(HTTP.CONFLICT.code).json({ message: SAVE_ERRORS.ALREADY_SAVED });
+      return;
     }
 
     res.status(HTTP.CREATED.code).json(save);
