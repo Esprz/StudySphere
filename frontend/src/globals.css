@@ -35,7 +35,7 @@ html, body {
 
 @layer utilities {
   /* TYPOGRAPHY */
-  .h1,h2 {
+  h1,h2 {
     @apply text-light-2
   }
   .h1-bold {
@@ -257,7 +257,7 @@ html, body {
 
   /* Post Card */
   .post-card {
-    @apply bg-dark-2 rounded-3xl  shadow-md lg:p-7 w-full max-w-screen-sm;
+    @apply bg-dark-2 rounded-3xl shadow-md lg:p-7 w-full max-w-screen-sm p-5 md:p-8;
   }
 
   .post-card_img {
