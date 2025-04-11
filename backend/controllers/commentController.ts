@@ -6,7 +6,8 @@ import { COMMENT_SUCCESS } from '../constants/successMessages';
 export const createComment = async (req: Request, res: Response): Promise<void> => {
     try {
       const { post_id } = req.params;
-      const { user_id, content, parent_id } = req.body;
+      const user_id = req.userId;
+      const { content, parent_id } = req.body;
   
       if (!post_id || !user_id || !content) {
         res.status(HTTP.BAD_REQUEST.code).json({ message: GENERAL_ERRORS.MISSING_FIELDS });

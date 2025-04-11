@@ -4,11 +4,12 @@ import {
   deleteComment,
   getCommentsByPost,
 } from '../controllers/commentController';
+import auth from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-router.post('/:post_id', createComment);
-router.delete('/:comment_id', deleteComment);
-router.get('/:post_id', getCommentsByPost);
+router.post('/:post_id', auth, createComment);
+router.delete('/:comment_id', auth, deleteComment);
+router.get('/:post_id', auth, getCommentsByPost);
 
 export default router;

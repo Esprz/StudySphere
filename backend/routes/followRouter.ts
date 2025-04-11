@@ -5,12 +5,13 @@ import {
   getFollowers,
   getFollowees,
 } from '../controllers/followController';
+import auth from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-router.post('/:followee_id/follow', createFollow);
-router.delete('/follow/:follow_id', deleteFollow);
-router.get('/followers/:user_id', getFollowers);
-router.get('/followees/:user_id', getFollowees);
+router.post('/:followee_id', auth, createFollow);
+router.delete('/:follow_id', auth, deleteFollow);
+router.get('/followers', auth, getFollowers);
+router.get('/followees', auth, getFollowees);
 
 export default router;
