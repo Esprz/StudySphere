@@ -1,7 +1,7 @@
 import AuthLayout from './_auth/AuthLayout';
 import SigninForm from './_auth/forms/SigninForm';
 import SignupForm from './_auth/forms/SignupForm';
-import { AllUsers, CreatePost, EditPost, Explore, Home, PostDetails, Profile, Saved, UpdateProfile } from './_root/pages';
+import { CreatePost, EditPost, Explore, Home, PostDetails, Profile, Saved, MyFocus, Friends } from './_root/pages';
 import RootLayout from './_root/RootLayout';
 import { Toaster } from './components/ui/toaster';
 import './globals.css';
@@ -21,14 +21,15 @@ const App = () => {
         {/* private routes (after sign in)*/}
         <Route element={<RootLayout />}>
           <Route index element={<Home />} />
-          <Route path="/explore" element={<Explore />} />
-          <Route path="/saved" element={<Saved />} />
-          <Route path="/all-users" element={<AllUsers />} />
+          <Route path="/explore" element={<Explore />} />          
+          <Route path="/my-focus" element={<MyFocus />} />          
+          <Route path="/friends" element={<Friends />} /> 
+          <Route path="/saved" element={<Saved />} />         
           <Route path="/create-post" element={<CreatePost />} />
+
           <Route path="/update-post/:id" element={<EditPost />} />
           <Route path="/post/:id" element={<PostDetails />} />
           <Route path="/profile/:id/*" element={<Profile />} />
-          <Route path="/update-profile/:id" element={<UpdateProfile />} />
         </Route>
 
       </Routes>
