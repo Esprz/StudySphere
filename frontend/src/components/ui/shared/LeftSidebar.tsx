@@ -49,7 +49,7 @@ const LeftSidebar = () => {
               <li key={link.label} className={`leftsidebar-link group ${isActive && 'bg-primary-500'}`}>
                 <NavLink to={link.route} className="flex gap-4 items-center p-4">
                   <img src={link.imgURL} alt={link.label} className={`group-hover:invert-white ${isActive && 'invert-white'}`} />
-                  <p className={`${isActive && 'text-dark-1'} ${!isActive && 'text-primary-500'} `}>{link.label}</p>
+                  <p className={`group-hover:invert-white ${isActive && 'text-dark-1'} ${!isActive && 'text-primary-500'} `}>{link.label}</p>
                 </NavLink>
               </li>
             )

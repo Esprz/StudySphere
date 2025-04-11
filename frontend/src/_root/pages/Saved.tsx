@@ -1,24 +1,21 @@
 import GridPostList from "@/components/ui/shared/GridPostList";
 import Loader from "@/components/ui/shared/Loader";
-import { useGetCurrentUser } from "@/lib/react-query/queriesAndMutations";
-import { Models } from "appwrite";
-
+import { useGetSavedPosts } from "@/lib/react-query/queriesAndMutations";
 
 const Saved = () => {
-  const { data: currentUser, isLoading: isLoadingSavedPosts } = useGetCurrentUser();
+  const { data: savedPosts, isLoading: isLoadingSavedPosts } = useGetSavedPosts();
 
   if (isLoadingSavedPosts) {
-    return <Loader />
+    return <Loader />;
   }
 
-  const savedPosts = currentUser?.save.map((savedPost: Models.Document) => ({
-    ...savedPost.post,
-    creator: {
-      imageUrl: currentUser.imageUrl,
-    }
-  }));
-  console.log(currentUser);
-  console.log(savedPosts);
+  if (!savedPosts || savedPosts.length === 0) {
+    return (
+      <div className="saved-container">
+        <p className="text-light-4 mt-10 text-center w-full">No saved posts yet.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="saved-container">
