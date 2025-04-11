@@ -29,7 +29,7 @@ const chartData = [
 const chartConfig = {
   focus: {
     //label: "Focus minutes",
-    color: "hsl(var(--chart-1))",
+    color: "hsl(var(--chart-2))",
   },
 } satisfies ChartConfig
 
