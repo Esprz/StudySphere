@@ -1,6 +1,8 @@
 export type PNewPost = {
+    title: string;
     content: string;
     images: File[];
+    extra: object;
     author: string;
 };
 
@@ -19,6 +21,7 @@ export type PPost = {
     created_at: string;
     updated_at: string;
     post_id: string;
+    title: string;
     content: string;
     image: string;
     author: string;

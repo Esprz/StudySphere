@@ -13,6 +13,7 @@ export const SigninValidation = z.object({
 
 
 export const PostValidation = z.object({
+    title: z.string().min(3).max(1000),
     content: z.string().min(5).max(4200),
     images: z.custom<File[]>(),
     //location: z.string().min(2).max(100),
