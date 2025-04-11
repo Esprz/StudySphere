@@ -40,6 +40,7 @@ const PostForm = ({ post, action }: PostFormProps) => {
   const form = useForm<z.infer<typeof PostValidation>>({
     resolver: zodResolver(PostValidation),
     defaultValues: {
+      title: post ? post?.title : "",
       content: post ? post?.content : "",
       images: [],
       //tags: post ? post?.tags.join(',') : ''
@@ -68,6 +69,7 @@ const PostForm = ({ post, action }: PostFormProps) => {
 
     const newPost = await createPost({
       ...values,
+      extra:{},
       author: user.user_id
     })
 
@@ -80,6 +82,19 @@ const PostForm = ({ post, action }: PostFormProps) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-9 w-full max-w-5xl">
+      <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="shad-form_label">title</FormLabel>
+              <FormControl>
+                <Textarea className="shad-textarea custom-scrollbar" {...field} />
+              </FormControl>
+              <FormMessage className="shad-form_message" />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="content"
