@@ -10,7 +10,7 @@ const router = Router();
 
 router.post('/:post_id', auth, likePost);
 router.delete('/:like_id', auth, deleteLike);
-router.get('/:user_id', auth, getLikedPosts);
+router.get('/', auth, getLikedPosts);
 
 
 export default router; 

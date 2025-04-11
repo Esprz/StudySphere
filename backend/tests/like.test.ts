@@ -73,11 +73,11 @@ describe('Like Routes', () => {
         expect(likeService.deleteLike).toHaveBeenCalledWith('1');
     });
 
-    test('GET /like/:user_id should return all liked posts for a user', async () => {
+    test('GET /like should return all liked posts for a user', async () => {
         (likeService.getLikedPosts as jest.Mock).mockResolvedValue(dummyLikes);
 
         const res = await request(app)
-            .get('/like/test-user-id')
+            .get('/like')
             .set('Authorization', `Bearer ${token}`); // Provide Authorization header
 
         expect(res.status).toBe(200);
@@ -85,11 +85,11 @@ describe('Like Routes', () => {
         expect(likeService.getLikedPosts).toHaveBeenCalledWith('test-user-id');
     });
 
-    test('GET /like/:user_id should return 500 on server error', async () => {
+    test('GET /like should return 500 on server error', async () => {
         (likeService.getLikedPosts as jest.Mock).mockRejectedValue(new Error('Internal server error'));
 
         const res = await request(app)
-            .get('/like/test-user-id')
+            .get('/like')
             .set('Authorization', `Bearer ${token}`); // Provide Authorization header
 
         expect(res.status).toBe(500);

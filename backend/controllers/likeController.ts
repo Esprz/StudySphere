@@ -7,7 +7,7 @@ import { LIKE_SUCCESS } from '../constants/successMessages';
 export const likePost = async (req: Request, res: Response): Promise<void> => {
   try {
     const { post_id } = req.params;
-    const { user_id } = req.body;
+    const user_id = req.userId;
 
     if (!post_id || !user_id) {
       res.status(HTTP.BAD_REQUEST.code).json({ message: GENERAL_ERRORS.MISSING_FIELDS });
@@ -39,7 +39,11 @@ export const deleteLike = async (req: Request, res: Response): Promise<void> => 
 
 export const getLikedPosts = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { user_id } = req.params;
+    const user_id = req.userId;
+    if (!user_id) {
+      res.status(HTTP.BAD_REQUEST.code).json({ message: GENERAL_ERRORS.MISSING_FIELDS });
+      return;
+    }
     const posts = await likeService.getLikedPosts(user_id);
     res.status(HTTP.OK.code).json(posts);
   } catch {

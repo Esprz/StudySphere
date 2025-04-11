@@ -29,6 +29,11 @@ export const getSavedPosts = async (user_id: string) => {
           display_name: true,
           avatar_url: true,
         },
+      },      
+      saves: {
+        select: {
+          save_id: true,
+        },
       },
     },
     orderBy: { updated_at: 'desc' },

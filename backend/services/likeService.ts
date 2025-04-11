@@ -31,6 +31,11 @@ export const getLikedPosts = async (user_id: string) => {
           avatar_url: true,
         },
       },
+      likes: {
+        select: {
+          like_id: true,
+        },
+      },
     },
     orderBy: { updated_at: 'desc' },
   });

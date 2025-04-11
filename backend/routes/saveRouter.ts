@@ -10,8 +10,8 @@ const router = Router();
 
 
 router.post('/:post_id', auth, savePost);
-router.delete('/:post_id/save/:save_id', auth, deleteSave);
-router.get('/:user_id', auth, getSavedPosts);
+router.delete('/:save_id', auth, deleteSave);
+router.get('/', auth, getSavedPosts);
 
 
 export default router; 

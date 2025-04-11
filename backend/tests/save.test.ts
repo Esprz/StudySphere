@@ -58,11 +58,11 @@ describe('Save Routes', () => {
         expect(res.body).toEqual({ message: 'Post already saved.' });
     });
 
-    test('DELETE /save/:post_id/save/:save_id should delete a saved post', async () => {
+    test('DELETE /save/:save_id should delete a saved post', async () => {
         (saveService.deleteSave as jest.Mock).mockResolvedValue({});
 
         const res = await request(app)
-            .delete('/save/101/save/1')
+            .delete('/save/1')
             .set('Authorization', `Bearer ${token}`); // Provide Authorization header
 
         expect(res.status).toBe(200);
@@ -74,7 +74,7 @@ describe('Save Routes', () => {
         (saveService.getSavedPosts as jest.Mock).mockResolvedValue(dummySaves);
 
         const res = await request(app)
-            .get('/save/test-user-id')
+            .get('/save')
             .set('Authorization', `Bearer ${token}`); // Provide Authorization header
 
         expect(res.status).toBe(200);
@@ -86,7 +86,7 @@ describe('Save Routes', () => {
         (saveService.getSavedPosts as jest.Mock).mockRejectedValue(new Error('Internal server error'));
 
         const res = await request(app)
-            .get('/save/test-user-id')
+            .get('/save')
             .set('Authorization', `Bearer ${token}`); // Provide Authorization header
 
         expect(res.status).toBe(500);

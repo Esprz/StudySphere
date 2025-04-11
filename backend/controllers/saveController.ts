@@ -6,7 +6,7 @@ import { SAVE_ERRORS, GENERAL_ERRORS } from '../constants/errorMessages';
 export const savePost = async (req: Request, res: Response): Promise<void> => {
   try {
     const { post_id } = req.params;
-    const { user_id } = req.body;
+    const user_id = req.userId;
 
     if (!post_id || !user_id) {
       res.status(HTTP.BAD_REQUEST.code).json({ message: GENERAL_ERRORS.MISSING_FIELDS });
@@ -38,7 +38,11 @@ export const deleteSave = async (req: Request, res: Response): Promise<void> => 
 
 export const getSavedPosts = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { user_id } = req.params;
+    const user_id = req.userId;
+    if (!user_id) {
+      res.status(HTTP.BAD_REQUEST.code).json({ message: GENERAL_ERRORS.MISSING_FIELDS });
+      return;
+    }
     const posts = await saveService.getSavedPosts(user_id);
     res.status(HTTP.OK.code).json(posts);
   } catch {
