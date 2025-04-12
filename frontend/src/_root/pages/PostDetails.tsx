@@ -22,7 +22,7 @@ const PostDetails = () => {
           <img src={post?.image} alt='post' className='post_details-img' />
           <div className='post_details-info'>
             <div className='flex-between w-full'>
-              <Link to={`/profile/${post?.user.display_name}`} className='flex items-center gap-3'>
+              <Link to={`/profile/${post?.user.username}`} className='flex items-center gap-3'>
                 <img src={post?.user.avatar_url || '/assets/icons/profile-placeholder.svg'}
                   alt='creator'
                   className='rounded-full w-8 h-8 lg:w-12 lg:h-12' />
@@ -41,11 +41,11 @@ const PostDetails = () => {
               </Link>
               <div className='flex-center gap-1'>
 
-                <Link to={`/update-post/${post?.post_id}`} className={`${user.user_id !== post?.user_id && 'hidden'}`}>
+                <Link to={`/update-post/${post?.post_id}`} className={`${user.username !== post?.username && 'hidden'}`}>
                   <img src='/assets/icons/edit.svg' alt='edit' width={24} height={24} />
                 </Link>
 
-                <Button onClick={handleDeletePost} variant="ghost" className={`ghost_details-delete_btn ${user.user_id !== post?.user_id&& 'hidden'}`}>
+                <Button onClick={handleDeletePost} variant="ghost" className={`ghost_details-delete_btn ${user.username !== post?.username&& 'hidden'}`}>
                   <img src='/assets/icons/delete.svg' alt='delete' width={24} height={24} />
                 </Button>
 

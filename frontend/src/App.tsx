@@ -29,7 +29,7 @@ const App = () => {
 
           <Route path="/update-post/:id" element={<EditPost />} />
           <Route path="/post/:id" element={<PostDetails />} />
-          <Route path="/profile/:id/*" element={<Profile />} />
+          <Route path="/profile/:username" element={<Profile />} />
         </Route>
 
       </Routes>

@@ -29,7 +29,7 @@ const Topbar = () => {
             onClick={() => signOut()}>
             <img src='/assets/icons/logout.svg' alt='logout' />
           </Button>
-          <Link to={`/profile/${user.user_id}`} className='flex-center gap-3'>
+          <Link to={`/profile/${user.username}`} className='flex-center gap-3'>
             <img src={user.avatarUrl || '/assets/icons/profile-placeholder.svg'}
               alt='profile'
               className='h-8 w-8 rounded-full' />

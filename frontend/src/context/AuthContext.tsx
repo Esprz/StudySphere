@@ -4,9 +4,11 @@ import { PUser } from '@/types/postgresTypes';
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-export const INITIAL_USER = {
+export const INITIAL_USER = {    
+    username: "",
     user_id: "",
     name: "",
+    display_name: "",
     email: "",
     avatarUrl: "",
     bio: "",
@@ -21,7 +23,7 @@ export const INITIAL_STATE = {
 }
 
 type AuthContextType = {
-    user: PUser;
+    user: any;
     isLoading: boolean;
     isAuthenticated: boolean;
     logout: () => Promise<void>;
@@ -32,7 +34,7 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType>(INITIAL_STATE)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<PUser>(INITIAL_USER);
+    const [user, setUser] = useState(INITIAL_USER);
     const [isLoading, setisLoading] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const navigate = useNavigate();
@@ -47,8 +49,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setisLoading(true);
             const currentUser = await getCurrentUser();
             setUser({
+                username: currentUser.username,
                 user_id: currentUser.user_id,
-                name: currentUser.username,
+                name: currentUser.display_name,                
+                display_name: currentUser.display_name,
                 email: currentUser.email,
                 avatarUrl: currentUser.avatar_url,
                 bio: currentUser.bio,

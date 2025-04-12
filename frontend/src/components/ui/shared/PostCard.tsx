@@ -2,7 +2,6 @@ import { useUserContext } from '@/context/AuthContext';
 import { formatTime } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import PostStats from './PostStats';
-import { PPost } from '@/types/postgresTypes';
 
 type PostCardProps = {
     post: any;
@@ -12,12 +11,12 @@ const PostCard = ({ post }: PostCardProps) => {
     const { user } = useUserContext();
     //if (!post.author) return;
     // console.log("user_id:",user.user_id);
-
+    console.log("postcard:post:", post);
     return (
         <div className='post-card'>            
             <div className='flex-between'>                
                 <div className='flex items-center gap-3'>
-                    <Link to={`/profile/${post.user_id}`}>
+                    <Link to={`/profile/${post.user.username}`} className='flex items-center gap-3'>
                         <img src= {post.user.avatar_url || '/assets/icons/profile-placeholder.svg'}
                             alt='creator'
                             className='rounded-full w-12 lg:h-12' />
@@ -30,7 +29,7 @@ const PostCard = ({ post }: PostCardProps) => {
                     </div>
 
                 </div>
-                <Link to={`/update-post/${post.post_id}`} className={`${user.user_id !== post.user_id && "hidden"}`}>
+                <Link to={`/update-post/${post.post_id}`} className={`${user.username !== post.user.username && "hidden"}`}>
                     <img src='/assets/icons/edit.svg' alt='edit' width={20} />
                 </Link>
             </div>
