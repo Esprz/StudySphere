@@ -7,6 +7,7 @@ import likeRouter from './likeRouter';
 import searchRouter from './searchRouter';
 import commentRouter from './commentRouter';
 import followRouter from './followRouter';
+import userRouter from './userRouter';
 
 const router = express.Router();
 
@@ -17,5 +18,6 @@ router.use('/like', likeRouter);
 router.use('/search', searchRouter);
 router.use('/comment', commentRouter);
 router.use('/follow', followRouter);
+router.use('/user', userRouter);
 
 export default router;
