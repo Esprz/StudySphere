@@ -38,6 +38,23 @@ export const getRecentPosts = async (req: Request, res: Response) => {
     }
 };
 
+export const getPostByUser = async (req: Request, res: Response) => {
+    try {
+        const { username } = req.body;
+        const post = await postService.getPostByUser(username);
+
+        if (!post) {
+            res.status(HTTP.NOT_FOUND.code).json({ message: POST_ERRORS.NOT_FOUND });
+            return;
+        }
+
+        res.status(HTTP.OK.code).json(post);
+    } catch {
+        res.status(HTTP.INTERNAL_ERROR.code).json({ message: GENERAL_ERRORS.UNKNOWN });
+    }
+};
+
+
 export const getPaginatedPosts = async (req: Request, res: Response) => {
     try {
         const page = parseInt(req.query.page as string) || 0;

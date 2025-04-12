@@ -7,6 +7,7 @@ export const getAllPosts = async () => {
             user: {
                 select: {
                     display_name: true,
+                    username: true,
                     avatar_url: true,
                 },
             },
@@ -21,9 +22,20 @@ export const getPostById = async (post_id: string) => {
             user: {
                 select: {
                     display_name: true,
+                    username: true,
                     avatar_url: true,
                 },
             },
+        },
+    });
+};
+
+export const getPostByUser = async (username: string) => {
+    return await prisma.post.findMany({
+        where: {
+            user: {
+                username,
+            }
         },
     });
 };
@@ -60,6 +72,7 @@ export const getRecentPosts = async () => {
             user: {
                 select: {
                     display_name: true,
+                    username: true,
                     avatar_url: true,
                 },
             },
@@ -81,6 +94,7 @@ export const searchPosts = async (searchTerm: string) => {
             user: {
                 select: {
                     display_name: true,
+                    username: true,
                     avatar_url: true,
                 },
             },
@@ -97,6 +111,7 @@ export const getPaginatedPosts = async (page: number, limit: number = 10) => {
             user: {
                 select: {
                     display_name: true,
+                    username: true,
                     avatar_url: true,
                 },
             },

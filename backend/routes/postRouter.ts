@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createPost, updatePost, deletePost, getPostById, getAllPosts, getRecentPosts, getPaginatedPosts} from '../controllers/postController';
+import { createPost, updatePost, deletePost, getPostById, getAllPosts, getRecentPosts, getPaginatedPosts, getPostByUser} from '../controllers/postController';
 import auth from '../middleware/authMiddleware';
 
 const router = Router();
@@ -11,6 +11,7 @@ router.delete('/:post_id', auth, deletePost);
 router.get('/', getAllPosts);
 router.get('/recent', getRecentPosts);
 router.get('/:post_id', getPostById);
+router.get('/by_user', getPostByUser);
 router.post('/infinite', getPaginatedPosts);
 
 
