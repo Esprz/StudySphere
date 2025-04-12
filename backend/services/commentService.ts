@@ -27,7 +27,7 @@ export const getCommentsByPost = async (post_id: string) => {
     include: {
       user: {
         select: {
-          user_id: true,
+          username: true,
           display_name: true,
           avatar_url: true,
         },

@@ -28,6 +28,7 @@ export const getLikedPosts = async (user_id: string) => {
       user: {
         select: {
           display_name: true,
+          username: true,
           avatar_url: true,
         },
       },
