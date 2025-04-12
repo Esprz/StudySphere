@@ -4,6 +4,6 @@ import { getUserInfo } from '../controllers/userController';
 
 const router = Router();
 
-router.get('/',auth, getUserInfo);
+router.post('/',auth, getUserInfo);
 
 export default router; 

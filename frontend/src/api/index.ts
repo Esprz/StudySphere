@@ -5,4 +5,5 @@ export * from './like'
 export * from './save';
 export * from './follow';
 export * from './comment';
+export * from './user';
 

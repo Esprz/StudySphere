@@ -13,7 +13,9 @@ import { signIn, signUp, getCurrentUser,
     searchPosts, 
     getLikedPosts,
     deleteLike,
-    getSavedPosts} from '@/api';
+    getSavedPosts,
+    getPostByUser,
+    getUserInfo} from '@/api';
 import { PNewPost, PNewUser, PUpdatedPost } from '@/types/postgresTypes';
 import { useUserContext } from '@/context/AuthContext';
 
@@ -182,11 +184,27 @@ export const useGetCurrentUser = () => {
     })
 }
 
+export const useGetUserInfo = (username: string) => {
+    return useQuery({
+        queryKey: [QUERY_KEYS.GET_USER_INFO, username],
+        queryFn: () => getUserInfo(username),
+        enabled: !!username,  // cache data more efficiently, avoid refetching for the same postId
+    })
+}
+
 export const useGetPostById = (postId: string) => {
     return useQuery({
         queryKey: [QUERY_KEYS.GET_POST_BY_ID, postId],
         queryFn: () => getPostById(postId),
         enabled: !!postId,  // cache data more efficiently, avoid refetching for the same postId
+    })
+}
+
+export const useGetPostByUser = (username: string) => {
+    return useQuery({
+        queryKey: [QUERY_KEYS.GET_POST_BY_USER, username],
+        queryFn: () => getPostByUser(username),
+        enabled: !!username,  // cache data more efficiently, avoid refetching for the same postId
     })
 }
 
