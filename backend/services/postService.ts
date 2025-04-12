@@ -37,6 +37,15 @@ export const getPostByUser = async (username: string) => {
                 username,
             }
         },
+        include: {
+            user: {
+                select: {
+                    display_name: true,
+                    username: true,
+                    avatar_url: true,
+                },
+            },
+        },
     });
 };
 

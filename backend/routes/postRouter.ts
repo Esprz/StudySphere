@@ -11,7 +11,7 @@ router.delete('/:post_id', auth, deletePost);
 router.get('/', getAllPosts);
 router.get('/recent', getRecentPosts);
 router.get('/:post_id', getPostById);
-router.get('/by_user', getPostByUser);
+router.post('/by_user', getPostByUser);
 router.post('/infinite', getPaginatedPosts);
 
 

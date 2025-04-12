@@ -123,6 +123,17 @@ export const getPostById = async (post_id: String) => {
     }
 }
 
+export const getPostByUser = async (username: String) => {
+    try {
+        const response = await API.post(`post/by_user`, { username });
+        console.log('Get post by user:', response.data);
+        return response.data;
+    } catch (error: any) {
+        console.error('Get post by user failed:', error.response?.data || error.message);
+        throw error;
+    }
+}
+
 export const getInfinitePosts = async ({ page }: { page: number }) => {
     try {
         const response = await API.post('post/infinite', { page });
