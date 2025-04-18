@@ -57,12 +57,15 @@ const LeftSidebar = () => {
         </ul>
 
       </div>
-      <Button variant="ghost" className='shad-button_ghost'
+
+      <Button
+        variant="ghost"
+        className='flex gap-4 items-center justify-start sticky bottom-0 bg-dark-3 p-6'
         onClick={() => {
           //console.log('signout clicked');
           signOut();
           //console.log('signout success');
-          }}>
+        }}>
         <img src='/assets/icons/logout.svg' alt='logout' />
         <p className='small-medium lg:base-medium text-primary-500'> Logout </p>
       </Button>

@@ -67,7 +67,8 @@ module.exports = {
         input: '#E5E7EB', // Light gray for input borders
         background: '#F9FAFB', // Light background color
         'ring-offset-background': '#FFFFFF', // Background for focus ring offset
-        ring: '#3B82F6', // Blue for focus ring
+
+        ring: '#3A7A56', // 'primary-400' for focus ring
       },
       screens: {
         'xs': '480px', // Extra small screens

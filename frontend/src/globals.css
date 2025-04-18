@@ -174,11 +174,11 @@ body {
 
   /* Home */
   .home-container {
-    @apply flex flex-col flex-1 items-center gap-4 overflow-scroll py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
+    @apply flex flex-col flex-1 items-center gap-4 xl:overflow-y-scroll py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
   }
 
   .right-side-container {
-    @apply hidden custom-scrollbar overflow-y-scroll overflow-x-hidden;
+    @apply hidden custom-scrollbar xl:overflow-y-scroll xl:overflow-x-hidden;
   }
 
   .home-header {
@@ -234,7 +234,7 @@ body {
 
   /* Bottom bar */
   .bottom-bar {
-    @apply z-50 flex-between w-full sticky bottom-0 rounded-t-[20px] bg-dark-3 px-5 py-4 md:hidden;
+    @apply z-50 flex-between w-full fixed bottom-0 rounded-t-[20px] bg-dark-3 px-5 py-4 md:hidden;
   }
 
   /* File uploader */
@@ -265,7 +265,7 @@ body {
 
   /* Left sidebar */
   .leftsidebar {
-    @apply hidden md:flex px-6 py-10 flex-col justify-between min-w-[270px] bg-dark-2;
+    @apply hidden md:flex px-6 py-10 flex-col justify-between min-w-[270px] bg-dark-2 h-full overflow-y-scroll custom-scrollbar;
   }
 
   .leftsidebar-link {
