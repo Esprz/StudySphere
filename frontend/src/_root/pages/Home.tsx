@@ -17,7 +17,7 @@ const Home = () => {
             Feeds
           </h1>
           <p className="text-light-2">Have you studied today?</p>
-          <p className="text-light-2">See what others are studying</p>
+          <p className="text-light-2">See who's hitting the books!</p>
         </div>
         {/* Posts */}        
         <div className="home-posts">

@@ -60,7 +60,7 @@ if (isFollowing){
         : (isUserLoadingError ? (
           <p className="text-light-2 font-normal text-lg">Error loading user</p>
         ) :
-          (<div className="lg:col-span-3 full home-container col-span-8 ">
+          (<div className="2xl:col-span-3 xl:col-span-4 full home-container col-span-8 ">
             {/* Header */}
             <div className="home-header px-8">
               <div className="flex flex-row gap-4 justify-between items-center">
@@ -99,7 +99,7 @@ if (isFollowing){
                   Bio
                 </h3>
                 <p className="text-left w-full">
-                  {user.biol ? user.biol : "This user havent written bio"}
+                  {user.biol ? user.biol : "No bio yet — maybe they’re too focused on studying!"}
                 </p>
               </Card>
               <Card className="w-full flex flex-col mt-8 gap-4 px-8  border-none">
@@ -114,7 +114,7 @@ if (isFollowing){
             </div>
           </div>))}
       {/* Sub Section Widget: My posts */}
-      <div className="lg:col-span-5 lg:grid col-span-0 right-side-container w-full ">
+      <div className="2xl:col-span-5 xl:col-span-4 xl:grid col-span-0 right-side-container w-full ">
         <div className="py-10 mt-4 gap-4 w-full flex justify-center">
           {/* Posts */}
           <div className="home-posts">
@@ -126,7 +126,7 @@ if (isFollowing){
                   <p className="text-light-2 font-normal text-lg">Error loading posts</p>
                 ) :
                   (posts.length === 0 ? (
-                    <p className="text-light-2 font-normal text-lg">No posts found</p>
+                    <p className="text-light-2 font-normal text-lg">Still waiting for their first post!</p>
                   ) : (
                     <ul className="flex flex-col flex-1 gap-9 w-full">
                       {posts.map((post: any) => (

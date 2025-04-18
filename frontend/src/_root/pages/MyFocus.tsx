@@ -14,7 +14,8 @@ const MyFocus = () => {
           <h1 className="h2-bold md:h1-bold text-left w-full text-light-2">
             My Focus
           </h1>
-          <p className="text-light-2"> See the progress I made!</p>
+          <p className="text-light-2"> Track your journey. </p>
+          <p className="text-light-2"> See how far you’ve come — and push forward!</p>
         </div>
         {/* Study History*/}        
         <div className="home-posts">

@@ -15,7 +15,7 @@ const Friends = () => {
             Friends Moments
           </h1>
           <p className="text-light-2">Have you studied today?</p>
-          <p className="text-light-2">Your friends have studied 54 hours this week!</p>
+          <p className="text-light-2">Your friends have already clocked in 54 hours this week!</p>
         </div>
         {/* Posts */}
         <div className="home-posts">
