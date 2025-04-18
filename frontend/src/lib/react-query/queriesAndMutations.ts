@@ -13,7 +13,12 @@ import { signIn, signUp, getCurrentUser,
     searchPosts,     
     getPostByUser,
     getUserInfo,
-    getFolloweePosts} from '@/api';
+    getFolloweePosts,
+    getSuggestedToFollow,
+    followUser,
+    unfollowUser,
+    getFollowees,
+    getFollowers} from '@/api';
 import { PNewPost, PNewUser, PUpdatedPost } from '@/types/postgresTypes';
 import { useUserContext } from '@/context/AuthContext';
 
@@ -254,4 +259,45 @@ export const useGetUsers = () => {
         queryKey: [QUERY_KEYS.GET_USERS],
         queryFn: getUsers
     })
+}
+export const useGetSuggestedToFollow = () => {
+    return useQuery({
+        queryKey: [QUERY_KEYS.GET_SUGGESTED_TO_FOLLOW],
+        queryFn: getSuggestedToFollow
+    })
+}
+
+export const useFollowUser = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (followee_username: string) => followUser(followee_username),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.GET_FOLLOWEES] });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.GET_FOLLOWEE_POSTS] });
+        },
+    });
+};
+
+export const useUnfollowUser = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (follow_username: string) => unfollowUser(follow_username),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.GET_FOLLOWEES] });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.GET_FOLLOWEE_POSTS] });
+        },
+    });
+};
+
+export const useGetFollowers = () => {
+    return useQuery({
+        queryKey: [QUERY_KEYS.GET_FOLLOWERS],
+        queryFn: () => getFollowers(),
+    });
+};
+export const useGetFollowees = () => {
+    return useQuery({
+        queryKey: [QUERY_KEYS.GET_FOLLOWEES],
+        queryFn: () => getFollowees(),
+    });
 }

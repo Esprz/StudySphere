@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import * as postService from '../services/postService';
 import { HTTP } from '../constants/httpStatus';
-import { POST_ERRORS, GENERAL_ERRORS } from '../constants/errorMessages';
+import { POST_ERRORS, GENERAL_ERRORS, USER_ERRORS } from '../constants/errorMessages';
 
 
 export const getAllPosts = async (req: Request, res: Response) => {
@@ -56,13 +56,13 @@ export const getPostByUser = async (req: Request, res: Response) => {
 
 export const getFolloweePosts = async (req: Request, res: Response) => {
     try {
-        const user_id  = req.userId;
-        if(!user_id) {
-            res.status(HTTP.UNAUTHORIZED.code).json({ message: POST_ERRORS.NOT_FOUND });
+        const user_id = req.userId;
+        if (!user_id) {
+            res.status(HTTP.UNAUTHORIZED.code).json({ message: POST_ERRORS.MISSING_FIELDS });
             return;
         }
         const post = await postService.getFolloweePosts(user_id);
-
+        
         if (!post) {
             res.status(HTTP.NOT_FOUND.code).json({ message: POST_ERRORS.NOT_FOUND });
             return;
@@ -76,9 +76,9 @@ export const getFolloweePosts = async (req: Request, res: Response) => {
 
 export const getFriendsPosts = async (req: Request, res: Response) => {
     try {
-        const user_id  = req.userId;
-        if(!user_id) {
-            res.status(HTTP.UNAUTHORIZED.code).json({ message: POST_ERRORS.NOT_FOUND });
+        const user_id = req.userId;
+        if (!user_id) {
+            res.status(HTTP.UNAUTHORIZED.code).json({ message: POST_ERRORS.MISSING_FIELDS });
             return;
         }
         const post = await postService.getFriendsPosts(user_id);

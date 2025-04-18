@@ -1,6 +1,6 @@
 import Loader from "@/components/ui/shared/Loader";
 import PostCard from "@/components/ui/shared/PostCard";
-import { useGetFolloweeePosts, useGetRecentPosts } from "@/lib/react-query/queriesAndMutations";
+import { useGetFolloweeePosts, useGetRecentPosts, useGetSuggestedToFollow } from "@/lib/react-query/queriesAndMutations";
 import UsersSuggested from "@/components/ui/shared/UsersSuggested";
 
 const Friends = () => {

@@ -5,15 +5,15 @@ import { GENERAL_ERRORS, FOLLOW_ERRORS } from '../constants/errorMessages';
 
 export const createFollow = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { followee_id } = req.params;
+    const { followee_username } = req.params;
     const user_id = req.userId;
 
-    if (!followee_id || !user_id) {
+    if (!followee_username || !user_id) {
       res.status(HTTP.BAD_REQUEST.code).json({ message: GENERAL_ERRORS.MISSING_FIELDS });
       return;
     }
 
-    const follow = await followService.createFollow(followee_id, user_id);
+    const follow = await followService.createFollow(followee_username, user_id);
 
     if (!follow) {
       res.status(HTTP.CONFLICT.code).json({ message: FOLLOW_ERRORS.ALREADY_FOLLOWED });
@@ -28,8 +28,13 @@ export const createFollow = async (req: Request, res: Response): Promise<void> =
 
 export const deleteFollow = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { follow_id } = req.params;
-    await followService.deleteFollow(follow_id);
+    const user_id = req.userId;
+    const { followee_username } = req.params;
+    if (!user_id || !followee_username) {
+      res.status(HTTP.BAD_REQUEST.code).json({ message: GENERAL_ERRORS.MISSING_FIELDS });
+      return;
+    }
+    await followService.deleteFollow(followee_username, user_id);
     res.status(HTTP.OK.code).json({ message: 'Follow deleted.' });
   } catch {
     res.status(HTTP.INTERNAL_ERROR.code).json({ message: GENERAL_ERRORS.UNKNOWN });
@@ -57,9 +62,30 @@ export const getFollowees = async (req: Request, res: Response): Promise<void> =
       res.status(HTTP.BAD_REQUEST.code).json({ message: GENERAL_ERRORS.MISSING_FIELDS });
       return;
     }
-    const followees = await followService.getFollowees(user_id);
+    const data = await followService.getFollowees(user_id);
+    const followees = data.map((follow) => ({
+      user_id: follow.followee.user_id,
+      username: follow.followee.username,
+      display_name: follow.followee.display_name,
+      avatar_url: follow.followee.avatar_url,
+    }));
+    
     res.status(HTTP.OK.code).json(followees);
   } catch {
     res.status(HTTP.INTERNAL_ERROR.code).json({ message: GENERAL_ERRORS.UNKNOWN });
   }
 };
+
+export const getSuggestedToFollow = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user_id = req.userId;
+    if (!user_id) {
+      res.status(HTTP.BAD_REQUEST.code).json({ message: GENERAL_ERRORS.MISSING_FIELDS });
+      return;
+    }
+    const suggestedFollowees = await followService.getSuggestedToFollow(user_id);
+    res.status(HTTP.OK.code).json(suggestedFollowees);
+  } catch {
+    res.status(HTTP.INTERNAL_ERROR.code).json({ message: GENERAL_ERRORS.UNKNOWN });
+  }
+}

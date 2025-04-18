@@ -43,3 +43,13 @@ export const getFollowees = async () => {
         throw error;
     }
 };
+
+export const getSuggestedToFollow = async () => {
+    try {
+        const response = await API.get(`/follow/suggested_to_follow`);
+        return response.data; // Returns a list of users suggested to follow
+    } catch (error: any) {
+        console.error('Error fetching users suggested to follow:', error.response?.data || error.message);
+        throw error;
+    }
+};

@@ -1,100 +1,112 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useFollowUser, useGetSuggestedToFollow, useUnfollowUser } from "@/lib/react-query/queriesAndMutations";
+import Loader from "./Loader";
+import { Link } from "react-router-dom";
 
-const mockUsers = [
-    {
-      id: "1",
-      name: "Alice Johnson",
-      avatar: "/assets/images/user1.jpg",
-      bio: "Frontend Developer | React Enthusiast",
-      isFollowing: false,
-    },
-    {
-      id: "2",
-      name: "Bob Smith",
-      avatar: "/assets/images/user2.jpg",
-      bio: "Backend Engineer | Node.js Expert",
-      isFollowing: false,
-    },
-    {
-      id: "3",
-      name: "Charlie Brown",
-      avatar: "/assets/images/user3.jpg",
-      bio: "Fullstack Developer | Open Source Contributor",
-      isFollowing: false,
-    },
-    {
-      id: "4",
-      name: "Diana Prince",
-      avatar: "/assets/images/user4.jpg",
-      bio: "Cloud Architect | AWS Certified",
-      isFollowing: false,
-    },
-    {
-      id: "5",
-      name: "Eve Adams",
-      avatar: "/assets/images/user5.jpg",
-      bio: "UI/UX Designer | Figma Lover",
-      isFollowing: false,
-    },
-    {
-      id: "6",
-      name: "Frank White",
-      avatar: "/assets/images/user6.jpg",
-      bio: "Data Scientist | Python Enthusiast",
-      isFollowing: false,
-    },
-  ];
+
 
 const UsersSuggested = () => {
-  const [users, setUsers] = useState(mockUsers);
 
-  const handleFollow = (id: string) => {
+  const { data: suggestedUsers, isPending: isUsersLoading, isError } = useGetSuggestedToFollow();
+  const [users, setUsers] = useState(suggestedUsers);
+
+  useEffect(() => {
+    if (!isUsersLoading && !isError && suggestedUsers) {
+      setUsers(suggestedUsers.map((user) => ({ ...user, isFollowing: false })));
+    }
+  }, [suggestedUsers, isUsersLoading, isError]);
+
+  const followUserMutation = useFollowUser();
+  const unfollowUserMutation = useUnfollowUser();
+
+  if (suggestedUsers){
+    console.log("suggestedUsers:", suggestedUsers);
+  }
+
+  const handleFollow = async (username: string, isFollowing: boolean) => {
+    // Optimistically update local state
     setUsers((prevUsers) =>
       prevUsers.map((user) =>
-        user.id === id ? { ...user, isFollowing: !user.isFollowing } : user
+        user.username === username ? { ...user, isFollowing: !isFollowing } : user
       )
     );
+
+    try {
+      if (isFollowing) {
+        // Unfollow the user
+        await unfollowUserMutation.mutateAsync(username);
+      } else {
+        // Follow the user
+        await followUserMutation.mutateAsync(username);
+      }
+    } catch (error) {
+      console.error("Error updating follow status:", error);
+
+      // Rollback local state if API call fails
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.username === username ? { ...user, isFollowing: isFollowing } : user
+        )
+      );
+    }
   };
 
   return (
     <div className="flex flex-col gap-4 p-4 ">
-      {/* Header */}
-      <div className="mb-4">
-        <h2 className="text-lg font-bold text-primary-500">Suggested Users</h2>
-        <p className="text-sm text-gray-500">
-          Follow these users to expand your network!
-        </p>
-      </div>
+      {
+        isUsersLoading || isError || !users || !suggestedUsers ? (
+          isUsersLoading ? (
+            <Loader />
+          ) : (
+            <p>Error loading suggested users.</p>
+          )) : (
+          users.length === 0 ? (
+            <p className="text-light-2 font-normal text-lg">No suggested users found</p>
+          ) : (
+            <>
+              {/* Header */}
+              <div className="mb-4">
+                <h2 className="text-lg font-bold text-primary-500">Suggested Users</h2>
+                <p className="text-sm text-gray-500">
+                  Follow these users to expand your network!
+                </p>
+              </div>
 
-      {/* User List */}
-      <ul className="flex flex-col gap-4">
-        {users.slice(0, 5).map((user) => (
-          <li key={user.id} className="flex items-center gap-4">
-            {/* Avatar */}
-            <img
-              src={user.avatar}
-              alt={user.name}
-              className="w-12 h-12 rounded-full"
-            />
+              {/* User List */}
+              <ul className="flex flex-col gap-4">
+                {users.map((user) => (                  
+                  <li key={user.username} className="flex items-center gap-4">
+                    {/* Avatar */}
+                    <Link to={`/profile/${user.username}`}>
+                    <img
+                      src={user.avatar_url || "/assets/icons/profile-placeholder.svg"}
+                      alt={user.display_name}
+                      className="w-12 h-12 rounded-full"
+                    />
+                    </Link>
 
-            {/* User Info */}
-            <div className="flex-1">
-              <p className="font-medium text-gray-800">{user.name}</p>
-              <p className="text-sm text-gray-500">{user.bio}</p>
-            </div>
+                    {/* User Info */}
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-800">{user.display_name}</p>
+                      <p className="text-sm text-gray-500">{user.bio}</p>
+                    </div>
 
-            {/* Follow Button */}
-            <Button
-              variant={user.isFollowing ? "default" : "outline"}
-              onClick={() => handleFollow(user.id)}
-              className="px-4 py-2"
-            >
-              {user.isFollowing ? "Following" : "Follow"}
-            </Button>
-          </li>
-        ))}
-      </ul>
+                    {/* Follow Button */}
+                    <Button
+                      variant={user.isFollowing ? "destructive" : "outline"}
+                      onClick={() => handleFollow(user.username, user.isFollowing)}
+                      className={"px-4 py-2 "+(user.isFollowing ? "bg-primary hover:bg-pr":"")}
+                      disabled={followUserMutation.isPending || unfollowUserMutation.isPending}
+                    >
+                      {user.isFollowing ? "Following" : "Follow"}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ))
+      }
     </div>
   );
 };

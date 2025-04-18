@@ -1,10 +1,13 @@
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import GoalsCard from "@/components/ui/shared/GoalsCard";
 import Loader from "@/components/ui/shared/Loader";
 import PostCard from "@/components/ui/shared/PostCard";
 import { useToast } from "@/components/ui/use-toast";
-import { useGetPostByUser, useGetUserInfo } from "@/lib/react-query/queriesAndMutations";
+import { useFollowUser, useGetFollowees, useGetPostByUser, useGetUserInfo, useUnfollowUser } from "@/lib/react-query/queriesAndMutations";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { set } from "zod";
 
 const Profile = () => {
   const { username } = useParams();
@@ -21,7 +24,33 @@ const Profile = () => {
   }
   const { data: posts, isPending: isPostLoading, isError: isPostLoadingError } = useGetPostByUser(username);
   const { data: user, isPending: isUserLoading, isError: isUserLoadingError } = useGetUserInfo(username);
+  const { data: follwees, isPending: isFolloweeLoading } = useGetFollowees();  
+  console.log("follwees", follwees);
+
+  const followUserMutation = useFollowUser();
+  const unfollowUserMutation = useUnfollowUser();
+
+  const [isFollowing, setIsFollowing] = useState(false);
+
+  useEffect(() => {
+    if (follwees) {
+        setIsFollowing(follwees.find((followee: any) => followee.username === username));
+    }
+}, [follwees, username, isFolloweeLoading]);
+  
   const studyTime = 47;
+  const handleFollow = async (username: string) => {
+    // Optimistically update local state
+if (isFollowing){
+      // Unfollow the user
+      await unfollowUserMutation.mutateAsync(username);
+      setIsFollowing(false);
+    } else {
+      // Follow the user
+      await followUserMutation.mutateAsync(username);
+      setIsFollowing(true);
+    }
+  };
 
   return (
     <div className="grid grid-cols-8 gap-4 w-full">
@@ -34,20 +63,33 @@ const Profile = () => {
           (<div className="lg:col-span-3 full home-container col-span-8 ">
             {/* Header */}
             <div className="home-header px-8">
-              <div className="flex items-stretch gap-8">
-                <img src={user.avatar_url || '/assets/icons/profile-placeholder.svg'}
-                  alt='profile'
-                  className='h-20 w-20 rounded-full' />
+              <div className="flex flex-row gap-4 justify-between items-center">
+                {/* Avatar */}
+                <div className="flex items-stretch gap-8">
+                  <img src={user.avatar_url || '/assets/icons/profile-placeholder.svg'}
+                    alt='profile'
+                    className='h-20 w-20 rounded-full' />
 
-                <div>
-                  <h1 className="h2-bold md:h1-bold text-left w-full text-light-2">
-                    {user.display_name}
-                  </h1>
-                  <p className="text-left w-full">
-                    @{user.username}
-                  </p>
+                  <div>
+                    <h1 className="h2-bold md:h1-bold text-left w-full text-light-2">
+                      {user.display_name}
+                    </h1>
+                    <p className="text-left w-full">
+                      @{user.username}
+                    </p>
+                  </div>
                 </div>
+                {/* Follow Button */}
+                <Button
+                  variant={isFollowing ? "destructive" : "outline"}
+                  onClick={() => handleFollow(user.username)}
+                  className={"px-4 py-2 "+(isFollowing ? "bg-primary hover:bg-pr":"")}
+                  disabled={followUserMutation.isPending || unfollowUserMutation.isPending || isFolloweeLoading}
+                >
+                  {isFollowing ? "Following" : "Follow"}
+                </Button>
               </div>
+              
 
             </div>
             {/* Profile*/}
