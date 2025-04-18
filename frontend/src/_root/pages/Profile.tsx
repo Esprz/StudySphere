@@ -72,8 +72,8 @@ const Profile = () => {
             </div>
           </div>))}
       {/* Sub Section Widget: My posts */}
-      <div className="lg:col-span-5 lg:grid col-span-0 right-side-container ">
-        <div className="py-10 mt-4 gap-4">
+      <div className="lg:col-span-5 lg:grid col-span-0 right-side-container w-full ">
+        <div className="py-10 mt-4 gap-4 w-full flex justify-center">
           {/* Posts */}
           <div className="home-posts">
             <h2 className="h3-bold md:h2-bold w-full">

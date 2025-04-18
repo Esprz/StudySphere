@@ -4,16 +4,13 @@ import {
     useQueryClient,
     useInfiniteQuery,
 } from '@tanstack/react-query'
-import { getUsers, deletePost,} from '../appwrite/api'
+import { getUsers,} from '../appwrite/api'
 import { QUERY_KEYS } from './queryKey';
 import { signIn, signUp, getCurrentUser,
-    createPost,  getRecentPosts, updatePost, getPostById, getInfinitePosts, 
-    likePost, 
-    savePost,deleteSave,
-    searchPosts, 
-    getLikedPosts,
-    deleteLike,
-    getSavedPosts,
+    createPost,  getRecentPosts, updatePost, getPostById, getInfinitePosts,deletePost, 
+    likePost, getLikedPosts, deleteLike,
+    savePost,deleteSave,getSavedPosts,
+    searchPosts,     
     getPostByUser,
     getUserInfo} from '@/api';
 import { PNewPost, PNewUser, PUpdatedPost } from '@/types/postgresTypes';
@@ -212,7 +209,7 @@ export const useGetPostByUser = (username: string) => {
 export const useDeletePost = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ postId, imageId }: { postId: string, imageId: string }) => deletePost(postId, imageId),
+        mutationFn: ({ postId, image }: { postId: string, image: object }) => deletePost(postId, image),
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: [QUERY_KEYS.GET_RECENT_POSTS]

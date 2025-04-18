@@ -21,7 +21,7 @@ const Saved = () => {
     <div className="saved-container">
       {savedPosts.length === 0
         ? <p className='text-light-4 mt-10 text-center w-full'>No saved posts yet.</p>
-        : <GridPostList posts={savedPosts} showStat={false} />}
+        : <GridPostList posts={savedPosts} showStat={true} />}
     </div>
   )
 }

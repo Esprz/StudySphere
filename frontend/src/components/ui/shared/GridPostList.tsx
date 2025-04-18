@@ -6,7 +6,7 @@ import PostStats from './PostStats'
 import { PPost } from '@/types/postgresTypes'
 
 type GridPostListProps = {
-    posts: PPost[],
+    posts: any[],
     showUser?: boolean,
     showStat?: boolean
 }
@@ -18,17 +18,17 @@ const GridPostList = ({ posts, showUser = true, showStat = true }: GridPostListP
             {posts.map((post) => (
                 <li key={post.post_id} className='relative min-w-80 h-80'>
                     <Link to={`/post/${post.post_id}`} className='grid-post_link'>
-                        <img src={post.image} className='h-full w-full object-cover' />
+                        <img src={post.image.fileUrl} className='h-full w-full object-cover' />
                     </Link>
 
                     <div className='grid-post_user'>
                         {showUser && (
                             <div className='flex items-center justify-start gap-2 flex-1'>
                                 <img src={post.author_avatar || '/assets/icons/profile-placeholder.svg'} alt="creator" className='h-8 w-8 rounded-full' />
-                                <p className='line-clamp-1'> {post.author_name}</p>
+                                <p className='line-clamp-1'> {post.user.display_name}</p>
                             </div>
                         )}
-                        {showStat && false && <PostStats post={post} userId={user.user_id} />}
+                        {showStat && <PostStats post={post} />}
 
                     </div>
                 </li>

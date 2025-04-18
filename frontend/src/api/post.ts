@@ -79,10 +79,11 @@ export const updatePost = async (post_id: String, updatedPost: any) => {
     }
 };
 
-export const deletePost = async (post_id: String) => {
+export const deletePost = async (post_id: String, image : any) => {
     try {
         const response = await API.delete(`post/${post_id}`);
         console.log('Delete post:', response.data);
+        //await deleteFile(image.fileUrl);
         return response.data;
     }
     catch (error: any) {

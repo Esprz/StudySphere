@@ -23,7 +23,7 @@ import { useCreatePost, useUpdatePost } from "@/lib/react-query/queriesAndMutati
 import { PPost } from "@/types/postgresTypes"
 
 type PostFormProps = {
-  post?: PPost;
+  post?: any;
   action: 'Create' | 'Update';
 }
 
@@ -56,7 +56,7 @@ const PostForm = ({ post, action }: PostFormProps) => {
         ...values,
         post_id: post.post_id,
         author: user.user_id,
-        image: post.image||"",
+        image: post.image.fileUrl||"",
       })
 
       if (!updatedPost) {
@@ -115,7 +115,7 @@ const PostForm = ({ post, action }: PostFormProps) => {
             <FormItem>
               <FormLabel className="shad-form_label">Add Photos</FormLabel>
               <FormControl>
-                <FileUploader fieldChange={field.onChange} mediaUrl={post?.image} />
+                <FileUploader fieldChange={field.onChange} mediaUrl={post?.image.fileUrl} />
               </FormControl>
               <FormMessage className="shad-form_message" />
             </FormItem>
