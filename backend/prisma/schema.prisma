@@ -54,7 +54,7 @@ model Token {
   created_at DateTime @default(now())
   expires_at DateTime
 
-  user       User     @relation(fields: [user_id], references: [user_id])
+  user       User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 
   @@index([user_id])
 }
@@ -69,7 +69,7 @@ model Post {
   created_at  DateTime  @default(now())
   updated_at  DateTime  @default(now())
 
-  user        User      @relation(fields: [user_id], references: [user_id])
+  user        User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
   comments    Comment[]
   likes       Like[]
   saves       Save[]
@@ -84,9 +84,9 @@ model Comment {
   post_id      String
   parent_id    String?
 
-  user         User      @relation(fields: [user_id], references: [user_id])
-  post         Post      @relation(fields: [post_id], references: [post_id])
-  parent       Comment?  @relation("CommentToParent", fields: [parent_id], references: [comment_id])
+  user         User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  post         Post      @relation(fields: [post_id], references: [post_id], onDelete: Cascade)
+  parent       Comment?  @relation("CommentToParent", fields: [parent_id], references: [comment_id], onDelete: Cascade)
   children     Comment[] @relation("CommentToParent")
 
   created_at   DateTime  @default(now())
@@ -99,8 +99,8 @@ model Like {
   post_id     String
   user_id     String
 
-  post        Post     @relation(fields: [post_id], references: [post_id])
-  user        User     @relation(fields: [user_id], references: [user_id])
+  post        Post     @relation(fields: [post_id], references: [post_id], onDelete: Cascade)
+  user        User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
   created_at  DateTime @default(now())
 
   @@index([post_id])
@@ -113,8 +113,8 @@ model Save {
   post_id     String
   user_id     String
 
-  post        Post     @relation(fields: [post_id], references: [post_id])
-  user        User     @relation(fields: [user_id], references: [user_id])
+  post        Post     @relation(fields: [post_id], references: [post_id], onDelete: Cascade)
+  user        User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
   created_at  DateTime @default(now())
 
   @@index([post_id])
@@ -127,8 +127,8 @@ model Follow {
   follower_id  String
   followee_id  String
 
-  follower     User     @relation("following", fields: [follower_id], references: [user_id])
-  followee     User     @relation("followers", fields: [followee_id], references: [user_id])
+  follower     User     @relation("following", fields: [follower_id], references: [user_id], onDelete: Cascade)
+  followee     User     @relation("followers", fields: [followee_id], references: [user_id], onDelete: Cascade)
   created_at   DateTime @default(now())
 
   @@index([follower_id])
@@ -143,7 +143,7 @@ model Goal {
   status      GoalStatus  @default(ONGOING)
   created_at  DateTime    @default(now())
 
-  user        User        @relation(fields: [user_id], references: [user_id])
+  user        User        @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
   focus_times FocusTime[]
 
   @@index([user_id, status])
@@ -156,8 +156,8 @@ model FocusTime {
   user_id    String
   goal_id    String?
 
-  user       User     @relation(fields: [user_id], references: [user_id])
-  goal       Goal?    @relation(fields: [goal_id], references: [goal_id])
+  user       User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  goal       Goal?    @relation(fields: [goal_id], references: [goal_id], onDelete: SetNull)
   created_at DateTime @default(now())
 
   @@index([user_id])
