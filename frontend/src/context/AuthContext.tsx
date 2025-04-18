@@ -1,4 +1,4 @@
-import { getCurrentUser, logOut } from '@/api';
+import { getCurrentUser, logOut, refreshToken } from '@/api';
 import { getAccessToken } from '@/api/config';
 import { PUser } from '@/types/postgresTypes';
 import { createContext, useContext, useEffect, useState } from 'react'
@@ -43,8 +43,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {            
             const token = getAccessToken();
             if (!token) {
-                navigate("/sign-in");
-                return false;
+                await refreshToken();
+                if (!token) {
+                    navigate("/sign-in");
+                    return false;
+                }                
             }
             setisLoading(true);
             const currentUser = await getCurrentUser();
@@ -67,6 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return false;
         } finally {
             setisLoading(false);
+            setIsAuthenticated(true);
         }
     };
 
