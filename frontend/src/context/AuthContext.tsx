@@ -4,7 +4,7 @@ import { PUser } from '@/types/postgresTypes';
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-export const INITIAL_USER = {    
+export const INITIAL_USER = {
     username: "",
     user_id: "",
     name: "",
@@ -40,11 +40,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const navigate = useNavigate();
 
     const checkAuthUser = async () => {
-        try {            
+        try {
             const token = getAccessToken();
             if (!token) {
-                await refreshToken();
-                if (!token) {
+                await refreshToken();              
+                if (!getAccessToken()) {
                     navigate("/sign-in");
                     return false;
                 }                
