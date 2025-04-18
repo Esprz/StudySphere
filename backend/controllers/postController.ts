@@ -54,6 +54,45 @@ export const getPostByUser = async (req: Request, res: Response) => {
     }
 };
 
+export const getFolloweePosts = async (req: Request, res: Response) => {
+    try {
+        const user_id  = req.userId;
+        if(!user_id) {
+            res.status(HTTP.UNAUTHORIZED.code).json({ message: POST_ERRORS.NOT_FOUND });
+            return;
+        }
+        const post = await postService.getFolloweePosts(user_id);
+
+        if (!post) {
+            res.status(HTTP.NOT_FOUND.code).json({ message: POST_ERRORS.NOT_FOUND });
+            return;
+        }
+
+        res.status(HTTP.OK.code).json(post);
+    } catch {
+        res.status(HTTP.INTERNAL_ERROR.code).json({ message: GENERAL_ERRORS.UNKNOWN });
+    }
+};
+
+export const getFriendsPosts = async (req: Request, res: Response) => {
+    try {
+        const user_id  = req.userId;
+        if(!user_id) {
+            res.status(HTTP.UNAUTHORIZED.code).json({ message: POST_ERRORS.NOT_FOUND });
+            return;
+        }
+        const post = await postService.getFriendsPosts(user_id);
+
+        if (!post) {
+            res.status(HTTP.NOT_FOUND.code).json({ message: POST_ERRORS.NOT_FOUND });
+            return;
+        }
+
+        res.status(HTTP.OK.code).json(post);
+    } catch {
+        res.status(HTTP.INTERNAL_ERROR.code).json({ message: GENERAL_ERRORS.UNKNOWN });
+    }
+};
 
 export const getPaginatedPosts = async (req: Request, res: Response) => {
     try {

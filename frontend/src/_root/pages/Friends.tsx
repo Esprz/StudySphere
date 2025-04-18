@@ -1,10 +1,10 @@
 import Loader from "@/components/ui/shared/Loader";
 import PostCard from "@/components/ui/shared/PostCard";
-import { useGetRecentPosts } from "@/lib/react-query/queriesAndMutations";
+import { useGetFolloweeePosts, useGetRecentPosts } from "@/lib/react-query/queriesAndMutations";
 import UsersSuggested from "@/components/ui/shared/UsersSuggested";
 
 const Friends = () => {
-  const { data: posts, isPending: isPostLoading, isError } = useGetRecentPosts();
+  const { data: posts, isPending: isPostLoading, isError } = useGetFolloweeePosts();
   return (
     <div className="grid grid-cols-8 gap-4 w-full">
       {/* Main */}

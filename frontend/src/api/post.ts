@@ -113,6 +113,17 @@ export const getRecentPosts = async () => {
     }
 }
 
+export const getFolloweePosts = async () => {
+    try {
+        const response = await API.get('post/followee');
+        console.log('Get followees\' posts:', response.data);
+        return response.data;
+    } catch (error: any) {
+        console.error('Get followees\' posts failed:', error.response?.data || error.message);
+        throw error;
+    }
+}
+
 export const getPostById = async (post_id: String) => {
     try {
         const response = await API.get(`post/${post_id}`);

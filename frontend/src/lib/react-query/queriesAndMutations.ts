@@ -12,7 +12,8 @@ import { signIn, signUp, getCurrentUser,
     savePost,deleteSave,getSavedPosts,
     searchPosts,     
     getPostByUser,
-    getUserInfo} from '@/api';
+    getUserInfo,
+    getFolloweePosts} from '@/api';
 import { PNewPost, PNewUser, PUpdatedPost } from '@/types/postgresTypes';
 import { useUserContext } from '@/context/AuthContext';
 
@@ -66,6 +67,13 @@ export const useGetRecentPosts = () => {
     return useQuery({
         queryKey: [QUERY_KEYS.GET_RECENT_POSTS],
         queryFn: getRecentPosts,
+    })
+}
+
+export const useGetFolloweeePosts = () => {
+    return useQuery({
+        queryKey: [QUERY_KEYS.GET_FOLLOWEE_POSTS],
+        queryFn: getFolloweePosts,
     })
 }
 
