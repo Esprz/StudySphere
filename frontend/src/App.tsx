@@ -8,7 +8,7 @@ import './globals.css';
 import { Routes, Route } from 'react-router-dom';
 const App = () => {
   return (
-    <main className='flex max-h-screen'>
+    <main className='flex xl:h-screen min-h-screen'>
       <Routes>
 
         {/* public routes (every one can see)*/}
