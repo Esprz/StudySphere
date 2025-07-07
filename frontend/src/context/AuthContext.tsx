@@ -67,10 +67,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
             console.error("Auth check failed:", error);
             setIsAuthenticated(false);
+            navigate("/sign-in");
             return false;
         } finally {
             setisLoading(false);
-            setIsAuthenticated(true);
         }
     };
 
@@ -78,16 +78,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             console.log("Logging out...");
             await logOut(); 
+        } catch (error) {
+            console.error("Logout failed:", error);
+        } finally {
+            setisLoading(false);
             setUser(INITIAL_USER); 
             setIsAuthenticated(false); 
             navigate("/sign-in"); 
-        } catch (error) {
-            console.error("Logout failed:", error);
         }
     };
 
     useEffect(() => {
-        //console.log('authcontext useeffect');
+        console.log('authcontext use effect');
         checkAuthUser();
     }, []);
 

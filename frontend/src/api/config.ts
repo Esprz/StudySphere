@@ -35,6 +35,7 @@ API.interceptors.request.use(
 );
 
 // Response interceptor: Handle responses and errors globally.
+/*
 API.interceptors.response.use(
     (response) => response, // Pass through successful responses.
     async (error) => {
@@ -58,4 +59,4 @@ API.interceptors.response.use(
 
         return Promise.reject(error); // Pass the error to the caller for further handling.
     }
-);
+);*/
