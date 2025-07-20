@@ -1,4 +1,5 @@
 import prisma from '../utils/prisma';
+import { eventService } from './eventService';
 
 export const savePost = async (post_id: string, user_id: string) => {
   const existing = await prisma.save.findFirst({
@@ -7,9 +8,18 @@ export const savePost = async (post_id: string, user_id: string) => {
 
   if (existing) return null;
 
-  return await prisma.save.create({
+  const newSave = await prisma.save.create({
     data: { post_id, user_id },
   });
+
+  setImmediate(async () => {
+    try {
+      await eventService.trackPostSaved(post_id, user_id);
+    } catch (error) {
+      console.error('Event tracking failed:', error);
+    }
+  });
+  return newSave;
 };
 
 export const deleteSave = async (save_id: string) => {

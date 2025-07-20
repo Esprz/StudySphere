@@ -49,6 +49,14 @@ class EventService {
     await this.behaviorProducer.trackPostLiked(postId, userId, sessionId);
   }
 
+  async trackPostSaved(
+    postId: string,
+    userId: string,
+    sessionId?: string
+  ): Promise<void> {
+    await this.behaviorProducer.trackPostSaved(postId, userId, sessionId);
+  }
+
   async trackSearchPerformed(
     userId: string,
     query: string,

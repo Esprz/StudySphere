@@ -48,6 +48,27 @@ export class BehaviorEventProducer extends BaseProducer<BehaviorEvent> {
         console.log(`👍 User ${userId} liked post ${postId}`);
     }
 
+    async trackPostSaved(postId: string, userId: string, sessionId?: string): Promise<void> {
+        const baseEvent = this.createEvent(
+            'POST_SAVED',
+            postId,  // aggregateId = postId
+            {
+                userId,
+                savedAt: new Date()
+            },
+            { sessionId }
+        );
+
+        const behaviorEvent: BehaviorEvent = {
+            ...baseEvent,
+            eventType: 'POST_SAVED',
+            sessionId
+        };
+
+        await this.publish(behaviorEvent);
+        console.log(`💾 User ${userId} saved post ${postId}`);
+    }
+
     async trackSearchPerformed(userId: string, query: string, sessionId?: string): Promise<void> {
         const baseEvent = this.createEvent(
             'SEARCH_PERFORMED',
