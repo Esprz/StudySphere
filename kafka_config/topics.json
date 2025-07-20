@@ -1,0 +1,22 @@
+{
+  "topics": [
+    {
+      "name": "post_content_event",
+      "partitions": 3,
+      "replicationFactor": 1,
+      "description": "Post creation, update, delete events"
+    },
+    {
+      "name": "user_behavior_log", 
+      "partitions": 6,
+      "replicationFactor": 1,
+      "description": "User clicks, views, likes, search behavior"
+    },
+    {
+      "name": "recommendation_request",
+      "partitions": 2,
+      "replicationFactor": 1,
+      "description": "Recommendation system requests"
+    }
+  ]
+}
