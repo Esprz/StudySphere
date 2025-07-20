@@ -13,12 +13,12 @@ reset:
 # First-time setup: start services, create initial migration, and run backend in background
 first-run: up
 	docker compose exec backend npx prisma migrate dev --name init
-	docker compose exec -d backend npm run dev
+	docker compose exec backend npm run dev
 
 # Normal run after first time: apply any new migrations and start backend in background
 run: up
 	docker compose exec backend npx prisma migrate dev
-	docker compose exec -d backend npm run dev
+	docker compose exec backend npm run dev
 
 # View logs from all services
 logs:
