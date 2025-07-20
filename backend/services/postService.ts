@@ -150,23 +150,25 @@ export const createPost = async (data: {
     extra?: object;
 }) => {
     try {
-        const post =  await prisma.post.create({ data });    
+        const post = await prisma.post.create({ data });
+        // console.log('Post created:', post);   
         setImmediate(async () => {
             try {
                 await eventService.trackPostCreated(post.post_id, post.user_id, {
                     title: post.title,
                     content: post.content,
                     created_at: post.created_at,
+                    
                 });
             } catch (error) {
                 console.error('Event tracking failed:', error);
             }
-        });    
+        });
         return post;
     } catch (error) {
         console.error('Error creating post:', error);
-        throw new Error('Failed to create post');        
-    }    
+        throw new Error('Failed to create post');
+    }
 };
 
 export const updatePost = async (
@@ -174,14 +176,18 @@ export const updatePost = async (
     data: { title?: string; content?: string; image?: object; extra?: object }
 ) => {
     try {
-        const post =  await prisma.post.update({
+        const post = await prisma.post.update({
             where: { post_id },
             data,
         });
-        // 异步埋点
+        // console.log('Post updated:', post);
         setImmediate(async () => {
             try {
-                await eventService.trackPostUpdated(post_id, post.user_id, data);
+                await eventService.trackPostUpdated(post_id, post.user_id, {
+                    title: post.title,
+                    content: post.content,
+                    created_at: post.created_at,
+                });
             } catch (error) {
                 console.error('Event tracking failed:', error);
             }
@@ -189,8 +195,8 @@ export const updatePost = async (
         return post;
     } catch (error) {
         console.error('Error updating post:', error);
-        throw new Error('Failed to update post');        
-    }    
+        throw new Error('Failed to update post');
+    }
 };
 
 export const deletePost = async (post_id: string) => {
@@ -198,10 +204,9 @@ export const deletePost = async (post_id: string) => {
     try {
         const post = await prisma.post.findUnique({ where: { post_id } });
         if (!post) throw new Error('Post not found');
-        
+
         const deletedPost = await prisma.post.delete({ where: { post_id } });
-        
-        // 异步埋点
+
         setImmediate(async () => {
             try {
                 await eventService.trackPostDeleted(post_id, post.user_id);
@@ -209,7 +214,7 @@ export const deletePost = async (post_id: string) => {
                 console.error('Event tracking failed:', error);
             }
         });
-        
+
         return deletedPost;
     } catch (error) {
         console.error('Error deleting post:', error);
@@ -231,10 +236,10 @@ export const getRecentPosts = async () => {
                     },
                 },
             },
-        });        
+        });
     } catch (error) {
         console.error('Error fetching recent posts:', error);
-        throw new Error('Failed to fetch recent posts');        
+        throw new Error('Failed to fetch recent posts');
     }
 };
 
@@ -258,10 +263,10 @@ export const searchPosts = async (searchTerm: string) => {
                     },
                 },
             },
-        });        
+        });
     } catch (error) {
         console.error('Error searching posts:', error);
-        throw new Error('Failed to search posts');        
+        throw new Error('Failed to search posts');
     }
 };
 
@@ -280,9 +285,9 @@ export const getPaginatedPosts = async (page: number, limit: number = 10) => {
                     },
                 },
             },
-        });        
+        });
     } catch (error) {
         console.error('Error fetching paginated posts:', error);
-        throw new Error('Failed to fetch paginated posts');        
+        throw new Error('Failed to fetch paginated posts');
     }
 };
