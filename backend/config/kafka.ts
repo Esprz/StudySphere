@@ -29,7 +29,7 @@ if (fs.existsSync(kafkaConfigPath)) {
 } else {
   // fallback configuration
   kafkaConfig = {
-    brokers: [process.env.KAFKA_BROKERS || "localhost:9092"],
+    brokers: [process.env.KAFKA_BROKERS || "kafka:9092"],
     clientId: "studysphere-backend",
   };
   console.log("⚠️  Using fallback kafka config");
