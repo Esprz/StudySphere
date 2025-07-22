@@ -2,7 +2,7 @@ import os
 
 KAFKA_CONFIG = {
     'bootstrap_servers': [
-        os.getenv('KAFKA_BROKERS', 'localhost:9092')
+        os.getenv('KAFKA_BROKERS', 'kafka:9092')
     ],
     'client_id': 'studysphere',
     'auto_offset_reset': 'earliest',

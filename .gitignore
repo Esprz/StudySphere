@@ -3,3 +3,5 @@ migrations
 dist
 .env*
 *.log
+venv
+__pycache__
