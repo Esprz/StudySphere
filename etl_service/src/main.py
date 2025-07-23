@@ -2,11 +2,13 @@ import asyncio
 import signal
 import sys
 from loguru import logger
+from sqlalchemy import text
 
 from config.logging_config import setup_logging
 from config.kafka_config import KafkaConfig
-#from config.database import DatabaseConfig
+from config.database_config import DatabaseConfig
 
+from src.storage.faiss_manager import FaissManager
 from src.consumers.behavior_event_consumer import BehaviorEventConsumer
 from src.consumers.post_event_consumer import PostEventConsumer
 
@@ -17,7 +19,8 @@ class ETLService:
         logger.info("🚀 Initializing ETL Service...")
 
         self.kafka_config = KafkaConfig.from_env()
-        #self.db_config = DatabaseConfig()
+        self.db_config = DatabaseConfig()
+        self.faiss_manager = FaissManager()
 
         self.consumers = []
         self.running = False
@@ -28,8 +31,8 @@ class ETLService:
             # TODO: Check Redis once it's implemented
 
             # Check Database
-            #with self.db_config.get_session() as session:
-             #   session.execute("SELECT 1")
+            with self.db_config.get_session() as session:
+                session.execute(text("SELECT 1"))
 
             logger.info("✅ All services healthy")
             return True
@@ -42,7 +45,10 @@ class ETLService:
         """set up Kafka consumers"""
         logger.info("🔧 Setting up consumers...")
 
-        self.consumers = [PostEventConsumer(), BehaviorEventConsumer()]
+        self.consumers = [
+            PostEventConsumer(self.faiss_manager, self.db_config),
+            BehaviorEventConsumer(self.faiss_manager, self.db_config),
+        ]
 
         logger.info(f"📝 {len(self.consumers)} consumers configured")
 
