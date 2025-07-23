@@ -6,17 +6,25 @@ up:
 stop:
 	docker compose stop
 
+# Stop and remove all containers (but keep volumes)
+down:
+	docker compose down
+
 # Completely remove all containers and volumes (fresh reset)
 reset:
 	docker compose down -v
 
-# First-time setup: start services, create initial migration, and run backend in background
+# First-time setup: start services, create initial migration, and run backend
 first-run: up
 	docker compose exec backend npx prisma migrate dev --name init
 	docker compose exec backend npm run dev
 
-# Normal run after first time: apply any new migrations and start backend in background
+# Normal run after first time: start backend
 run: up
+	docker compose exec backend npm run dev
+
+# Normal run after first time: apply any new migrations and start backend
+migrate-run: up
 	docker compose exec backend npx prisma migrate dev
 	docker compose exec backend npm run dev
 

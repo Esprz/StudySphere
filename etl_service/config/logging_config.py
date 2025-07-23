@@ -15,7 +15,7 @@ def setup_logging():
         sys.stdout,
         format=console_format,
         level=os.getenv("LOG_LEVEL", "INFO"),
-        colorize=True
+        colorize=True,
     )
 
     log_file = os.getenv("LOG_FILE", "./logs/etl.log")
@@ -31,7 +31,7 @@ def setup_logging():
         level=os.getenv("LOG_LEVEL", "INFO"),
         rotation="100 MB",
         retention="7 days",
-        compression="zip"
+        compression="zip",
     )
 
     return logger
