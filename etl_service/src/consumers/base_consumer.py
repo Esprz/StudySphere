@@ -17,18 +17,23 @@ class BaseConsumer(ABC):
                 **self.cfg.consumer_config,
             }
         )
-        print(f"🔧 Consumer initialized for topic: {self.topic_name} (group: {self.group_id})")
+        print(
+            f"🔧 Consumer initialized for topic: {self.topic_name} (group: {self.group_id})"
+        )
 
     async def start(self):
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, self._consume_loop)
         self.consumer.start()
-        #print(f"🟢 Consumer for topic {self.topic_name} started")
+        # print(f"🟢 Consumer for topic {self.topic_name} started")
 
     def _consume_loop(self):
         try:
             self.consumer.subscribe([self.topic_name])
-            print(f"🟢 Subscribed to topic: {self.topic_name} (group: {self.group_id})", flush=True)
+            print(
+                f"🟢 Subscribed to topic: {self.topic_name} (group: {self.group_id})",
+                flush=True,
+            )
             print(f"🔧 Bootstrap servers: {self.cfg.bootstrap_servers}", flush=True)
             print(f"🔧 Consumer config: {self.cfg.consumer_config}")
 
@@ -52,7 +57,6 @@ class BaseConsumer(ABC):
             print(f"❌ [FATAL ERROR IN CONSUMER LOOP] {e}")
         finally:
             self.consumer.close()
-        
 
     @abstractmethod
     def handle_message(self, raw_msg: str):

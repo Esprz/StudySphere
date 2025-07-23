@@ -3,9 +3,10 @@ from src.consumers.base_consumer import BaseConsumer
 
 
 class PostEventConsumer(BaseConsumer):
-    def __init__(self):
+    def __init__(self, faiss_manager, db_config):
         super().__init__(topic_key="post_events")
-        
+        self.faiss = faiss_manager
+        self.db = db_config
 
     def handle_message(self, raw_msg: str):
         print(f"📬 [Post] Received message from {self.topic_name}: {raw_msg}")
