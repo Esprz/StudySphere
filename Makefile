@@ -42,14 +42,20 @@ logs-frontend:
 logs-db:
 	docker compose logs -f db
 
+logs-etl:
+	docker compose logs -f etl-service
+
+logs-kafka:
+	docker compose logs -f kafka
+
 # Optional: open Prisma Studio (GUI for DB)
 studio:
 	docker compose exec backend npx prisma studio
 
 # Optional: check Prisma migration status
-status:
+prisma-status:
 	docker compose exec backend npx prisma migrate status
 
 # Optional: run seed script if defined
-seed:
+prisma-seed:
 	docker compose exec backend npx prisma db seed
