@@ -1,17 +1,19 @@
 # Kafka
-confluent-kafka==2.11.0
-
+confluent-kafka
 # Utilities
-python-dotenv==1.0.0
-loguru==0.7.0
+python-dotenv
+loguru
 
 # Database
 sqlalchemy[asyncio,postgresql]
 psycopg
 
 # Vector Database
-faiss-cpu==1.11.0
+faiss-cpu
 
 # Data Processing
 pandas
 numpy
+
+# Text Processing & Embeddings
+sentence-transformers
