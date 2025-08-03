@@ -26,11 +26,11 @@ class PostEventConsumer(BaseConsumer):
         try:
             eventType = self.get_event_type(raw_msg)
             data = json.loads(raw_msg)
-            if eventType == "post_created":
+            if eventType == "POST_CREATED":
                 self.process_post_created(data)
-            elif eventType == "post_updated":
+            elif eventType == "POST_UPDATED":
                 self.process_post_updated(data)
-            elif eventType == "post_deleted":
+            elif eventType == "POST_DELETED":
                 self.process_post_deleted(data)
             else:
                 print(
@@ -54,18 +54,15 @@ class PostEventConsumer(BaseConsumer):
                 tags=data.get("tags", []),
             )
 
-            post_id = data.get("post_id")
+            post_id = data.get("aggregateId")
 
             if post_id and embedding:
                 self.faiss.add_post_vector(post_id, embedding)
                 print(f"✅ [Post] Stored post vector for post ID: {post_id}")
             else:
-                print(f"❌ [Post] Missing post_id or embedding for message: {raw_msg}")
-
+                print(f"❌ [Post] Missing post_id or embedding for for data: {data}")
         except Exception as e:
-            print(
-                f"❌ [Post] Error processing post created event: {e} for message: {raw_msg}"
-            )
+            print(f"❌ [Post] Error processing post created event: {e} for data: {data}")
 
     def process_post_updated(self, data):
         """
@@ -82,18 +79,16 @@ class PostEventConsumer(BaseConsumer):
                 tags=data.get("tags", []),
             )
 
-            post_id = data.get("post_id")
+            post_id = data.get("aggregateId")
 
             if post_id and embedding:
                 self.faiss.add_post_vector(post_id, embedding)
                 print(f"✅ [Post] Updated post vector for post ID: {post_id}")
             else:
-                print(f"❌ [Post] Missing post_id or embedding for message: {raw_msg}")
+                print(f"❌ [Post] Missing post_id or embedding for for data: {data}")
 
         except Exception as e:
-            print(
-                f"❌ [Post] Error processing post updated event: {e} for message: {raw_msg}"
-            )
+            print(f"❌ [Post] Error processing post updated event: {e} for data: {data}")
 
     def process_post_deleted(self, data):
         """
@@ -104,15 +99,13 @@ class PostEventConsumer(BaseConsumer):
         print(f"Processing post deleted event: {data}")
 
         try:
-            post_id = data.get("post_id")
+            post_id = data.get("aggregateId")
             if post_id:
                 self.faiss.delete_post_vector(post_id)
                 # TODO: Also update the deleted post related user vectors in the future
                 print(f"✅ [Post] Deleted post vector for post ID: {post_id}")
             else:
-                print(f"❌ [Post] Missing post_id for message: {raw_msg}")
+                print(f"❌ [Post] Missing post_id for message: {post_id}")
 
         except Exception as e:
-            print(
-                f"❌ [Post] Error processing post deleted event: {e} for message: {raw_msg}"
-            )
+            print(f"❌ [Post] Error processing post deleted event: {e} for data: {data}")
