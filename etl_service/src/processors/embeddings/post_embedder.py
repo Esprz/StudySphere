@@ -1,11 +1,12 @@
 from typing import List, Optional
 from .text_embedder import TextEmbedder
 
+
 class PostEmbedder:
     """Post embedding processor"""
 
-    def __init__(self, faiss_manager, text_embedder: TextEmbedder = None):
-        self.faiss = faiss_manager
+    def __init__(self, vector_store, text_embedder: TextEmbedder = None):
+        self.vector_store = vector_store
         self.text_embedder = text_embedder or TextEmbedder()
 
     def generate_post_embedding(
@@ -46,8 +47,8 @@ class PostEmbedder:
                 print(f"Failed to generate embedding for post {post_id}")
                 return False
 
-            # Store in Faiss
-            self.faiss.add_post_vector(post_id, embedding)
+            # Store in vector store
+            self.vector_store.add_post_vector(post_id, embedding)
             print(f"✅ Stored post embedding for {post_id}")
             return True
 
@@ -65,8 +66,8 @@ class PostEmbedder:
                 print(f"Failed to generate embedding for updated post {post_id}")
                 return False
 
-            # Update vector in Faiss
-            self.faiss.update_post_vector(post_id, embedding)
+            # Update vector in vector store
+            self.vector_store.update_post_vector(post_id, embedding)
             print(f"✅ Updated post embedding for {post_id}")
             return True
 
@@ -77,7 +78,7 @@ class PostEmbedder:
     def process_post_deleted(self, post_id: str) -> bool:
         """Process post deletion event"""
         try:
-            self.faiss.delete_post_vector(post_id)
+            self.vector_store.delete_post_vector(post_id)
             print(f"✅ Deleted post embedding for {post_id}")
             return True
         except Exception as e:
@@ -85,9 +86,9 @@ class PostEmbedder:
             return False
 
     def get_post_embedding(self, post_id: str) -> Optional[List[float]]:
-        """Get post embedding from Faiss"""
+        """Get post embedding from vector store"""
         try:
-            return self.faiss.get_post_vector(post_id)
+            return self.vector_store.get_post_vector(post_id)
         except Exception as e:
             print(f"Error getting post embedding {post_id}: {e}")
             return None

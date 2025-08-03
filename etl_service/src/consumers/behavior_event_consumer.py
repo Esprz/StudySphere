@@ -1,17 +1,14 @@
 import json
-from etl_service.src.storage.vector_store import VectorStore
 from src.processors.event_processor import EventProcessor
-from src.processors.data_cleaner import parse_post_behavior_event
 from src.consumers.base_consumer import BaseConsumer
 
 
 class BehaviorEventConsumer(BaseConsumer):
-    def __init__(self, faiss_manager, db_config):
+    def __init__(self, vector_store, db_config):
         super().__init__(topic_key="behavior_events")
-        self.faiss = faiss_manager
-        self.vector_store = VectorStore(faiss_manager)
+        self.vector_store = vector_store
         self.db = db_config
-        self.processor = EventProcessor(faiss_manager, db_config)
+        self.processor = EventProcessor(vector_store, db_config)
 
     def get_event_type(self, raw_msg: str) -> str:
         """

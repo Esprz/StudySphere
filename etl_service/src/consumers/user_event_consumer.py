@@ -1,16 +1,14 @@
 import json
-from src.storage.vector_store import VectorStore
 from src.consumers.base_consumer import BaseConsumer
 from src.processors.event_processor import EventProcessor
 
 
 class UserEventConsumer(BaseConsumer):
-    def __init__(self, faiss_manager, db_config):
+    def __init__(self, vector_store, db_config):
         super().__init__(topic_key="user_events")
-        self.faiss = faiss_manager
-        self.vector_store = VectorStore(faiss_manager)
+        self.vector_store = vector_store
         self.db = db_config
-        self.processor = EventProcessor(faiss_manager, db_config)
+        self.processor = EventProcessor(vector_store, db_config)
 
     def get_event_type(self, raw_msg: str) -> str:
         """
