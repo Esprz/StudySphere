@@ -100,11 +100,11 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
       DYNAMIC_CONFIG_ENABLED: 'true'
 
-  etl_service:
+  etl-service:
     build:
       context: ./etl_service
       dockerfile: Dockerfile
-    container_name: etl_service
+    container_name: etl-service
     depends_on:
       kafka:
         condition: service_healthy
