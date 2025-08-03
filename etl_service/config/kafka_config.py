@@ -15,7 +15,7 @@ class KafkaConfig:
         return cls(
             bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092"),
             consumer_group_prefix=os.getenv(
-                "KAFKA_CONSUMER_GROUP_PREFIX", "etl_service"
+                "KAFKA_CONSUMER_GROUP_PREFIX", "etl-service"
             ),
             topics={
                 "post_events": os.getenv("POST_TOPIC", "post-events"),
