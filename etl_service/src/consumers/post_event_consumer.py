@@ -1,5 +1,5 @@
 import json
-from src.processors.text_processor import TextProcessor
+from src.processors.event_processor import EventProcessor
 from src.consumers.base_consumer import BaseConsumer
 
 
@@ -8,7 +8,7 @@ class PostEventConsumer(BaseConsumer):
         super().__init__(topic_key="post_events")
         self.faiss = faiss_manager
         self.db = db_config
-        self.processor = TextProcessor()
+        self.processor = EventProcessor(faiss_manager, db_config)
 
     def get_event_type(self, raw_msg: str) -> str:
         """
@@ -48,19 +48,18 @@ class PostEventConsumer(BaseConsumer):
 
         print(f"Processing post created event: {data}")
         try:
-            embedding = self.processor.generate_post_embedding(
-                title=data.get("title", ""),
-                content=data.get("content", ""),
-                tags=data.get("tags", []),
-            )
-
+            post_data = data.get("data", {})
             post_id = data.get("aggregateId")
 
-            if post_id and embedding:
-                self.faiss.add_post_vector(post_id, embedding)
-                print(f"✅ [Post] Stored post vector for post ID: {post_id}")
-            else:
-                print(f"❌ [Post] Missing post_id or embedding for for data: {data}")
+            self.processor.process_post_created(
+                post_id=post_id,
+                title=post_data.get("title", ""),
+                content=post_data.get("content", ""),
+                tags=post_data.get("tags", []),
+                author_id=post_data.get("authorId"),
+                timestamp=data.get("timestamp"),
+            )
+
         except Exception as e:
             print(f"❌ [Post] Error processing post created event: {e} for data: {data}")
 
