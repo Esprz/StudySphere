@@ -7,15 +7,15 @@ from .embeddings.user_embedder import UserEmbedder
 class EventProcessor:
     """Unified event processing coordinator"""
 
-    def __init__(self, faiss_manager, db_config, model_name: str = "all-MiniLM-L6-v2"):
+    def __init__(self, vector_store, db_config, model_name: str = "all-MiniLM-L6-v2"):
         # Initialize base components
-        self.faiss = faiss_manager
+        self.vector_store = vector_store
         self.db = db_config
 
         # Initialize embedder components
         self.text_embedder = TextEmbedder(model_name)
-        self.post_embedder = PostEmbedder(faiss_manager, self.text_embedder)
-        self.user_embedder = UserEmbedder(faiss_manager, self.text_embedder)
+        self.post_embedder = PostEmbedder(vector_store, self.text_embedder)
+        self.user_embedder = UserEmbedder(vector_store, self.text_embedder)
 
     # ==================== USER EVENTS ====================
 

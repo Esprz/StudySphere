@@ -7,8 +7,8 @@ from .text_embedder import TextEmbedder
 class UserEmbedder:
     """User embedding processor with temporal decay and behavior weighting"""
 
-    def __init__(self, faiss_manager, text_embedder: TextEmbedder = None):
-        self.faiss = faiss_manager
+    def __init__(self, vector_store, text_embedder: TextEmbedder = None):
+        self.vector_store = vector_store
         self.text_embedder = text_embedder or TextEmbedder()
 
         # Configuration parameters
@@ -26,22 +26,21 @@ class UserEmbedder:
         }
 
     def init_user_embedding(self, user_id: str) -> bool:
-        """Initialize user embedding with random vector"""
+        """Initialize user embedding with global average or zero vector"""
         try:
             # Check if already exists
-            if self.faiss.get_user_vector(user_id):
+            if self.vector_store.get_user_vector(user_id):
                 print(f"User {user_id} embedding already exists")
                 return True
 
-            # Create random initial embedding
-            random_embedding = np.random.normal(
-                0, 0.1, self.text_embedder.embedding_dim
+            # Initialize with zero vector (will be updated as user interacts)
+            zero_embedding = np.zeros(
+                self.text_embedder.embedding_dim, dtype=np.float32
             )
-            random_embedding = random_embedding / np.linalg.norm(random_embedding)
 
-            # Store in Faiss
-            self.faiss.add_user_vector(user_id, random_embedding.tolist())
-            print(f"✅ Initialized user embedding for {user_id}")
+            # Store in vector store
+            self.vector_store.add_user_vector(user_id, zero_embedding.tolist())
+            print(f"✅ Initialized user embedding for {user_id} with zero vector")
             return True
 
         except Exception as e:
@@ -72,12 +71,12 @@ class UserEmbedder:
         """Update user embedding using moving average approach"""
         try:
             # Get current user embedding
-            current_embedding = self.faiss.get_user_vector(user_id)
+            current_embedding = self.vector_store.get_user_vector(user_id)
             if not current_embedding:
                 # Initialize user embedding if not exists
                 if not self.init_user_embedding(user_id):
                     return False
-                current_embedding = self.faiss.get_user_vector(user_id)
+                current_embedding = self.vector_store.get_user_vector(user_id)
 
             # Calculate update weight
             time_decay = self.calculate_time_decay(timestamp)
@@ -93,8 +92,8 @@ class UserEmbedder:
             )
             new_embedding = new_embedding / np.linalg.norm(new_embedding)
 
-            # Update in Faiss
-            self.faiss.update_user_vector(user_id, new_embedding.tolist())
+            # Update in vector store
+            self.vector_store.update_user_vector(user_id, new_embedding.tolist())
 
             print(
                 f"✅ Updated user {user_id} embedding from {behavior_type} (weight: {update_weight:.3f})"
@@ -111,7 +110,7 @@ class UserEmbedder:
         """Update user embedding based on post interaction"""
         try:
             # Get post embedding
-            post_vector = self.faiss.get_post_vector(post_id)
+            post_vector = self.vector_store.get_post_vector(post_id)
             if not post_vector:
                 print(f"Post vector not found for {post_id}")
                 return False
@@ -144,9 +143,9 @@ class UserEmbedder:
             return False
 
     def get_user_embedding(self, user_id: str) -> Optional[List[float]]:
-        """Get user embedding from Faiss"""
+        """Get user embedding from vector store"""
         try:
-            return self.faiss.get_user_vector(user_id)
+            return self.vector_store.get_user_vector(user_id)
         except Exception as e:
             print(f"Error getting user embedding for {user_id}: {e}")
             return None

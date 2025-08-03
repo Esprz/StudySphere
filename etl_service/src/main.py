@@ -8,6 +8,7 @@ from config.logging_config import setup_logging
 from config.kafka_config import KafkaConfig
 from config.database_config import DatabaseConfig
 
+from src.storage.vector_store import VectorStore
 from src.storage.faiss_manager import FaissManager
 from src.consumers.behavior_event_consumer import BehaviorEventConsumer
 from src.consumers.post_event_consumer import PostEventConsumer
@@ -21,6 +22,7 @@ class ETLService:
         self.kafka_config = KafkaConfig.from_env()
         self.db_config = DatabaseConfig()
         self.faiss_manager = FaissManager()
+        self.vector_store = VectorStore(self.faiss_manager)
 
         self.consumers = []
         self.running = False
@@ -46,8 +48,8 @@ class ETLService:
         logger.info("🔧 Setting up consumers...")
 
         self.consumers = [
-            PostEventConsumer(self.faiss_manager, self.db_config),
-            BehaviorEventConsumer(self.faiss_manager, self.db_config),
+            PostEventConsumer(self.vector_store, self.db_config),
+            BehaviorEventConsumer(self.vector_store, self.db_config),
         ]
 
         logger.info(f"📝 {len(self.consumers)} consumers configured")
