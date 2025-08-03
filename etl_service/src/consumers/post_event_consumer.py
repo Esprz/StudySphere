@@ -1,4 +1,5 @@
 import json
+from src.storage.vector_store import VectorStore
 from src.processors.event_processor import EventProcessor
 from src.consumers.base_consumer import BaseConsumer
 
@@ -7,6 +8,7 @@ class PostEventConsumer(BaseConsumer):
     def __init__(self, faiss_manager, db_config):
         super().__init__(topic_key="post_events")
         self.faiss = faiss_manager
+        self.vector_store = VectorStore(faiss_manager)
         self.db = db_config
         self.processor = EventProcessor(faiss_manager, db_config)
 
@@ -81,7 +83,7 @@ class PostEventConsumer(BaseConsumer):
             post_id = data.get("aggregateId")
 
             if post_id and embedding:
-                self.faiss.add_post_vector(post_id, embedding)
+                self.vector_store.add_post_vector(post_id, embedding)
                 print(f"✅ [Post] Updated post vector for post ID: {post_id}")
             else:
                 print(f"❌ [Post] Missing post_id or embedding for for data: {data}")
@@ -100,7 +102,7 @@ class PostEventConsumer(BaseConsumer):
         try:
             post_id = data.get("aggregateId")
             if post_id:
-                self.faiss.delete_post_vector(post_id)
+                self.vector_store.delete_post_vector(post_id)
                 # TODO: Also update the deleted post related user vectors in the future
                 print(f"✅ [Post] Deleted post vector for post ID: {post_id}")
             else:
