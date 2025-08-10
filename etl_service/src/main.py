@@ -8,6 +8,7 @@ from config.logging_config import setup_logging
 from config.kafka_config import KafkaConfig
 from config.database_config import DatabaseConfig
 
+from src.storage.postgres_store import PostgresStore
 from src.storage.vector_store import VectorStore
 from src.storage.faiss_manager import FaissManager
 from src.consumers.behavior_event_consumer import BehaviorEventConsumer
@@ -22,7 +23,8 @@ class ETLService:
         self.kafka_config = KafkaConfig.from_env()
         self.db_config = DatabaseConfig()
         self.faiss_manager = FaissManager()
-        self.vector_store = VectorStore(self.faiss_manager)
+        self.postgres_store = PostgresStore()
+        self.vector_store = VectorStore(self.faiss_manager, self.postgres_store)
 
         self.consumers = []
         self.running = False

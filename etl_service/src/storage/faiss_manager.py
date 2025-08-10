@@ -27,7 +27,7 @@ class FaissManager:
             try:
                 return faiss.read_index(path)
             except Exception as e:
-                print(f"Error loading index from {path}: {e}")
+                print(f"❌Error loading index from {path}: {e}")
 
         return faiss.IndexIDMap(faiss.IndexFlatL2(dim))
 
@@ -37,7 +37,7 @@ class FaissManager:
             faiss.write_index(self.post_index, self.post_index_path)
             faiss.write_index(self.user_index, self.user_index_path)
         except Exception as e:
-            print(f"Error saving indexes: {e}")
+            print(f"❌Error saving indexes: {e}")
 
     # Raw Faiss operations - no business logic
     def add_vector(self, index, vector_id: str, vector: list):
