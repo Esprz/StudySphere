@@ -9,7 +9,7 @@ export const trackPageView = (req: Request, res: Response, next: NextFunction) =
     if (userId && postId) {
         setImmediate(async () => {
             try {
-                await eventService.trackPostViewed(userId, postId, sessionId);
+                await eventService.trackPostViewed(postId, userId, sessionId);
             } catch (error) {
                 console.error('Page view tracking failed:', error);
             }
