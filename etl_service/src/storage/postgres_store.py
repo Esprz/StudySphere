@@ -48,7 +48,7 @@ class PostgresStore:
                         vector_dimension=vector_dimension,
                         faiss_indexed=faiss_indexed,
                         extra_data=extra_data,
-                        last_faiss_sync=datetime.now(datetime.now(timezone.utc))
+                        last_faiss_sync=datetime.now(timezone.utc)
                         if faiss_indexed == "indexed"
                         else None,
                     )
@@ -87,7 +87,7 @@ class PostgresStore:
             return []
 
     def mark_faiss_indexed(
-        self, source_id: str, source_type: str, succes: bool = True
+        self, source_id: str, source_type: str, success: bool = True
     ) -> bool:
         try:
             with self.get_session() as session:
@@ -97,8 +97,8 @@ class PostgresStore:
                     .first()
                 )
                 if vector:
-                    vector.faiss_indexed = "indexed" if succes else "failed"
-                    if succes:
+                    vector.faiss_indexed = "indexed" if success else "failed"
+                    if success:
                         vector.last_faiss_sync = datetime.now(timezone.utc)
                     session.commit()
                     return True
