@@ -16,7 +16,7 @@ This document explains how to run the project using **Docker** and **Makefile**.
 
 ## ⚙️ Environment Setup
 
-Create a `.env` files
+Create `.env` files
 
 ```env
 # backend/.env.docker
