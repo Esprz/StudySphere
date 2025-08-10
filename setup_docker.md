@@ -128,7 +128,7 @@ This will:
 ├── frontend/            # Vite frontend
 ├── docker-compose.yml   # Orchestration for backend, frontend, and db
 ├── Makefile             # Dev automation commands
-└── README-docker.md     # ← This file
+└── setup_docker.md     # ← This file
 ```
 
 ---
