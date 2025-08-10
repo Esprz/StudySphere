@@ -1,0 +1,19 @@
+# Kafka
+confluent-kafka
+# Utilities
+python-dotenv
+loguru
+
+# Database
+sqlalchemy[asyncio,postgresql]
+psycopg
+
+# Vector Database
+faiss-cpu
+
+# Data Processing
+pandas
+numpy
+
+# Text Processing & Embeddings
+sentence-transformers
