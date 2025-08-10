@@ -2,7 +2,7 @@ import prisma from '../utils/prisma';
 import { eventService } from './eventService';
 
 export const likePost = async (post_id: string, user_id: string) => {
-  // Optional: check if already liked
+  // Mandatory: check if already liked to prevent duplicate likes
   const existing = await prisma.like.findFirst({
     where: { post_id, user_id },
   });
