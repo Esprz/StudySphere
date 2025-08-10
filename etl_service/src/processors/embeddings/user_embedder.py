@@ -44,7 +44,7 @@ class UserEmbedder:
             return True
 
         except Exception as e:
-            print(f"Error initializing user embedding for {user_id}: {e}")
+            print(f"❌Error initializing user embedding for {user_id}: {e}")
             return False
 
     def calculate_time_decay(self, timestamp: str) -> float:
@@ -58,7 +58,7 @@ class UserEmbedder:
             decay_factor = self.decay_rate**days_diff
             return max(decay_factor, 0.01)  # Minimum decay of 0.01
         except Exception as e:
-            print(f"Error calculating time decay: {e}")
+            print(f"❌Error calculating time decay: {e}")
             return 1.0
 
     def update_user_embedding(
@@ -101,7 +101,7 @@ class UserEmbedder:
             return True
 
         except Exception as e:
-            print(f"Error updating user embedding for {user_id}: {e}")
+            print(f"❌Error updating user embedding for {user_id}: {e}")
             return False
 
     def update_from_post_interaction(
@@ -120,7 +120,7 @@ class UserEmbedder:
             )
 
         except Exception as e:
-            print(f"Error updating user embedding from post interaction: {e}")
+            print(f"❌Error updating user embedding from post interaction: {e}")
             return False
 
     def update_from_search(
@@ -139,7 +139,7 @@ class UserEmbedder:
             )
 
         except Exception as e:
-            print(f"Error updating user embedding from search: {e}")
+            print(f"❌Error updating user embedding from search: {e}")
             return False
 
     def get_user_embedding(self, user_id: str) -> Optional[List[float]]:
@@ -147,5 +147,5 @@ class UserEmbedder:
         try:
             return self.vector_store.get_user_vector(user_id)
         except Exception as e:
-            print(f"Error getting user embedding for {user_id}: {e}")
+            print(f"❌Error getting user embedding for {user_id}: {e}")
             return None

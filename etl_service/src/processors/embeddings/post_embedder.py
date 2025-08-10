@@ -53,7 +53,7 @@ class PostEmbedder:
             return True
 
         except Exception as e:
-            print(f"Error processing post created {post_id}: {e}")
+            print(f"❌Error processing post created {post_id}: {e}")
             return False
 
     def process_post_updated(
@@ -72,7 +72,7 @@ class PostEmbedder:
             return True
 
         except Exception as e:
-            print(f"Error processing post updated {post_id}: {e}")
+            print(f"❌Error processing post updated {post_id}: {e}")
             return False
 
     def process_post_deleted(self, post_id: str) -> bool:
@@ -82,7 +82,7 @@ class PostEmbedder:
             print(f"✅ Deleted post embedding for {post_id}")
             return True
         except Exception as e:
-            print(f"Error deleting post embedding {post_id}: {e}")
+            print(f"❌Error deleting post embedding {post_id}: {e}")
             return False
 
     def get_post_embedding(self, post_id: str) -> Optional[List[float]]:
@@ -90,5 +90,5 @@ class PostEmbedder:
         try:
             return self.vector_store.get_post_vector(post_id)
         except Exception as e:
-            print(f"Error getting post embedding {post_id}: {e}")
+            print(f"❌Error getting post embedding {post_id}: {e}")
             return None
