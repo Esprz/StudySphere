@@ -43,7 +43,7 @@ export const createPost = async (newPost: PNewPost) => {
         throw error;
     }
 }
-export const updatePost = async (post_id: String, updatedPost: any) => {
+export const updatePost = async (post_id: string, updatedPost: any) => {
     const hasFileToUpdate = updatedPost.images.length > 0;
     try {
         console.log('api:updatePost2')
@@ -67,7 +67,7 @@ export const updatePost = async (post_id: String, updatedPost: any) => {
         const response = await API.patch(`post/${post_id}`, {
             title: updatedPost.title,
             content: updatedPost.content,
-            image: fileUrl,
+            image: {fileUrl},
             extra: updatedPost.extra || {},
         });
         console.log('Update post:', response.data);
@@ -79,7 +79,7 @@ export const updatePost = async (post_id: String, updatedPost: any) => {
     }
 };
 
-export const deletePost = async (post_id: String, image : any) => {
+export const deletePost = async (post_id: string) => {
     try {
         const response = await API.delete(`post/${post_id}`);
         console.log('Delete post:', response.data);
@@ -124,7 +124,7 @@ export const getFolloweePosts = async () => {
     }
 }
 
-export const getPostById = async (post_id: String) => {
+export const getPostById = async (post_id: string) => {
     try {
         const response = await API.get(`post/${post_id}`);
         console.log('Get post by id:', response.data);
@@ -135,7 +135,7 @@ export const getPostById = async (post_id: String) => {
     }
 }
 
-export const getPostByUser = async (username: String) => {
+export const getPostByUser = async (username: string) => {
     try {
         const response = await API.post(`post/by_user`, { username });
         console.log('Get post by user:', response.data);
