@@ -9,7 +9,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ ./src/
 COPY config/ ./config/
-COPY scripts/ ./scripts/
 RUN mkdir -p logs data/faiss_indexes
 
 ENV PYTHONPATH=/app
