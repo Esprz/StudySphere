@@ -6,10 +6,8 @@ from pydantic import BaseModel
 from app.utils.database import get_db
 from app.services.hybrid_recommender import HybridRecommender
 
-router = APIRouter(
-    prefix="/recommendations",
-    tags=["recommendations"]
-)
+router = APIRouter(prefix="/recommendations", tags=["recommendations"])
+
 
 class PostRecommendation(BaseModel):
     post_id: str
@@ -17,19 +15,24 @@ class PostRecommendation(BaseModel):
     username: Optional[str] = None
     score: Optional[float] = None
 
+
 @router.get("/for-user/{user_id}", response_model=List[PostRecommendation])
 async def get_recommendations_for_user(
-    user_id: str, 
-    post_id: Optional[str] = None,
-    db: Session = Depends(get_db)
+    user_id: str, post_id: Optional[str] = None, db: Session = Depends(get_db)
 ):
     try:
         recommender = HybridRecommender(db)
         recommender.initialize()
-        recommendations = recommender.get_recommendations_for_user(user_id, post_id, top_n=10)
+        recommendations = recommender.get_recommendations_for_user(
+            user_id, post_id, top_n=10
+        )
         return recommendations
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating recommendations: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error generating recommendations: {str(e)}"
+        )
+
+
 @router.get("/personalized-feed/{user_id}", response_model=List[PostRecommendation])
 async def get_personalized_feed(user_id: str, db: Session = Depends(get_db)):
     try:
@@ -38,14 +41,25 @@ async def get_personalized_feed(user_id: str, db: Session = Depends(get_db)):
         recommendations = recommender.get_personalized_feed(user_id, limit=20)
         return recommendations
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating personalized feed: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error generating personalized feed: {str(e)}"
+        )
 
-@router.get("/post-recommendations/{user_id}/{post_id}", response_model=List[PostRecommendation])
-async def get_post_recommendations(user_id: str, post_id: str, db: Session = Depends(get_db)):
+
+@router.get(
+    "/post-recommendations/{user_id}/{post_id}", response_model=List[PostRecommendation]
+)
+async def get_post_recommendations(
+    user_id: str, post_id: str, db: Session = Depends(get_db)
+):
     try:
         recommender = AdvancedHybridRecommender(db)
         recommender.initialize()
-        recommendations = recommender.get_post_recommendations(user_id, post_id, limit=10)
+        recommendations = recommender.get_post_recommendations(
+            user_id, post_id, limit=10
+        )
         return recommendations
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating post recommendations: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error generating post recommendations: {str(e)}"
+        )
