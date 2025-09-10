@@ -2,9 +2,9 @@ import logging
 from typing import List, Dict, Any, Optional
 import time
 
-from app.services.recall.base import RecallBase
-from app.services.filters.base import FilterBase
-from app.services.diversity.base import DiversityBase
+from services.recall.base import RecallBase
+from services.filters.base import FilterBase
+from services.diversity.base import DiversityBase
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +62,12 @@ class RecommendationPipeline:
     ) -> List[Dict[str, Any]]:
         all_candidates = []
         source_metrics = {}
+
+        if self._is_cold_start_user(user_id):
+            self.recall_services = self.recall_services.filter(
+                lambda svc: svc.name == "cold_start" or svc.name == "trending_posts"
+            )
+            logger.info(f"User {user_id} identified as cold start user.")
 
         for recall_service in self.recall_services:
             source_name = recall_service.name
@@ -157,3 +163,7 @@ class RecommendationPipeline:
                 candidates, key=lambda x: x.get("score", 0.0), reverse=True
             )
             return sorted_candidates[:limit]
+
+    def _is_cold_start_user(self, user_id):
+        interaction_count = self.postgres_store.get_user_interaction_count(user_id)
+        return interaction_count < 5

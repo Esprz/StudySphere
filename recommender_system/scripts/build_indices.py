@@ -1,5 +1,5 @@
-from app.services.offline.feature_processor import FeatureProcessor
-from app.services.offline.index_builder import IndexBuilder
+from services.offline.feature_processor import FeatureProcessor
+from services.offline.index_builder import IndexBuilder
 from app.utils.postgres_store import PostgresStore
 
 
