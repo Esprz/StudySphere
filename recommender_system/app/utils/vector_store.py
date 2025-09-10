@@ -9,7 +9,6 @@ class VectorStore:
 
     def __init__(self, faiss_manager: FaissManager, postgres_store: PostgresStore):
         self.faiss = faiss_manager
-        self.postgres = postgres_store
         self._cache = {}  # Unified cache
         self.cache_ttl = 300
 

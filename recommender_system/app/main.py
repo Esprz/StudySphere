@@ -14,26 +14,26 @@ from app.services.filters.duplicate_filter import DuplicateFilter
 
 from app.services.diversity.diversity_enhancer import DiversityEnhancer
 from app.services.recommendation_pipeline import RecommendationPipeline
+from app.utils.postgres_store import PostgresStore
+
+postgres_store = PostgresStore()
 
 recall_services = [
-    ContentBasedRecall(index_path="data/indices", db_connection_string="..."),
-    UserCollaborativeRecall(index_path="data/indices", db_connection_string="..."),
-    ItemCollaborativeRecall(index_path="data/indices", db_connection_string="..."),
+    ContentBasedRecall(index_path="data/indices", db_connection=postgres_store),
+    UserCollaborativeRecall(index_path="data/indices", db_connection=postgres_store),
+    ItemCollaborativeRecall(index_path="data/indices", db_connection=postgres_store),
     TrendingPostsRecall(db_connection_string="..."),
     FollowingActivityRecall(db_connection_string="..."),
-    ColdStartRecall()  
+    ColdStartRecall(),
 ]
 
 recommendation_pipeline = RecommendationPipeline(
     recall_services=recall_services,
     filter_services=filter_services,
-    diversity_service=diversity_service
+    diversity_service=diversity_service,
 )
 
-filter_services = [
-    SeenFilter(db_connection_string="..."),
-    DuplicateFilter()
-]
+filter_services = [SeenFilter(db_connection_string="..."), DuplicateFilter()]
 
 diversity_service = DiversityEnhancer()
 
