@@ -1,65 +1,99 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from typing import List, Optional
+from fastapi import APIRouter, Query
+from typing import Dict, List, Any, Optional
 from pydantic import BaseModel
+from fastapi import HTTPException
 
-from app.utils.database import get_db
-from app.services.hybrid_recommender import HybridRecommender
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).parent.parent))
+from main import recommendation_pipeline, postgres_store
 
 router = APIRouter(prefix="/recommendations", tags=["recommendations"])
 
 
-class PostRecommendation(BaseModel):
-    post_id: str
+class Post(BaseModel):
+    """Model for post data"""
+
+    id: str
     title: str
-    username: Optional[str] = None
-    score: Optional[float] = None
+    content: str
+    created_at: Optional[str]
+    updated_at: Optional[str]
+    author_id: str
+    author_name: str
+    author_avatar: Optional[str]
+    tags: List[Dict[str, Any]]
+    recommendation_score: Optional[float] = None
+    recommendation_reason: Optional[str] = None
 
 
-@router.get("/for-user/{user_id}", response_model=List[PostRecommendation])
-async def get_recommendations_for_user(
-    user_id: str, post_id: Optional[str] = None, db: Session = Depends(get_db)
+class RecommendationResponse(BaseModel):
+    """Response model for recommendations"""
+
+    posts: List[Post]
+    metadata: Dict[str, Any]
+
+
+@router.get("/{user_id}", response_model=RecommendationResponse)
+async def get_post_recommendations(
+    user_id: str,
+    device: Optional[str] = Query(
+        None, description="User device type (e.g., mobile, desktop)"
+    ),
+    time_of_day: Optional[str] = Query(
+        None, description="Time of day (e.g., morning, afternoon, evening)"
+    ),
+    limit: int = Query(20, description="Maximum number of recommendations to return"),
 ):
+    """Get personalized post recommendations for a user"""
     try:
-        recommender = HybridRecommender(db)
-        recommender.initialize()
-        recommendations = recommender.get_recommendations_for_user(
-            user_id, post_id, top_n=10
+        context = {}
+        if device:
+            context["device"] = device
+        if time_of_day:
+            context["time_of_day"] = time_of_day
+
+        recommendations = recommendation_pipeline.recommend(
+            user_id=user_id, context=context, limit=limit
         )
-        return recommendations
+
+        if not recommendations:
+            return {
+                "posts": [],
+                "metadata": {"count": 0, "user_id": user_id, "context_used": context},
+            }
+
+        post_ids = [rec.get("item_id") for rec in recommendations]
+
+        post_details = postgres_store.get_posts_by_ids(post_ids)
+
+        # Create a mapping of recommendation metadata for each post
+        rec_info = {
+            rec.get("item_id"): {
+                "score": rec.get("score"),
+                "reason": rec.get("reason", "Recommended for you"),
+            }
+            for rec in recommendations
+        }
+
+        posts = []
+        for post in post_details:
+            post_id = post.get("id")
+            if post_id in rec_info:
+                post["recommendation_score"] = rec_info[post_id].get("score")
+                post["recommendation_reason"] = rec_info[post_id].get("reason")
+                posts.append(post)
+
+        return {
+            "posts": posts,
+            "metadata": {
+                "count": len(posts),
+                "user_id": user_id,
+                "context_used": context,
+            },
+        }
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Error generating recommendations: {str(e)}"
-        )
-
-
-@router.get("/personalized-feed/{user_id}", response_model=List[PostRecommendation])
-async def get_personalized_feed(user_id: str, db: Session = Depends(get_db)):
-    try:
-        recommender = AdvancedHybridRecommender(db)
-        recommender.initialize()
-        recommendations = recommender.get_personalized_feed(user_id, limit=20)
-        return recommendations
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error generating personalized feed: {str(e)}"
-        )
-
-
-@router.get(
-    "/post-recommendations/{user_id}/{post_id}", response_model=List[PostRecommendation]
-)
-async def get_post_recommendations(
-    user_id: str, post_id: str, db: Session = Depends(get_db)
-):
-    try:
-        recommender = AdvancedHybridRecommender(db)
-        recommender.initialize()
-        recommendations = recommender.get_post_recommendations(
-            user_id, post_id, limit=10
-        )
-        return recommendations
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error generating post recommendations: {str(e)}"
         )

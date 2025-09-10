@@ -136,6 +136,46 @@ class PostgresStore:
             rows = cur.fetchall()
         return [r["item_id"] for r in rows]
 
+    def get_posts_by_ids(self, post_ids: List[str]) -> List[Dict[str, Any]]:
+        """
+        Return full post information by post IDs.
+        This joins necessary tables to get complete post data.
+        """
+        if not post_ids:
+            return []
+
+        sql = """
+            SELECT 
+                p.id, 
+                p.title, 
+                p.content, 
+                p.created_at,
+                p.updated_at,
+                u.id as author_id,
+                u.username as author_name,
+                u.avatar_url as author_avatar,
+                COALESCE(
+                    (SELECT json_agg(
+                        json_build_object(
+                            'id', t.id,
+                            'name', t.name
+                        )
+                    )
+                    FROM post_tags pt
+                    JOIN tags t ON pt.tag_id = t.id
+                    WHERE pt.post_id = p.id
+                    ), '[]'::json
+                ) as tags
+            FROM posts p
+            JOIN users u ON p.author_id = u.id
+            WHERE p.id = ANY(%s)
+            ORDER BY array_position(%s, p.id::text)
+        """
+        with self.psycopg_conn.cursor() as cur:
+            cur.execute(sql, (post_ids, post_ids))
+            posts = cur.fetchall()
+        return posts
+
     # ---------- small helpers ----------
 
     def close(self):

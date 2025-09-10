@@ -20,6 +20,7 @@ from utils.faiss_manager import FaissManager
 from utils.vector_store import VectorStore
 from utils.postgres_store import PostgresStore
 
+# Initialize services
 postgres_store = PostgresStore()
 faiss_manager = FaissManager()
 vector_store = VectorStore(faiss_manager=faiss_manager, postgres_store=postgres_store)
@@ -42,9 +43,6 @@ recommendation_pipeline = RecommendationPipeline(
     filter_services=filter_services,
     diversity_service=diversity_service,
 )
-user_id = "user_123"
-context = {"device": "mobile", "time_of_day": "evening"}
-recommendations = recommendation_pipeline.recommend(user_id, context, limit=20)
 
 app = FastAPI(title="StudySphere Recommender System")
 
