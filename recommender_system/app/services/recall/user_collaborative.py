@@ -1,12 +1,16 @@
 from collections import defaultdict
 from typing import List
 
-from services.recall.base import RecallBase
+from .base import RecallBase
 
 
 class UserCollaborativeRecall(RecallBase):
-    def __init__(self):
-        super().__init__(name="user_collaborative")
+    def __init__(self, vector_store, postgres_store):
+        super().__init__(
+            name="user_collaborative",
+            vector_store=vector_store,
+            postgres_store=postgres_store,
+        )
 
     def get_candidates(
         self,

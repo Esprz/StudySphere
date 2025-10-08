@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import faiss
+from loguru import logger
 
 
 class IndexBuilder:
@@ -61,7 +62,7 @@ class IndexBuilder:
         index = faiss.IndexIDMap(faiss.IndexFlatL2(dim))
         index.add_with_ids(vecs, np.array(ids))
         faiss.write_index(index, out_path)
-        print(f"✅ Saved FAISS index to {out_path}, size={index.ntotal}")
+        logger.info(f"✅ Saved FAISS index to {out_path}, size={index.ntotal}")
 
     def init_collaborative_indices(self, version="v1"):
         self.compute_user_user_similarity(version)

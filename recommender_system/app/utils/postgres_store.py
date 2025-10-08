@@ -9,7 +9,7 @@ load_dotenv()
 
 class PostgresStore:
     def __init__(self):
-        self.db_connection_string = os.getenv("DB_CONNECTION_STRING")
+        self.db_connection_string = os.getenv("DATABASE_URL")
         # row_factory=dict_row gives you dict-like rows
         self.psycopg_conn = psycopg.connect(
             self.db_connection_string, row_factory=dict_row

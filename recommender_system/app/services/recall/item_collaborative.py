@@ -1,9 +1,13 @@
-from services.recall.base import RecallBase
+from .base import RecallBase
 
 
 class ItemCollaborativeRecall(RecallBase):
-    def __init__(self):
-        super().__init__(name="item_copllaborative")
+    def __init__(self, vector_store, postgres_store):
+        super().__init__(
+            name="item_collaborative",
+            vector_store=vector_store,
+            postgres_store=postgres_store,
+        )
 
     def get_candidates(self, user_id, k=50, version="v1"):
         # 1) seed items with scores

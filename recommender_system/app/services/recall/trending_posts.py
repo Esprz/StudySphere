@@ -1,9 +1,13 @@
-from services.recall.base import RecallBase
+from .base import RecallBase
 
 
 class TrendingPostsRecall(RecallBase):
-    def __init__(self):
-        super().__init__(name="trending_posts")
+    def __init__(self, vector_store, postgres_store):
+        super().__init__(
+            name="trending_posts",
+            vector_store=vector_store,
+            postgres_store=postgres_store,
+        )
 
     def get_candidates(self, k=50):
         candidates = []

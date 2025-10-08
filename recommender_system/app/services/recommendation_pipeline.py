@@ -2,9 +2,9 @@ import logging
 from typing import List, Dict, Any, Optional
 import time
 
-from services.recall.base import RecallBase
-from services.filters.base import FilterBase
-from services.diversity.base import DiversityBase
+from .recall.base import RecallBase
+from .filters.base import FilterBase
+from .diversity.base import DiversityBase
 
 logger = logging.getLogger(__name__)
 

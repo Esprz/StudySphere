@@ -1,10 +1,14 @@
 from asyncio.log import logger
-from services.recall.base import RecallBase
+from .base import RecallBase
 
 
 class ContentBasedRecall(RecallBase):
-    def __init__(self):
-        super().__init__(name="content_based")
+    def __init__(self, vector_store, postgres_store):
+        super().__init__(
+            name="content_based",
+            vector_store=vector_store,
+            postgres_store=postgres_store,
+        )
 
     def get_candidates(self, user_id, entity_type="posts", context=None, k=50):
         user_embedding = self.vector_store.get_user_embedding(user_id)

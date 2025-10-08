@@ -3,11 +3,7 @@ from typing import Dict, List, Any, Optional
 from pydantic import BaseModel
 from fastapi import HTTPException
 
-import sys
-from pathlib import Path
-
-sys.path.append(str(Path(__file__).parent.parent))
-from main import recommendation_pipeline, postgres_store
+from ..config import recommendation_pipeline, postgres_store
 
 router = APIRouter(prefix="/recommendations", tags=["recommendations"])
 

@@ -1,9 +1,13 @@
-from services.recall.base import RecallBase
+from .base import RecallBase
 
 
 class FollowingActivityRecall(RecallBase):
-    def __init__(self):
-        super().__init__(name="following_activity")
+    def __init__(self, vector_store, postgres_store):
+        super().__init__(
+            name="following_activity",
+            vector_store=vector_store,
+            postgres_store=postgres_store,
+        )
 
     def get_candidates(self, user_id, k=50):
         candidates = []
