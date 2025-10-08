@@ -63,6 +63,12 @@ class EventProcessor:
             user_success = self.user_embedder.update_from_post_interaction(
                 author_id, post_id, "POST_CREATED", timestamp
             )
+        
+            self.postgres_store.store_behavior_event(
+                user_id=author_id,
+                post_id=post_id,
+                event_type="POST_CREATED",
+            )
 
         return post_success and user_success
 
@@ -99,16 +105,28 @@ class EventProcessor:
     def process_post_interaction(
         self, user_id: str, post_id: str, behavior_type: str, timestamp: str
     ) -> bool:
-        """Process user-post interaction behavior"""
-        return self.user_embedder.update_from_post_interaction(
+        """Process user-post interaction behavior"""    
+        success = self.user_embedder.update_from_post_interaction(
             user_id, post_id, behavior_type, timestamp
         )
+        if success:
+            self.postgres_store.store_behavior_event(
+                user_id=user_id,
+                post_id=post_id,
+                event_type=behavior_type,
+            )
+        return success
 
-    def process_search_behavior(
-        self, user_id: str, search_query: str, timestamp: str
-    ) -> bool:
+    def process_search_behavior(self, user_id: str, search_query: str, timestamp: str) -> bool:
         """Process search behavior"""
-        return self.user_embedder.update_from_search(user_id, search_query, timestamp)
+        success = self.user_embedder.update_from_search(user_id, search_query, timestamp)
+        if success:
+            self.postgres_store.store_behavior_event(
+                user_id=user_id,
+                event_type="SEARCH",
+                search_term=search_query,
+            )
+        return success
 
     # ==================== UTILITY METHODS ====================
 
