@@ -2,12 +2,15 @@ from typing import List, Optional
 from .embeddings.text_embedder import TextEmbedder
 from .embeddings.post_embedder import PostEmbedder
 from .embeddings.user_embedder import UserEmbedder
+from loguru import logger
 
 
 class EventProcessor:
     """Unified event processing coordinator"""
 
-    def __init__(self, vector_store, postgres_store, model_name: str = "all-MiniLM-L6-v2"):
+    def __init__(
+        self, vector_store, postgres_store, model_name: str = "all-MiniLM-L6-v2"
+    ):
         # Initialize base components
         self.vector_store = vector_store
         self.postgres_store = postgres_store
@@ -26,13 +29,15 @@ class EventProcessor:
     def process_user_updated(self, user_id: str, updated_data: dict = None) -> bool:
         """Process user update event"""
         # Currently not processing user info updates affecting embeddings
-        print(f"✅ User {user_id} updated (embedding unchanged)")
+        logger.info(f"✅ User {user_id} updated (embedding unchanged)")
         return True
 
     def process_user_deleted(self, user_id: str) -> bool:
         """Process user deletion event"""
         # TODO: Implement user embedding deletion
-        print(f"✅ User {user_id} deleted (TODO: implement user embedding deletion)")
+        logger.info(
+            f"✅ User {user_id} deleted (TODO: implement user embedding deletion)"
+        )
         return True
 
     # ==================== POST EVENTS ====================

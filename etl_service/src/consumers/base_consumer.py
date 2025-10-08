@@ -2,6 +2,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from confluent_kafka import Consumer, KafkaError
 from config.kafka_config import KafkaConfig
+from loguru import logger
 
 
 class BaseConsumer(ABC):
@@ -17,7 +18,7 @@ class BaseConsumer(ABC):
                 **self.cfg.consumer_config,
             }
         )
-        print(
+        logger.info(
             f"🔧 Consumer initialized for topic: {self.topic_name} (group: {self.group_id})"
         )
 
@@ -25,17 +26,19 @@ class BaseConsumer(ABC):
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, self._consume_loop)
         self.consumer.start()
-        # print(f"🟢 Consumer for topic {self.topic_name} started")
+        logger.info(f"🟢 Consumer for topic {self.topic_name} started")
 
     def _consume_loop(self):
         try:
             self.consumer.subscribe([self.topic_name])
-            print(
+            logger.info(
                 f"🟢 Subscribed to topic: {self.topic_name} (group: {self.group_id})",
                 flush=True,
             )
-            print(f"🔧 Bootstrap servers: {self.cfg.bootstrap_servers}", flush=True)
-            print(f"🔧 Consumer config: {self.cfg.consumer_config}")
+            logger.info(
+                f"🔧 Bootstrap servers: {self.cfg.bootstrap_servers}", flush=True
+            )
+            logger.info(f"🔧 Consumer config: {self.cfg.consumer_config}")
 
             while True:
                 msg = self.consumer.poll(timeout=1.0)
@@ -46,17 +49,18 @@ class BaseConsumer(ABC):
                     if msg.error().code() == KafkaError._PARTITION_EOF:
                         continue
                     else:
-                        print(f"Kafka error: {msg.error()}")
+                        logger.error(f"Kafka error: {msg.error()}")
                         continue
 
                 self.handle_message(msg.value().decode("utf-8"))
 
         except KeyboardInterrupt:
-            print(f"🛑 Stopping consumer for topic: {self.topic_name}")
+            logger.info(f"🛑 Stopping consumer for topic: {self.topic_name}")
         except Exception as e:
-            print(f"❌ [FATAL ERROR IN CONSUMER LOOP] {e}")
+            logger.error(f"❌ [FATAL ERROR IN CONSUMER LOOP] {e}")
         finally:
             self.consumer.close()
+            logger.info(f"🔧 Consumer for topic {self.topic_name} closed")
 
     @abstractmethod
     def handle_message(self, raw_msg: str):

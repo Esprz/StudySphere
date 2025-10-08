@@ -7,6 +7,7 @@ Base = declarative_base()
 
 class BehaviorEvent(Base):
     """User interaction events for recommendation algorithms"""
+
     __tablename__ = "etl_behavior_events"
 
     id = Column(String, primary_key=True)

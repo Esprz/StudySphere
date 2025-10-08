@@ -3,6 +3,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from typing import List, Optional
 import re
+from loguru import logger
 
 
 class TextEmbedder:
@@ -31,7 +32,7 @@ class TextEmbedder:
                 embedding = self.model.encode(processed_text, normalize_embeddings=True)
             return embedding.tolist()
         except Exception as e:
-            print(f"❌ Error generating embedding: {e}")
+            logger.error(f"❌ Error generating embedding: {e}")
             return None
 
     def generate_batch_embeddings(
@@ -59,7 +60,7 @@ class TextEmbedder:
                     result.append(None)
             return result
         except Exception as e:
-            print(f"❌ Error generating batch embeddings: {e}")
+            logger.error(f"❌ Error generating batch embeddings: {e}")
             return [None] * len(texts)
 
     def normalize_embedding(self, embedding: List[float]) -> List[float]:

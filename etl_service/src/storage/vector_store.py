@@ -2,6 +2,7 @@ from typing import List, Optional
 from .qdrant_manager import QdrantManager
 from loguru import logger
 
+
 class VectorStore:
     """High-level vector storage with unified CRUD operations"""
 
@@ -62,7 +63,7 @@ class VectorStore:
 
         except Exception as e:
             logger.error(f"❌ Failed to delete {source_type} vector {source_id}: {e}")
-            return False    
+            return False
 
     # ==================== CONVENIENCE METHODS ====================
 

@@ -2,6 +2,7 @@ import numpy as np
 from datetime import datetime
 from typing import List, Optional
 from .text_embedder import TextEmbedder
+from loguru import logger
 
 
 class UserEmbedder:
@@ -30,7 +31,7 @@ class UserEmbedder:
         try:
             # Check if already exists
             if self.vector_store.get_user_vector(user_id):
-                print(f"User {user_id} embedding already exists")
+                logger.info(f"User {user_id} embedding already exists")
                 return True
 
             # Initialize with zero vector (will be updated as user interacts)
@@ -40,11 +41,11 @@ class UserEmbedder:
 
             # Store in vector store
             self.vector_store.add_user_vector(user_id, zero_embedding.tolist())
-            print(f"✅ Initialized user embedding for {user_id} with zero vector")
+            logger.info(f"✅ Initialized user embedding for {user_id} with zero vector")
             return True
 
         except Exception as e:
-            print(f"❌Error initializing user embedding for {user_id}: {e}")
+            logger.error(f"❌Error initializing user embedding for {user_id}: {e}")
             return False
 
     def calculate_time_decay(self, timestamp: str) -> float:
@@ -58,7 +59,7 @@ class UserEmbedder:
             decay_factor = self.decay_rate**days_diff
             return max(decay_factor, 0.01)  # Minimum decay of 0.01
         except Exception as e:
-            print(f"❌Error calculating time decay: {e}")
+            logger.error(f"❌Error calculating time decay: {e}")
             return 1.0
 
     def update_user_embedding(
@@ -95,13 +96,13 @@ class UserEmbedder:
             # Update in vector store
             self.vector_store.update_user_vector(user_id, new_embedding.tolist())
 
-            print(
+            logger.info(
                 f"✅ Updated user {user_id} embedding from {behavior_type} (weight: {update_weight:.3f})"
             )
             return True
 
         except Exception as e:
-            print(f"❌Error updating user embedding for {user_id}: {e}")
+            logger.error(f"❌Error updating user embedding for {user_id}: {e}")
             return False
 
     def update_from_post_interaction(
@@ -112,7 +113,7 @@ class UserEmbedder:
             # Get post embedding
             post_vector = self.vector_store.get_post_vector(post_id)
             if not post_vector:
-                print(f"Post vector not found for {post_id}")
+                logger.error(f"Post vector not found for {post_id}")
                 return False
 
             return self.update_user_embedding(
@@ -120,7 +121,7 @@ class UserEmbedder:
             )
 
         except Exception as e:
-            print(f"❌Error updating user embedding from post interaction: {e}")
+            logger.error(f"❌Error updating user embedding from post interaction: {e}")
             return False
 
     def update_from_search(
@@ -131,7 +132,9 @@ class UserEmbedder:
             # Generate search query embedding
             search_embedding = self.text_embedder.generate_embedding(search_query)
             if not search_embedding:
-                print(f"Failed to generate search embedding for query: {search_query}")
+                logger.error(
+                    f"❌Failed to generate search embedding for query: {search_query}"
+                )
                 return False
 
             return self.update_user_embedding(
@@ -139,7 +142,7 @@ class UserEmbedder:
             )
 
         except Exception as e:
-            print(f"❌Error updating user embedding from search: {e}")
+            logger.error(f"❌Error updating user embedding from search: {e}")
             return False
 
     def get_user_embedding(self, user_id: str) -> Optional[List[float]]:
@@ -147,5 +150,5 @@ class UserEmbedder:
         try:
             return self.vector_store.get_user_vector(user_id)
         except Exception as e:
-            print(f"❌Error getting user embedding for {user_id}: {e}")
+            logger.error(f"❌Error getting user embedding for {user_id}: {e}")
             return None

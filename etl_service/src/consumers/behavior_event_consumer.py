@@ -1,6 +1,7 @@
 import json
 from src.processors.event_processor import EventProcessor
 from src.consumers.base_consumer import BaseConsumer
+from loguru import logger
 
 
 class BehaviorEventConsumer(BaseConsumer):
@@ -22,7 +23,7 @@ class BehaviorEventConsumer(BaseConsumer):
             return "invalid_json"
 
     def handle_message(self, raw_msg: str):
-        print(f"📬 [Behavior] Received message from {self.topic_name}: {raw_msg}")
+        logger.info(f"📬 [Behavior] Received message from {self.topic_name}: {raw_msg}")
         try:
             data = json.loads(raw_msg)
 
@@ -33,14 +34,14 @@ class BehaviorEventConsumer(BaseConsumer):
             elif event_type == "SEARCH":
                 self.process_search_event(data)
             else:
-                print(
+                logger.error(
                     f"❌ [Behavior] Unknown event type: {event_type} for message: {raw_msg}"
                 )
 
-            print(f"📊 [Behavior] Processed data: {data}")
+            logger.info(f"📊 [Behavior] Processed data: {data}")
 
         except json.JSONDecodeError as e:
-            print(f"❌ [Behavior] JSON decode error: {e} for message: {raw_msg}")
+            logger.error(f"❌ [Behavior] JSON decode error: {e} for message: {raw_msg}")
 
     def process_post_interaction(self, data: dict, event_type: str):
         try:
@@ -53,7 +54,7 @@ class BehaviorEventConsumer(BaseConsumer):
             )
 
         except Exception as e:
-            print(f"❌ [Behavior] Error processing post interaction: {e}")
+            logger.error(f"❌ [Behavior] Error processing post interaction: {e}")
 
     def process_search_event(self, data: dict):
         try:
@@ -64,4 +65,4 @@ class BehaviorEventConsumer(BaseConsumer):
             self.processor.process_search_behavior(user_id, search_query, timestamp)
 
         except Exception as e:
-            print(f"❌ [Behavior] Error processing search event: {e}")
+            logger.error(f"❌ [Behavior] Error processing search event: {e}")

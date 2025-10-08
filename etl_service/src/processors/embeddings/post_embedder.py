@@ -1,5 +1,6 @@
 from typing import List, Optional
 from .text_embedder import TextEmbedder
+from loguru import logger
 
 
 class PostEmbedder:
@@ -30,7 +31,7 @@ class PostEmbedder:
                 text_parts.append(tag_text)
 
         if not text_parts:
-            print("No valid content for post embedding")
+            logger.error("No valid content for post embedding")
             return None
 
         # Use special separator to join different parts
@@ -44,16 +45,16 @@ class PostEmbedder:
         try:
             embedding = self.generate_post_embedding(title, content, tags)
             if not embedding:
-                print(f"Failed to generate embedding for post {post_id}")
+                logger.error(f"Failed to generate embedding for post {post_id}")
                 return False
 
             # Store in vector store
             self.vector_store.add_post_vector(post_id, embedding)
-            print(f"✅ Stored post embedding for {post_id}")
+            logger.info(f"✅ Stored post embedding for {post_id}")
             return True
 
         except Exception as e:
-            print(f"❌Error processing post created {post_id}: {e}")
+            logger.error(f"❌Error processing post created {post_id}: {e}")
             return False
 
     def process_post_updated(
@@ -63,26 +64,26 @@ class PostEmbedder:
         try:
             embedding = self.generate_post_embedding(title, content, tags)
             if not embedding:
-                print(f"Failed to generate embedding for updated post {post_id}")
+                logger.error(f"Failed to generate embedding for updated post {post_id}")
                 return False
 
             # Update vector in vector store
             self.vector_store.update_post_vector(post_id, embedding)
-            print(f"✅ Updated post embedding for {post_id}")
+            logger.info(f"✅ Updated post embedding for {post_id}")
             return True
 
         except Exception as e:
-            print(f"❌Error processing post updated {post_id}: {e}")
+            logger.error(f"❌Error processing post updated {post_id}: {e}")
             return False
 
     def process_post_deleted(self, post_id: str) -> bool:
         """Process post deletion event"""
         try:
             self.vector_store.delete_post_vector(post_id)
-            print(f"✅ Deleted post embedding for {post_id}")
+            logger.info(f"✅ Deleted post embedding for {post_id}")
             return True
         except Exception as e:
-            print(f"❌Error deleting post embedding {post_id}: {e}")
+            logger.error(f"❌Error deleting post embedding {post_id}: {e}")
             return False
 
     def get_post_embedding(self, post_id: str) -> Optional[List[float]]:
@@ -90,5 +91,5 @@ class PostEmbedder:
         try:
             return self.vector_store.get_post_vector(post_id)
         except Exception as e:
-            print(f"❌Error getting post embedding {post_id}: {e}")
+            logger.error(f"❌Error getting post embedding {post_id}: {e}")
             return None

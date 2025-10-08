@@ -13,7 +13,6 @@ class PostgresStore:
     def get_session(self) -> Session:
         return self.db.get_session()
 
-
     def store_behavior_event(
         self,
         user_id: str,
@@ -35,7 +34,9 @@ class PostgresStore:
                 )
                 session.add(behavior_event)
                 session.commit()
-                logger.info(f"✅ Behavior event stored successfully for user: {user_id} and post: {post_id}")
+                logger.info(
+                    f"✅ Behavior event stored successfully for user: {user_id} and post: {post_id}"
+                )
                 return True
 
         except Exception as e:
