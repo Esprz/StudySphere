@@ -7,10 +7,10 @@ from .embeddings.user_embedder import UserEmbedder
 class EventProcessor:
     """Unified event processing coordinator"""
 
-    def __init__(self, vector_store, db_config, model_name: str = "all-MiniLM-L6-v2"):
+    def __init__(self, vector_store, postgres_store, model_name: str = "all-MiniLM-L6-v2"):
         # Initialize base components
         self.vector_store = vector_store
-        self.db = db_config
+        self.postgres_store = postgres_store
 
         # Initialize embedder components
         self.text_embedder = TextEmbedder(model_name)

@@ -4,11 +4,11 @@ from src.processors.event_processor import EventProcessor
 
 
 class UserEventConsumer(BaseConsumer):
-    def __init__(self, vector_store, db_config):
+    def __init__(self, vector_store, postgres_store):
         super().__init__(topic_key="user_events")
         self.vector_store = vector_store
-        self.db = db_config
-        self.processor = EventProcessor(vector_store, db_config)
+        self.postgres_store = postgres_store
+        self.processor = EventProcessor(vector_store, postgres_store)
 
     def get_event_type(self, raw_msg: str) -> str:
         """

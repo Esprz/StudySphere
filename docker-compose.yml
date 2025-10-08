@@ -17,7 +17,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "5000:5000"
+      - "3000:5000"
     volumes:
       - ./backend:/app
     stdin_open: true
@@ -115,6 +115,9 @@ services:
     command: ["python", "-m", "src.main"]
     environment:
       - PYTHONUNBUFFERED=1
+    volumes:
+      - ./etl_service:/app
+      - faiss_indexes:/app/faiss_data
   
   recommender:
     build:

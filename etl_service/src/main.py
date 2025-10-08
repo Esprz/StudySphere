@@ -9,8 +9,8 @@ from config.kafka_config import KafkaConfig
 from config.database_config import DatabaseConfig
 
 from src.storage.postgres_store import PostgresStore
+from src.storage.qdrant_manager import QdrantManager
 from src.storage.vector_store import VectorStore
-from src.storage.faiss_manager import FaissManager
 from src.consumers.behavior_event_consumer import BehaviorEventConsumer
 from src.consumers.post_event_consumer import PostEventConsumer
 
@@ -22,9 +22,9 @@ class ETLService:
 
         self.kafka_config = KafkaConfig.from_env()
         self.db_config = DatabaseConfig()
-        self.faiss_manager = FaissManager()
-        self.postgres_store = PostgresStore()
-        self.vector_store = VectorStore(self.faiss_manager, self.postgres_store)
+        self.postgres_store = PostgresStore(db_config=self.db_config)
+        self.qdrant_manager = QdrantManager()
+        self.vector_store = VectorStore(self.qdrant_manager)
 
         self.consumers = []
         self.running = False
@@ -32,8 +32,6 @@ class ETLService:
     async def health_check(self) -> bool:
         """check the health of the service components"""
         try:
-            # TODO: Check Redis once it's implemented
-
             # Check Database
             with self.db_config.get_session() as session:
                 session.execute(text("SELECT 1"))
@@ -50,8 +48,8 @@ class ETLService:
         logger.info("🔧 Setting up consumers...")
 
         self.consumers = [
-            PostEventConsumer(self.vector_store, self.db_config),
-            BehaviorEventConsumer(self.vector_store, self.db_config),
+            PostEventConsumer(self.vector_store, self.postgres_store),
+            BehaviorEventConsumer(self.vector_store, self.postgres_store),
         ]
 
         logger.info(f"📝 {len(self.consumers)} consumers configured")
