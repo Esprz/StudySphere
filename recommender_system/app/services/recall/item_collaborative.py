@@ -2,16 +2,16 @@ from .base import RecallBase
 
 
 class ItemCollaborativeRecall(RecallBase):
-    def __init__(self, vector_store, postgres_store):
+    def __init__(self, vector_store, db):
         super().__init__(
             name="item_collaborative",
             vector_store=vector_store,
-            postgres_store=postgres_store,
+            db=db,
         )
 
     def get_candidates(self, user_id, k=50, version="v1"):
         # 1) seed items with scores
-        seeds = self.postgres_store.get_user_topk_posts(user_id, k=10, version=version)
+        seeds = self.db.get_user_topk_posts(user_id, k=10, version=version)
         if not seeds:
             return []
 
@@ -19,14 +19,12 @@ class ItemCollaborativeRecall(RecallBase):
         seed_interest = {s["post_id"]: float(s["interest_score"] or 0.0) for s in seeds}
 
         # 2) batch fetch top-k similars for all seeds
-        rows = self.postgres_store.get_items_topk_similar_items(
+        rows = self.db.get_items_topk_similar_items(
             seed_ids, per_seed_k=10, version=version
         )
 
         # 3) filter out already-interacted
-        seen = set(
-            self.postgres_store.get_user_interacted_item_ids(user_id, version=version)
-        )
+        seen = set(self.db.get_user_interacted_item_ids(user_id, version=version))
         seed_set = set(seed_ids)
 
         # 4) aggregate scores (max path score; switch to += to sum)

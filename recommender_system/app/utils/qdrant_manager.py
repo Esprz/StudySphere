@@ -1,18 +1,26 @@
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
-import os
+from .env_config import EnvConfig
+from loguru import logger
 
 
 class QdrantManager:
-    def __init__(self, dim_post=384, dim_user=384, host="qdrant", port=6333):
-        self.client = QdrantClient(host=host, port=port)
+    def __init__(self, dim_post=None, dim_user=None, host=None, port=None):
+        # Use environment variables with fallback to defaults
+        self.dim_post = dim_post or EnvConfig.QDRANT_DIM_POST
+        self.dim_user = dim_user or EnvConfig.QDRANT_DIM_USER
+        self.host = host or EnvConfig.QDRANT_HOST
+        self.port = port or EnvConfig.QDRANT_PORT
+        self.client = QdrantClient(host=self.host, port=self.port)
         self.collections = {
             "realtime_posts": "post_embeddings_realtime",
             "realtime_users": "user_embeddings_realtime",
         }
-        self.dim_post = dim_post
-        self.dim_user = dim_user
-        self._create_collections()
+        if not all(
+            self.client.collection_exists(collection_name=collection_name)
+            for collection_name in self.collections.values()
+        ):
+            self._create_collections()
 
     def _create_collections(self):
         for collection_name in self.collections.values():
@@ -23,24 +31,15 @@ class QdrantManager:
                         size=self.dim_post, distance=Distance.COSINE
                     ),
                 )
-            except:
+                logger.info(f"✅ Created collection {collection_name}")
+            except Exception as e:
+                logger.error(f"❌ Failed to create collection {collection_name}: {e}")
                 pass  # Collection already exists
 
     def get_vector(self, collection_type, vector_id: str):
         collection_name = self.collections[collection_type]
         result = self.client.retrieve(collection_name=collection_name, ids=[vector_id])
         return result[0].vector if result else None
-
-    def update_vector(self, collection_type, vector_id: str, vector: list):
-        collection_name = self.collections[collection_type]
-        self.client.upsert(
-            collection_name=collection_name,
-            points=[PointStruct(id=vector_id, vector=vector)],
-        )
-
-    def delete_vector(self, collection_type, vector_id: str):
-        collection_name = self.collections[collection_type]
-        self.client.delete(collection_name=collection_name, ids=[vector_id])
 
     def search_vectors(self, collection_type, query_vector: list, k: int = 5):
         collection_name = self.collections[collection_type]

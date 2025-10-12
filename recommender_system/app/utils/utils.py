@@ -1,6 +1,7 @@
 import uuid
 import numpy as np
 
+
 def uuid_to_int64(uuid_str):
     return np.int64(
         uuid.UUID(uuid_str).int % (2**63 - 1)

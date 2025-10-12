@@ -4,11 +4,10 @@ from typing import List, Dict, Any, Optional
 
 class RecallBase(ABC):
 
-    def __init__(self, name: str, vector_store, postgres_store):
-
+    def __init__(self, name: str, vector_store, db):
         self.name = name
         self.vector_store = vector_store
-        self.postgres_store = postgres_store
+        self.db = db
 
     @abstractmethod
     def get_candidates(

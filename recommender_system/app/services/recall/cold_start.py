@@ -2,14 +2,12 @@ from .base import RecallBase
 
 
 class ColdStartRecall(RecallBase):
-    def __init__(self, vector_store, postgres_store):
-        super().__init__(
-            name="cold_start", vector_store=vector_store, postgres_store=postgres_store
-        )
+    def __init__(self, vector_store, db):
+        super().__init__(name="cold_start", vector_store=vector_store, db=db)
 
     def get_candidates(self, k=50):
         candidates = []
-        with self.postgres_store.get_connection() as conn:
+        with self.db.get_connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(
                     """

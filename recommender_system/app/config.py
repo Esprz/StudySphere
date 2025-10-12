@@ -18,15 +18,15 @@ from .utils.postgres_store import PostgresStore
 # Initialize services
 postgres_store = PostgresStore()
 qdrant_manager = QdrantManager()
-vector_store = VectorStore(qdrant_manager, postgres_store)
+vector_store = VectorStore(qdrant_manager)
 
 recall_services = [
-    ContentBasedRecall(vector_store=vector_store, postgres_store=postgres_store),
-    UserCollaborativeRecall(vector_store=vector_store, postgres_store=postgres_store),
-    ItemCollaborativeRecall(vector_store=vector_store, postgres_store=postgres_store),
-    TrendingPostsRecall(vector_store=vector_store, postgres_store=postgres_store),
-    FollowingActivityRecall(vector_store=vector_store, postgres_store=postgres_store),
-    ColdStartRecall(vector_store=vector_store, postgres_store=postgres_store),
+    ContentBasedRecall(vector_store=vector_store, db=postgres_store),
+    UserCollaborativeRecall(vector_store=vector_store, db=postgres_store),
+    ItemCollaborativeRecall(vector_store=vector_store, db=postgres_store),
+    TrendingPostsRecall(vector_store=vector_store, db=postgres_store),
+    FollowingActivityRecall(vector_store=vector_store, db=postgres_store),
+    ColdStartRecall(vector_store=vector_store, db=postgres_store),
 ]
 
 filter_services = [SeenFilter(), DuplicateFilter()]

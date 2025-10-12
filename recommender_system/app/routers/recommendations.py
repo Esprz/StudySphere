@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from fastapi import HTTPException
 
 from ..config import recommendation_pipeline, postgres_store
+from ..utils.env_config import EnvConfig
 
 router = APIRouter(prefix="/recommendations", tags=["recommendations"])
 
@@ -40,7 +41,10 @@ async def get_post_recommendations(
     time_of_day: Optional[str] = Query(
         None, description="Time of day (e.g., morning, afternoon, evening)"
     ),
-    limit: int = Query(20, description="Maximum number of recommendations to return"),
+    limit: int = Query(
+        EnvConfig.DEFAULT_RECOMMENDATION_LIMIT,
+        description="Maximum number of recommendations to return",
+    ),
 ):
     """Get personalized post recommendations for a user"""
     try:

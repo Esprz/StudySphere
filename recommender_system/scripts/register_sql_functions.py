@@ -1,6 +1,7 @@
 import os
 import psycopg
 from dotenv import load_dotenv
+from loguru import logger
 
 load_dotenv()
 
@@ -14,7 +15,7 @@ def run_create_schema(cursor):
     with open(CREATE_SCHEMA_FILE, "r") as f:
         schema_sql = f.read()
     cursor.execute(schema_sql)
-    print("✅ Ran create_schema.sql")
+    logger.info("✅ Ran create_schema.sql")
 
 
 def register_sql_functions(cursor):
@@ -23,7 +24,7 @@ def register_sql_functions(cursor):
             with open(os.path.join(SQL_FUNCTIONS_DIR, filename), "r") as f:
                 sql = f.read()
             cursor.execute(sql)
-            print(f"✅ Registered SQL function: {filename}")
+            logger.info(f"✅ Registered SQL function: {filename}")
 
 
 def main():

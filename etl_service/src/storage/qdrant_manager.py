@@ -12,7 +12,9 @@ class QdrantManager:
         }
         self.dim_post = dim_post
         self.dim_user = dim_user
-        self._create_collections()
+        
+        if not all(self.client.collection_exists(collection_name=collection_name) for collection_name in self.collections.values()):
+            self._create_collections()
 
     def _create_collections(self):
         for collection_name in self.collections.values():

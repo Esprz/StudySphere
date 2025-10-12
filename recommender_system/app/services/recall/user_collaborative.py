@@ -5,11 +5,11 @@ from .base import RecallBase
 
 
 class UserCollaborativeRecall(RecallBase):
-    def __init__(self, vector_store, postgres_store):
+    def __init__(self, vector_store, db):
         super().__init__(
             name="user_collaborative",
             vector_store=vector_store,
-            postgres_store=postgres_store,
+            db=db,
         )
 
     def get_candidates(

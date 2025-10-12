@@ -1,15 +1,12 @@
-import os
 import psycopg
 from psycopg.rows import dict_row
 from typing import List, Dict, Any, Tuple, Optional
-from dotenv import load_dotenv
-
-load_dotenv()
+from .env_config import EnvConfig
 
 
 class PostgresStore:
     def __init__(self):
-        self.db_connection_string = os.getenv("DATABASE_URL")
+        self.db_connection_string = EnvConfig.DATABASE_URL
         # row_factory=dict_row gives you dict-like rows
         self.psycopg_conn = psycopg.connect(
             self.db_connection_string, row_factory=dict_row
