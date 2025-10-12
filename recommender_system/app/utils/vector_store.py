@@ -7,7 +7,7 @@ class VectorStore:
     """High-level vector storage with unified CRUD operations"""
 
     def __init__(self, qdrant_manager: QdrantManager):
-        self = qdrant_manager
+        self.vector_store = qdrant_manager
 
     # ==================== UNIFIED CRUD METHODS ====================
 
@@ -27,11 +27,11 @@ class VectorStore:
 
     def get_post_vector(self, post_id: str) -> Optional[List[float]]:
         """Convenience method for getting post vectors"""
-        return self.get_vector(post_id, "realtime_posts")
+        return self.vector_store.get_vector(post_id, "realtime_posts")
 
     def get_user_vector(self, user_id: str) -> Optional[List[float]]:
         """Convenience method for getting user vectors"""
-        return self.get_vector(user_id, "realtime_users")
+        return self.vector_store. get_vector(user_id, "realtime_users")
 
     # ==================== SEARCH METHODS ====================
 
@@ -41,7 +41,7 @@ class VectorStore:
             post_ids, scores = self.vector_store.search_vectors(
                 "realtime_posts", user_vector, k
             )
-            logger.info(f"✅ Searched {len(post_ids)} posts for user {user_id}")
+            logger.info(f"✅ Searched {len(post_ids)} posts for user {user_vector}")
             return post_ids, scores
         except Exception as e:
             logger.error(f"❌ Failed to search posts: {e}")
@@ -53,7 +53,7 @@ class VectorStore:
             user_ids, scores = self.vector_store.search_vectors(
                 "realtime_users", post_vector, k
             )
-            logger.info(f"✅ Searched {len(user_ids)} users for post {post_id}")
+            logger.info(f"✅ Searched {len(user_ids)} users for post {post_vector}")
             return user_ids, scores
         except Exception as e:
             logger.error(f"❌ Failed to search users: {e}")

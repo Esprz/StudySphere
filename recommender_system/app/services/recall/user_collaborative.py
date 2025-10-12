@@ -23,16 +23,12 @@ class UserCollaborativeRecall(RecallBase):
     ) -> List[str]:
 
         # 1) similar users (neighbors) with similarity scores
-        neighbors = self.postgres_store.get_user_topk_neighbors(
-            user_id, k=k, version=version
-        )
+        neighbors = self.db.get_user_topk_neighbors(user_id, k=k, version=version)
         if not neighbors:
             return []
 
         # 2) items the target user has already interacted with (filter out)
-        seen_items = set(
-            self.postgres_store.get_user_interacted_item_ids(user_id, version=version)
-        )
+        seen_items = set(self.db.get_user_interacted_item_ids(user_id, version=version))
 
         # 3) aggregate scores from neighbors' favorite items
         scores = defaultdict(float)
@@ -43,7 +39,7 @@ class UserCollaborativeRecall(RecallBase):
                 continue
 
             # neighbor's top items with their interest scores
-            nb_items = self.postgres_store.get_user_topk_posts(
+            nb_items = self.db.get_user_topk_posts(
                 nb_id, k=per_neighbor_k, version=version
             )
             for row in nb_items:
