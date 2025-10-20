@@ -112,18 +112,13 @@ async def invalidate_user_cache(user_id: str):
 
 
 @router.post("/warm-up-cache")
-async def warm_up_cache(
-    user_ids: List[str],
-    context: Optional[Dict[str, Any]] = None
-):
+async def warm_up_cache(user_ids: List[str], context: Optional[Dict[str, Any]] = None):
     """Pre-warm cache for multiple users"""
     try:
         await recommendation_pipeline.warm_up_cache(user_ids, context)
         return {"message": f"Cache warmed up for {len(user_ids)} users"}
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error warming up cache: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error warming up cache: {str(e)}")
 
 
 @router.get("/cache/stats")

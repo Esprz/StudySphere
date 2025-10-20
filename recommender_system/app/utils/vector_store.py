@@ -31,7 +31,7 @@ class VectorStore:
 
     def get_user_vector(self, user_id: str) -> Optional[List[float]]:
         """Convenience method for getting user vectors"""
-        return self.vector_store. get_vector(user_id, "realtime_users")
+        return self.vector_store.get_vector(user_id, "realtime_users")
 
     # ==================== SEARCH METHODS ====================
 

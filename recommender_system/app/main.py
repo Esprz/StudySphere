@@ -56,16 +56,12 @@ async def health_check():
             "redis": "connected" if redis_healthy else "disconnected",
             "services": {
                 "recommender": "running",
-                "redis": "connected" if redis_healthy else "disconnected"
-            }
+                "redis": "connected" if redis_healthy else "disconnected",
+            },
         }
     except Exception as e:
         logger.error(f"Health check failed: {e}")
-        return {
-            "status": "unhealthy",
-            "redis": "error",
-            "error": str(e)
-        }
+        return {"status": "unhealthy", "redis": "error", "error": str(e)}
 
 
 @app.get("/cache/stats")

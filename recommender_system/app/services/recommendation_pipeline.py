@@ -36,7 +36,7 @@ class RecommendationPipeline:
 
         # Generate cache key
         cache_key = self._generate_cache_key(user_id, context, limit)
-        
+
         # Try to get from cache first
         if use_cache:
             try:
@@ -69,7 +69,11 @@ class RecommendationPipeline:
 
         metrics["total_time"] = time.time() - start_time
 
-        response = {"recommendations": diversified_results, "user_id": user_id, "cached": False}
+        response = {
+            "recommendations": diversified_results,
+            "user_id": user_id,
+            "cached": False,
+        }
 
         if detailed:
             response["metrics"] = metrics
@@ -78,9 +82,7 @@ class RecommendationPipeline:
         if use_cache:
             try:
                 await self.redis.set(
-                    cache_key, 
-                    response, 
-                    ttl=self.redis.CACHE_TTL["recommendations"]
+                    cache_key, response, ttl=self.redis.CACHE_TTL["recommendations"]
                 )
                 logger.info(f"Cached recommendations for user {user_id}")
             except Exception as e:
@@ -195,7 +197,9 @@ class RecommendationPipeline:
             )
             return sorted_candidates[:limit]
 
-    def _generate_cache_key(self, user_id: str, context: Dict[str, Any], limit: int) -> str:
+    def _generate_cache_key(
+        self, user_id: str, context: Dict[str, Any], limit: int
+    ) -> str:
         """Generate a unique cache key for recommendations"""
         # Create a hash of the context to ensure cache key uniqueness
         context_str = json.dumps(context, sort_keys=True)
@@ -205,26 +209,24 @@ class RecommendationPipeline:
     async def _is_cold_start_user(self, user_id: str) -> bool:
         """Check if user is cold start using Redis cache first"""
         cache_key = f"cold_start:{user_id}"
-        
+
         try:
             # Try to get from cache first
             cached_status = await self.redis.get(cache_key)
             if cached_status is not None:
                 return cached_status
-            
+
             # If not in cache, check database
             interaction_count = self.postgres_store.get_user_interaction_count(user_id)
             is_cold_start = interaction_count < 5
-            
+
             # Cache the result
             await self.redis.set(
-                cache_key, 
-                is_cold_start, 
-                ttl=self.redis.CACHE_TTL["cold_start"]
+                cache_key, is_cold_start, ttl=self.redis.CACHE_TTL["cold_start"]
             )
-            
+
             return is_cold_start
-            
+
         except Exception as e:
             logger.warning(f"Cold start check failed, falling back to DB: {e}")
             # Fallback to database check
@@ -240,13 +242,15 @@ class RecommendationPipeline:
         except Exception as e:
             logger.error(f"Failed to invalidate cache for user {user_id}: {e}")
 
-    async def warm_up_cache(self, user_ids: List[str], context: Dict[str, Any] = None) -> None:
+    async def warm_up_cache(
+        self, user_ids: List[str], context: Dict[str, Any] = None
+    ) -> None:
         """Pre-warm cache for multiple users"""
         if context is None:
             context = {}
-            
+
         logger.info(f"Warming up cache for {len(user_ids)} users")
-        
+
         for user_id in user_ids:
             try:
                 # Generate recommendations and cache them

@@ -44,4 +44,4 @@ recommendation_pipeline = RecommendationPipeline(
     diversity_service=diversity_service,
 )
 
-__all__ = ['redis_config', 'recommendation_pipeline', 'postgres_store']
+__all__ = ["redis_config", "recommendation_pipeline", "postgres_store"]
