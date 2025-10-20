@@ -3,7 +3,7 @@ from typing import Dict, List, Any, Optional
 from pydantic import BaseModel
 from fastapi import HTTPException
 
-from ..config import recommendation_pipeline, postgres_store
+from ..config import recommendation_pipeline, postgres_store, redis_config
 from ..utils.env_config import EnvConfig
 
 router = APIRouter(prefix="/recommendations", tags=["recommendations"])
@@ -54,7 +54,7 @@ async def get_post_recommendations(
         if time_of_day:
             context["time_of_day"] = time_of_day
 
-        recommendations = recommendation_pipeline.recommend(
+        recommendations = await recommendation_pipeline.recommend(
             user_id=user_id, context=context, limit=limit
         )
 
@@ -96,4 +96,43 @@ async def get_post_recommendations(
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Error generating recommendations: {str(e)}"
+        )
+
+
+@router.post("/{user_id}/invalidate-cache")
+async def invalidate_user_cache(user_id: str):
+    """Invalidate cached recommendations for a specific user"""
+    try:
+        await recommendation_pipeline.invalidate_user_cache(user_id)
+        return {"message": f"Cache invalidated for user {user_id}"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error invalidating cache: {str(e)}"
+        )
+
+
+@router.post("/warm-up-cache")
+async def warm_up_cache(
+    user_ids: List[str],
+    context: Optional[Dict[str, Any]] = None
+):
+    """Pre-warm cache for multiple users"""
+    try:
+        await recommendation_pipeline.warm_up_cache(user_ids, context)
+        return {"message": f"Cache warmed up for {len(user_ids)} users"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error warming up cache: {str(e)}"
+        )
+
+
+@router.get("/cache/stats")
+async def get_cache_stats():
+    """Get Redis cache statistics"""
+    try:
+        stats = await redis_config.get_cache_stats()
+        return {"cache_stats": stats}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error getting cache stats: {str(e)}"
         )

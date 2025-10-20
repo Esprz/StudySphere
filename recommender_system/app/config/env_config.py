@@ -34,3 +34,16 @@ class EnvConfig:
     # Recommendation Configuration
     DEFAULT_RECOMMENDATION_LIMIT = int(os.getenv("DEFAULT_RECOMMENDATION_LIMIT", "20"))
     MAX_RECOMMENDATION_LIMIT = int(os.getenv("MAX_RECOMMENDATION_LIMIT", "100"))
+
+    # Redis Configuration
+    REDIS_HOST = os.getenv("REDIS_HOST", "redis")
+    REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+    REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
+    REDIS_DB = int(os.getenv("REDIS_DB", "1"))
+    REDIS_MAX_CONNECTIONS = int(os.getenv("REDIS_MAX_CONNECTIONS", "20"))
+
+    # CORS Configuration
+    CORS_ORIGINS = ["*"]
+    CORS_CREDENTIALS = True
+    CORS_METHODS = ["*"]
+    CORS_HEADERS = ["*"]
