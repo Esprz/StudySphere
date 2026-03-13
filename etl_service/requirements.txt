@@ -1,15 +1,15 @@
 # Kafka
 confluent-kafka
+
 # Utilities
 python-dotenv
 loguru
 
 # Database
-sqlalchemy[asyncio,postgresql]
-psycopg
+sqlalchemy
+psycopg[binary]
 
 # Vector Database
-faiss-cpu
 qdrant_client
 
 # Data Processing
@@ -17,7 +17,5 @@ pandas
 numpy
 
 # Text Processing & Embeddings
+# torch is installed separately — see Dockerfile (CUDA) or scripts/setup-local.sh (auto-detect)
 sentence-transformers
-
-#logging
-loguru

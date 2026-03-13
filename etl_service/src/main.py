@@ -13,6 +13,7 @@ from src.storage.qdrant_manager import QdrantManager
 from src.storage.vector_store import VectorStore
 from src.consumers.behavior_event_consumer import BehaviorEventConsumer
 from src.consumers.post_event_consumer import PostEventConsumer
+from src.consumers.user_event_consumer import UserEventConsumer
 
 
 class ETLService:
@@ -50,6 +51,7 @@ class ETLService:
         self.consumers = [
             PostEventConsumer(self.vector_store, self.postgres_store),
             BehaviorEventConsumer(self.vector_store, self.postgres_store),
+            UserEventConsumer(self.vector_store, self.postgres_store),
         ]
 
         logger.info(f"📝 {len(self.consumers)} consumers configured")

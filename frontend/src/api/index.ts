@@ -6,4 +6,5 @@ export * from './save';
 export * from './follow';
 export * from './comment';
 export * from './user';
+export * from './recommendation';
 

@@ -1,12 +1,18 @@
 import Timer from "@/components/ui/shared/Timer";
 import Loader from "@/components/ui/shared/Loader";
 import PostCard from "@/components/ui/shared/PostCard";
-import { useGetRecentPosts } from "@/lib/react-query/queriesAndMutations";
+import { useGetRecommendedFeed, useGetRecentPosts } from "@/lib/react-query/queriesAndMutations";
 import GoalsCard from "@/components/ui/shared/GoalsCard";
 
 
 const Home = () => {
-  const { data: posts, isPending: isPostLoading } = useGetRecentPosts();
+  const { data: recData, isPending: isRecLoading } = useGetRecommendedFeed();
+  const { data: recentPosts, isPending: isRecentLoading } = useGetRecentPosts();
+
+  const posts = recData?.posts?.length > 0 ? recData.posts : recentPosts;
+  const isLoading = isRecLoading && isRecentLoading;
+  const source = recData?.posts?.length > 0 ? recData.source : 'recent';
+
   return (
     <div className="grid grid-cols-8 gap-4 w-full">
       {/* Feed */}
@@ -22,7 +28,7 @@ const Home = () => {
         {/* Posts */}        
         <div className="home-posts">
           <h2 className="h3-bold md:h2-bold text-left w-full">        
-            {isPostLoading && !posts? (
+            {isLoading && !posts? (
               <Loader />
             ) : (
               posts?.length === 0 ? (

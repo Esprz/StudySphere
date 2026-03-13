@@ -26,6 +26,9 @@ export enum QUERY_KEYS {
     // LIKE KEYS
     LIKE_LIST = 'likeList',
 
+    // RECOMMENDATION KEYS
+    GET_RECOMMENDED_FEED = "getRecommendedFeed",
+
     // SAVE KEYS
     SAVED_POSTS = 'savedPosts',
 

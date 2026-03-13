@@ -20,7 +20,9 @@ class KafkaConfig:
             topics={
                 "post_events": os.getenv("POST_TOPIC", "post-events"),
                 "behavior_events": os.getenv("BEHAVIOR_TOPIC", "behavior-events"),
+                "user_events": os.getenv("USER_TOPIC", "user-events"),
                 "search_events": os.getenv("SEARCH_TOPIC", "search-events"),
+                "embedding_updates": os.getenv("EMBEDDING_UPDATES_TOPIC", "embedding-updates"),
             },
             consumer_config={
                 "auto.offset.reset": "latest",

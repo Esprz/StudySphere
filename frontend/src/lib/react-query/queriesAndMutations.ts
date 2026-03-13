@@ -18,7 +18,8 @@ import { signIn, signUp, getCurrentUser,
     followUser,
     unfollowUser,
     getFollowees,
-    getFollowers} from '@/api';
+    getFollowers,
+    getRecommendedFeed} from '@/api';
 import { PNewPost, PNewUser, PUpdatedPost } from '@/types/postgresTypes';
 import { useUserContext } from '@/context/AuthContext';
 
@@ -72,6 +73,13 @@ export const useGetRecentPosts = () => {
     return useQuery({
         queryKey: [QUERY_KEYS.GET_RECENT_POSTS],
         queryFn: getRecentPosts,
+    })
+}
+
+export const useGetRecommendedFeed = () => {
+    return useQuery({
+        queryKey: [QUERY_KEYS.GET_RECOMMENDED_FEED],
+        queryFn: () => getRecommendedFeed(),
     })
 }
 

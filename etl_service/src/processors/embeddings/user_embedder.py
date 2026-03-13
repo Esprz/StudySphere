@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from datetime import datetime
 from typing import List, Optional
@@ -12,9 +13,8 @@ class UserEmbedder:
         self.vector_store = vector_store
         self.text_embedder = text_embedder or TextEmbedder()
 
-        # Configuration parameters
-        self.decay_rate = 0.95  # 5% decay per day
-        self.learning_rate = 0.1  # Embedding update learning rate
+        self.decay_rate = float(os.getenv("USER_EMBED_DECAY_RATE", "0.95"))
+        self.learning_rate = float(os.getenv("USER_EMBED_LEARNING_RATE", "0.1"))
 
         # Behavior weights for different user actions
         self.behavior_weights = {
@@ -91,9 +91,13 @@ class UserEmbedder:
             new_embedding = current_embedding + update_weight * (
                 target_vector - current_embedding
             )
-            new_embedding = new_embedding / np.linalg.norm(new_embedding)
 
-            # Update in vector store
+            norm = np.linalg.norm(new_embedding)
+            if norm > 0:
+                new_embedding = new_embedding / norm
+            else:
+                new_embedding = target_vector / max(np.linalg.norm(target_vector), 1e-9)
+
             self.vector_store.update_user_vector(user_id, new_embedding.tolist())
 
             logger.info(

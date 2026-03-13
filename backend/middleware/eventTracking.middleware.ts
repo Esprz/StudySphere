@@ -4,7 +4,7 @@ import { eventService } from '../services/eventService';
 export const trackPageView = (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId;
     const postId = req.params.post_id;
-    const sessionId = req.sessionID || req.headers['x-session-id'] as string;
+    const sessionId = req.headers['x-session-id'] as string | undefined;
     
     if (userId && postId) {
         setImmediate(async () => {
@@ -22,7 +22,7 @@ export const trackPageView = (req: Request, res: Response, next: NextFunction) =
 export const trackSearch = (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId;
     const query = req.query.q as string;
-    const sessionId = req.sessionID || req.headers['x-session-id'] as string;
+    const sessionId = req.headers['x-session-id'] as string | undefined;
     
     if (userId && query) {
         setImmediate(async () => {

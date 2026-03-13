@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
+from sqlalchemy.dialects.postgresql import insert
 from src.models.postgres_models import BehaviorEvent, Base
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import uuid
 from loguru import logger
 
@@ -20,25 +21,40 @@ class PostgresStore:
         event_type: str = None,
         search_term: str = None,
         extra_data: Dict[str, Any] = None,
+        event_id: Optional[str] = None,
     ) -> bool:
-        """Store behavior event"""
         try:
+            row = {
+                "id": str(uuid.uuid4()),
+                "event_id": event_id,
+                "user_id": user_id,
+                "post_id": post_id,
+                "event_type": event_type,
+                "search_term": search_term,
+                "extra_data": extra_data,
+            }
+
             with self.get_session() as session:
-                behavior_event = BehaviorEvent(
-                    id=str(uuid.uuid4()),
-                    user_id=user_id,
-                    post_id=post_id,
-                    event_type=event_type,
-                    search_term=search_term,
-                    extra_data=extra_data,
-                )
-                session.add(behavior_event)
-                session.commit()
+                if event_id:
+                    stmt = (
+                        insert(BehaviorEvent)
+                        .values(**row)
+                        .on_conflict_do_nothing(index_elements=["event_id"])
+                    )
+                    result = session.execute(stmt)
+                    session.commit()
+                    if result.rowcount == 0:
+                        logger.debug(f"Duplicate event_id {event_id} skipped")
+                        return False
+                else:
+                    session.add(BehaviorEvent(**row))
+                    session.commit()
+
                 logger.info(
-                    f"✅ Behavior event stored successfully for user: {user_id} and post: {post_id}"
+                    f"Behavior event stored: user={user_id} type={event_type}"
                 )
                 return True
 
         except Exception as e:
-            logger.error(f"❌ Error storing behavior event: {e}")
+            logger.error(f"Error storing behavior event: {e}")
             return False

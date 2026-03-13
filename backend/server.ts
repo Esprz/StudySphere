@@ -5,15 +5,13 @@ import cookieParser from 'cookie-parser';
 import prisma from './utils/prisma';
 import router from './routes';
 import KafkaClient from './core/messaging/KafkaClient';
+import redis, { initRedis, isRedisConnected } from './utils/redis';
 
-// Configure dotenv
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT;
 
-
-// Middleware
 app.use(cors({
     origin: 'http://localhost:5173',
     credentials: true, 
@@ -21,12 +19,33 @@ app.use(cors({
 app.use(cookieParser());
 app.use(express.json());
 
-// Routes
 app.use('/api', router);
 
-// Example route to test the server
-app.get('/', (req: Request, res: any) => {
+app.get('/', (_req, res) => {
     res.send('Server is running!');
+});
+
+app.get('/api/health', async (_req, res) => {
+    const checks: Record<string, string> = {};
+
+    try {
+        await prisma.$queryRaw`SELECT 1`;
+        checks.postgres = 'ok';
+    } catch {
+        checks.postgres = 'down';
+    }
+
+    checks.redis = isRedisConnected() ? 'ok' : 'down';
+
+    try {
+        const kafkaClient = KafkaClient.getInstance();
+        checks.kafka = kafkaClient.isKafkaAvailable() ? 'ok' : 'down';
+    } catch {
+        checks.kafka = 'down';
+    }
+
+    const allOk = Object.values(checks).every(v => v === 'ok');
+    res.status(allOk ? 200 : 503).json({ status: allOk ? 'healthy' : 'degraded', checks });
 });
 
 // Initialize Kafka
@@ -50,6 +69,7 @@ async function initializeKafka() {
 app.listen(PORT, async () => {
     console.log(`🚀 StudySphere Backend running at http://localhost:${PORT}`);
     await initializeKafka();
+    await initRedis();
 });
 
 // Graceful shutdown
@@ -58,6 +78,7 @@ const gracefulShutdown = async () => {
     try {
         const kafkaClient = KafkaClient.getInstance();
         await kafkaClient.disconnect();
+        await redis.quit();
         await prisma.$disconnect();
     } catch (error) {
         console.error('Error during shutdown:', error);

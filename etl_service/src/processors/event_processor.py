@@ -2,6 +2,7 @@ from typing import List, Optional
 from .embeddings.text_embedder import TextEmbedder
 from .embeddings.post_embedder import PostEmbedder
 from .embeddings.user_embedder import UserEmbedder
+from src.producers.embedding_producer import EmbeddingProducer
 from loguru import logger
 
 
@@ -11,14 +12,18 @@ class EventProcessor:
     def __init__(
         self, vector_store, postgres_store, model_name: str = "all-MiniLM-L6-v2"
     ):
-        # Initialize base components
         self.vector_store = vector_store
         self.postgres_store = postgres_store
 
-        # Initialize embedder components
         self.text_embedder = TextEmbedder(model_name)
         self.post_embedder = PostEmbedder(vector_store, self.text_embedder)
         self.user_embedder = UserEmbedder(vector_store, self.text_embedder)
+
+        try:
+            self.embedding_producer = EmbeddingProducer()
+        except Exception as e:
+            logger.warning(f"EmbeddingProducer unavailable: {e}")
+            self.embedding_producer = None
 
     # ==================== USER EVENTS ====================
 
@@ -51,19 +56,20 @@ class EventProcessor:
         author_id: str = None,
         timestamp: str = None,
     ) -> bool:
-        """Process post creation event"""
-        # 1. Process post embedding
         post_success = self.post_embedder.process_post_created(
             post_id, title, content, tags
         )
+        if post_success:
+            self._notify_embedding_updated("post", post_id)
 
-        # 2. If author info available, update author embedding
         user_success = True
         if post_success and author_id and timestamp:
             user_success = self.user_embedder.update_from_post_interaction(
                 author_id, post_id, "POST_CREATED", timestamp
             )
-        
+            if user_success:
+                self._notify_embedding_updated("user", author_id)
+
             self.postgres_store.store_behavior_event(
                 user_id=author_id,
                 post_id=post_id,
@@ -81,18 +87,19 @@ class EventProcessor:
         author_id: str = None,
         timestamp: str = None,
     ) -> bool:
-        """Process post update event"""
-        # 1. Update post embedding
         post_success = self.post_embedder.process_post_updated(
             post_id, title, content, tags
         )
+        if post_success:
+            self._notify_embedding_updated("post", post_id)
 
-        # 2. If author info available, update author embedding
         user_success = True
         if post_success and author_id and timestamp:
             user_success = self.user_embedder.update_from_post_interaction(
-                author_id, post_id, "POST_CREATED", timestamp
+                author_id, post_id, "POST_UPDATED", timestamp
             )
+            if user_success:
+                self._notify_embedding_updated("user", author_id)
 
         return post_success and user_success
 
@@ -105,11 +112,11 @@ class EventProcessor:
     def process_post_interaction(
         self, user_id: str, post_id: str, behavior_type: str, timestamp: str
     ) -> bool:
-        """Process user-post interaction behavior"""    
         success = self.user_embedder.update_from_post_interaction(
             user_id, post_id, behavior_type, timestamp
         )
         if success:
+            self._notify_embedding_updated("user", user_id)
             self.postgres_store.store_behavior_event(
                 user_id=user_id,
                 post_id=post_id,
@@ -118,9 +125,9 @@ class EventProcessor:
         return success
 
     def process_search_behavior(self, user_id: str, search_query: str, timestamp: str) -> bool:
-        """Process search behavior"""
         success = self.user_embedder.update_from_search(user_id, search_query, timestamp)
         if success:
+            self._notify_embedding_updated("user", user_id)
             self.postgres_store.store_behavior_event(
                 user_id=user_id,
                 event_type="SEARCH",
@@ -130,14 +137,18 @@ class EventProcessor:
 
     # ==================== UTILITY METHODS ====================
 
+    def _notify_embedding_updated(self, entity_type: str, entity_id: str):
+        if self.embedding_producer:
+            try:
+                self.embedding_producer.publish(entity_type, entity_id)
+            except Exception as e:
+                logger.warning(f"Failed to publish embedding update: {e}")
+
     def get_post_embedding(self, post_id: str) -> Optional[List[float]]:
-        """Get post embedding"""
         return self.post_embedder.get_post_embedding(post_id)
 
     def get_user_embedding(self, user_id: str) -> Optional[List[float]]:
-        """Get user embedding"""
         return self.user_embedder.get_user_embedding(user_id)
 
     def generate_text_embedding(self, text: str) -> Optional[List[float]]:
-        """Generate text embedding"""
         return self.text_embedder.generate_embedding(text)

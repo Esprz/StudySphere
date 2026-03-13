@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { searchPosts } from '../controllers/searchController';
+import { trackSearch } from '../middleware/eventTracking.middleware';
 
 const router = Router();
 
-router.get('/', searchPosts);
+router.get('/', trackSearch, searchPosts);
 
 
 

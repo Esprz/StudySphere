@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { createPost, updatePost, deletePost, getPostById, getAllPosts, getRecentPosts, getPaginatedPosts, getPostByUser, getFolloweePosts, getFriendsPosts} from '../controllers/postController';
 import auth from '../middleware/authMiddleware';
+import { trackPageView } from '../middleware/eventTracking.middleware';
 
 const router = Router();
 
@@ -12,7 +13,7 @@ router.get('/friends', auth, getFriendsPosts);
 
 router.get('/', getAllPosts);
 router.get('/recent', getRecentPosts);
-router.get('/:post_id', getPostById);
+router.get('/:post_id', trackPageView, getPostById);
 router.post('/by_user', getPostByUser);
 router.post('/infinite', getPaginatedPosts);
 

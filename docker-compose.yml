@@ -11,6 +11,8 @@ services:
     tty: true
     environment:
       - CHOKIDAR_USEPOLLING=true
+      # Backend is exposed on 3000 in this compose file; browser must use that for API calls.
+      - VITE_SERVER_BASE_URL=http://localhost:3000
 
   backend:
     build:
