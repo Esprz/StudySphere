@@ -1,12 +1,19 @@
-class DuplicateFilter:
-    def __init__(self):
-        self.name = "duplicate_filter"
+from typing import List, Dict, Any
+from .base import FilterBase
 
-    def filter(self, user_id, candidates, entity_type="posts", context=None):
+
+class DuplicateFilter(FilterBase):
+    def __init__(self):
+        super().__init__(name="duplicate_filter")
+
+    async def filter_candidates(
+        self, user_id: str, candidates: List[Dict[str, Any]], context: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         seen = set()
-        filtered_candidates = []
+        unique = []
         for candidate in candidates:
-            if candidate not in seen:
-                seen.add(candidate)
-                filtered_candidates.append(candidate)
-        return filtered_candidates
+            item_id = candidate.get("item_id")
+            if item_id and item_id not in seen:
+                seen.add(item_id)
+                unique.append(candidate)
+        return unique

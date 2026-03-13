@@ -4,7 +4,7 @@ import numpy as np
 
 def uuid_to_int64(uuid_str):
     return np.int64(
-        uuid.UUID(uuid_str).int % (2**63 - 1)
+        uuid.UUID(uuid_str).int % (2 ** 63 - 1)
     )  # stay in positive int64 range
 
 

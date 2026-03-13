@@ -1,8 +1,5 @@
-# Config package for recommender system
 from .redis_config import redis_config
-from .env_config import *
 
-# Import and initialize services
 from ..services.recall.content_based import ContentBasedRecall
 from ..services.recall.user_collaborative import UserCollaborativeRecall
 from ..services.recall.item_collaborative import ItemCollaborativeRecall
@@ -20,7 +17,6 @@ from ..utils.qdrant_manager import QdrantManager
 from ..utils.vector_store import VectorStore
 from ..utils.postgres_store import PostgresStore
 
-# Initialize services
 postgres_store = PostgresStore()
 qdrant_manager = QdrantManager()
 vector_store = VectorStore(qdrant_manager)
@@ -42,6 +38,8 @@ recommendation_pipeline = RecommendationPipeline(
     recall_services=recall_services,
     filter_services=filter_services,
     diversity_service=diversity_service,
+    postgres_store=postgres_store,
+    redis=redis_config,
 )
 
 __all__ = ["redis_config", "recommendation_pipeline", "postgres_store"]

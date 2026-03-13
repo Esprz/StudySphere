@@ -21,12 +21,8 @@ class PostgresStore:
     def get_user_topk_posts(
         self, user_id: str, k: int, version: str = "v1"
     ) -> List[Dict[str, Any]]:
-        """
-        Return the user's top-K interested posts with scores.
-        Output: [{post_id, interest_score, rank}]
-        """
         sql = """
-            SELECT post_id, interest_score, rank
+            SELECT item_id, interest_score, rank
             FROM user_interested_items
             WHERE user_id = %s AND version = %s
             ORDER BY rank ASC
@@ -34,8 +30,7 @@ class PostgresStore:
         """
         with self.psycopg_conn.cursor() as cur:
             cur.execute(sql, (user_id, version, k))
-            rows = cur.fetchall()  # list of dicts
-        # keep shape consistent
+            rows = cur.fetchall()
         return rows
 
     def get_user_topk_neighbors(
@@ -173,7 +168,19 @@ class PostgresStore:
             posts = cur.fetchall()
         return posts
 
-    # ---------- small helpers ----------
+    def get_user_interaction_count(self, user_id: str) -> int:
+        sql = """
+            SELECT COUNT(*) as cnt
+            FROM etl_behavior_events
+            WHERE user_id = %s
+        """
+        try:
+            with self.psycopg_conn.cursor() as cur:
+                cur.execute(sql, (user_id,))
+                row = cur.fetchone()
+                return row["cnt"] if row else 0
+        except Exception:
+            return 0
 
     def close(self):
         try:

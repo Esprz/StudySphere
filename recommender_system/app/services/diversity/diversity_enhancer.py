@@ -1,12 +1,21 @@
-class DiversityEnhancer:
+from typing import List, Dict, Any
+from .base import DiversityBase
+
+
+class DiversityEnhancer(DiversityBase):
     def __init__(self):
-        self.name = "diversity_enhancer"
+        super().__init__(name="diversity_enhancer")
 
-    def enhance(self, user_id, candidates, entity_type="posts", context=None):
-        # Implement logic to enhance diversity in the candidate list
-        diverse_candidates = self.get_diverse_candidates(candidates)
-        return diverse_candidates
-
-    def get_diverse_candidates(self, candidates):
-        # Placeholder: Implement your diversity enhancement logic here
-        return candidates
+    async def diversify(
+        self,
+        user_id: str,
+        candidates: List[Dict[str, Any]],
+        context: Dict[str, Any],
+        limit: int,
+    ) -> List[Dict[str, Any]]:
+        # Placeholder: return top-scored candidates up to limit.
+        # Full MMR-based diversity logic added in Spec 5.
+        sorted_candidates = sorted(
+            candidates, key=lambda x: x.get("score", 0.0), reverse=True
+        )
+        return sorted_candidates[:limit]

@@ -1,13 +1,18 @@
-class SeenFilter:
+from typing import List, Dict, Any
+from .base import FilterBase
+
+
+class SeenFilter(FilterBase):
     def __init__(self):
-        self.name = "seen_filter"
+        super().__init__(name="seen_filter")
 
-    def filter(self, user_id, candidates, entity_type="posts", context=None):
-        # Placeholder implementation: In a real scenario, this would check against a database or cache
-        seen_items = self.get_seen_items(user_id, entity_type)
-        filtered_candidates = [item for item in candidates if item not in seen_items]
-        return filtered_candidates
+    async def filter_candidates(
+        self, user_id: str, candidates: List[Dict[str, Any]], context: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        seen_items = self._get_seen_items(user_id)
+        return [c for c in candidates if c.get("item_id") not in seen_items]
 
-    def get_seen_items(self, user_id, entity_type):
-        # Placeholder: Return an empty list for demonstration purposes
-        return []
+    def _get_seen_items(self, user_id: str) -> set:
+        # Placeholder: returns empty set. Full implementation in Spec 5
+        # (query etl_behavior_events for POST_VIEWED by this user).
+        return set()
