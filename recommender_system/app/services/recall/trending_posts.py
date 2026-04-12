@@ -20,9 +20,30 @@ class TrendingPostsRecall(RecallBase):
             with session.cursor() as cursor:
                 cursor.execute(
                     """
-                    SELECT item_id, popularity
-                    FROM item_popularity
-                    ORDER BY popularity DESC
+                    SELECT
+                        p.post_id AS item_id,
+                        (
+                            COALESCE(l.like_count, 0) * 2
+                            + COALESCE(s.save_count, 0) * 3
+                            + COALESCE(c.comment_count, 0)
+                        )::float AS popularity
+                    FROM "Post" p
+                    LEFT JOIN (
+                        SELECT post_id, COUNT(*) AS like_count
+                        FROM "Like"
+                        GROUP BY post_id
+                    ) l ON l.post_id = p.post_id
+                    LEFT JOIN (
+                        SELECT post_id, COUNT(*) AS save_count
+                        FROM "Save"
+                        GROUP BY post_id
+                    ) s ON s.post_id = p.post_id
+                    LEFT JOIN (
+                        SELECT post_id, COUNT(*) AS comment_count
+                        FROM "Comment"
+                        GROUP BY post_id
+                    ) c ON c.post_id = p.post_id
+                    ORDER BY popularity DESC, p.created_at DESC
                     LIMIT %s
                     """,
                     (k,),

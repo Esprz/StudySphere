@@ -54,6 +54,35 @@ describe('Auth Routes', () => {
         );
     });
 
+    test('POST /auth/sign-up should fall back to name when display_name is omitted', async () => {
+        const newUser = {
+            username: 'testuser',
+            name: 'Test User',
+            email: 'test@example.com',
+            password: 'password123',
+        };
+
+        const mockResponse = {
+            user: { user_id: '1', username: newUser.username, display_name: newUser.name, email: newUser.email },
+            accessToken: 'access-token',
+            refreshToken: 'refresh-token',
+        };
+
+        (authService.signUp as jest.Mock).mockResolvedValue(mockResponse);
+
+        const res = await request(app).post('/auth/sign-up').send(newUser);
+
+        expect(res.status).toBe(HTTP.OK.code);
+        expect(authService.signUp).toHaveBeenCalledWith(
+            newUser.username,
+            newUser.name,
+            newUser.email,
+            newUser.password,
+            null,
+            null
+        );
+    });
+
     test('POST /auth/sign-in should return tokens for valid credentials', async () => {
         const credentials = { email: 'test@example.com', password: 'password123' };
         const mockResponse = {

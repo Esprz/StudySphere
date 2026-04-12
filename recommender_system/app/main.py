@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import recommendations
-from .config import redis_config
+from .config import recommendation_pipeline, redis_config
 from .utils.env_config import EnvConfig
 from .consumers.embedding_updates_consumer import EmbeddingUpdatesConsumer
 from loguru import logger
@@ -23,6 +23,7 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to connect to Redis: {e}")
 
     consumer = EmbeddingUpdatesConsumer(
+        pipeline=recommendation_pipeline,
         redis_config=redis_config,
         bootstrap_servers=EnvConfig.KAFKA_BROKERS,
     )

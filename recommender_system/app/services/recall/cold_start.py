@@ -22,8 +22,8 @@ class ColdStartRecall(RecallBase):
             with session.cursor() as cursor:
                 cursor.execute(
                     """
-                    SELECT id as item_id
-                    FROM posts
+                    SELECT post_id AS item_id
+                    FROM "Post"
                     ORDER BY created_at DESC
                     LIMIT %s
                     """,

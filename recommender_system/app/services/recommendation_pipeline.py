@@ -82,21 +82,25 @@ class RecommendationPipeline:
 
         if self.redis:
             try:
-                if use_cache:
-                    await self.redis.set(
-                        cache_key, response, ttl=self.redis.CACHE_TTL["recommendations"]
-                    )
+                await self.redis.set(
+                    cache_key, response, ttl=self.redis.CACHE_TTL["recommendations"]
+                )
 
                 feed_key = f"rec:feed:{user_id}"
-                feed_ids = [
-                    r["item_id"] for r in diversified_results if r.get("item_id")
+                feed_entries = [
+                    {
+                        "post_id": recommendation["item_id"],
+                        "score": float(recommendation.get("score", 0.0)),
+                        "source": recommendation.get("source", "unknown"),
+                    }
+                    for recommendation in diversified_results
+                    if recommendation.get("item_id")
                 ]
-                if feed_ids:
-                    await self.redis.set(
-                        feed_key,
-                        feed_ids,
-                        ttl=self.redis.CACHE_TTL["recommendations"],
-                    )
+                await self.redis.set(
+                    feed_key,
+                    feed_entries,
+                    ttl=self.redis.CACHE_TTL["recommendations"],
+                )
 
                 logger.info(f"Cached recs + feed for user {user_id}")
             except Exception as e:
@@ -251,6 +255,7 @@ class RecommendationPipeline:
         try:
             pattern = f"rec:user:{user_id}:*"
             deleted_count = await self.redis.invalidate_pattern(pattern)
+            deleted_count += await self.redis.delete(f"rec:feed:{user_id}")
             logger.info(f"Invalidated {deleted_count} cache entries for user {user_id}")
         except Exception as e:
             logger.error(f"Failed to invalidate cache for user {user_id}: {e}")

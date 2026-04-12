@@ -19,16 +19,30 @@ export const getFeed = async (req: Request, res: Response): Promise<void> => {
       try {
         const cached = await redis.get(`${REC_FEED_PREFIX}${userId}`);
         if (cached) {
-          const postIds: string[] = JSON.parse(cached).slice(0, limit);
+          const parsed = JSON.parse(cached);
+          const postIds: string[] = Array.isArray(parsed)
+            ? parsed
+                .slice(0, limit)
+                .map((entry: string | { post_id?: string; item_id?: string }) =>
+                  typeof entry === 'string' ? entry : entry.post_id || entry.item_id
+                )
+                .filter((postId): postId is string => Boolean(postId))
+            : [];
+
           if (postIds.length > 0) {
             const posts = await prisma.post.findMany({
               where: { post_id: { in: postIds } },
               include: {
                 user: { select: { user_id: true, username: true, avatar_url: true } },
               },
-              orderBy: { created_at: 'desc' },
             });
-            res.status(HTTP.OK.code).json({ posts, source: 'recommended' });
+
+            const postById = new Map(posts.map((post) => [post.post_id, post]));
+            const orderedPosts = postIds
+              .map((postId) => postById.get(postId))
+              .filter((post): post is NonNullable<typeof post> => Boolean(post));
+
+            res.status(HTTP.OK.code).json({ posts: orderedPosts, source: 'recommended' });
             return;
           }
         }

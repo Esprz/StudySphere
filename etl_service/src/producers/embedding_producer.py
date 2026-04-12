@@ -18,17 +18,24 @@ class EmbeddingProducer:
         if err:
             logger.error(f"Embedding event delivery failed: {err}")
 
-    def publish(self, entity_type: str, entity_id: str, version: str = "v1"):
+    def publish(
+        self,
+        embedding_type: str,
+        entity_id: str,
+        source_event_id: str | None = None,
+        priority: str = "NORMAL",
+    ):
         event = {
             "eventId": str(uuid.uuid4()),
             "eventType": "EMBEDDING_UPDATED",
             "aggregateId": entity_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "version": "1",
+            "version": "1.0",
             "data": {
-                "entityType": entity_type,
-                "entityId": entity_id,
-                "embeddingVersion": version,
+                "embeddingType": embedding_type,
+                "updatedAt": datetime.now(timezone.utc).isoformat(),
+                "priority": priority,
+                "sourceEventId": source_event_id,
             },
         }
         self.producer.produce(

@@ -1,8 +1,4 @@
-"""Consumes EMBEDDING_UPDATED events from Kafka with per-entity debouncing.
-
-When an entity's embedding changes, invalidates the user's cached
-recommendation feed so the next request triggers a fresh pipeline run.
-"""
+"""Consumes EMBEDDING_UPDATED events from Kafka with per-user debouncing."""
 
 import asyncio
 import json
@@ -18,8 +14,13 @@ DEBOUNCE_SECONDS = float(__import__("os").getenv("EMBEDDING_DEBOUNCE_SECONDS", "
 
 class EmbeddingUpdatesConsumer:
     def __init__(
-        self, redis_config, bootstrap_servers: str, topic: str = "embedding-updates"
+        self,
+        pipeline,
+        redis_config,
+        bootstrap_servers: str,
+        topic: str = "embedding-updates",
     ):
+        self.pipeline = pipeline
         self.redis = redis_config
         self.topic = topic
         self.bootstrap_servers = bootstrap_servers
@@ -56,8 +57,9 @@ class EmbeddingUpdatesConsumer:
 
                 try:
                     payload = json.loads(msg.value().decode("utf-8"))
-                    entity_type = payload.get("data", {}).get("entityType", "")
-                    entity_id = payload.get("data", {}).get("entityId", "")
+                    data = payload.get("data", {})
+                    entity_type = data.get("embeddingType") or data.get("entityType", "")
+                    entity_id = payload.get("aggregateId") or data.get("entityId", "")
                     if entity_type == "user" and entity_id:
                         with self._lock:
                             self._pending[entity_id] = time.monotonic()
@@ -81,9 +83,11 @@ class EmbeddingUpdatesConsumer:
 
             for user_id in to_flush:
                 try:
-                    if self.redis:
-                        pattern = f"rec:user:{user_id}:*"
-                        await self.redis.invalidate_pattern(pattern)
-                        logger.info(f"Invalidated rec cache for user {user_id}")
+                    await self.pipeline.recommend(
+                        user_id=user_id,
+                        context={},
+                        use_cache=False,
+                    )
+                    logger.info(f"Recomputed recommendation feed for user {user_id}")
                 except Exception as e:
-                    logger.error(f"Cache invalidation failed for {user_id}: {e}")
+                    logger.error(f"Recommendation recompute failed for {user_id}: {e}")

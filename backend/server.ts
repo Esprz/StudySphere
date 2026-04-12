@@ -26,26 +26,45 @@ app.get('/', (_req, res) => {
 });
 
 app.get('/api/health', async (_req, res) => {
-    const checks: Record<string, string> = {};
+    const dependencies: Record<string, string> = {
+        postgres: 'error',
+        redis_cache: 'error',
+        redis_session: 'error',
+        kafka: 'error',
+    };
 
     try {
         await prisma.$queryRaw`SELECT 1`;
-        checks.postgres = 'ok';
+        dependencies.postgres = 'ok';
     } catch {
-        checks.postgres = 'down';
+        dependencies.postgres = 'error';
     }
 
-    checks.redis = isRedisConnected() ? 'ok' : 'down';
+    try {
+        const redisHealthy = isRedisConnected() && (await redis.ping()) === 'PONG';
+        dependencies.redis_cache = redisHealthy ? 'ok' : 'error';
+        dependencies.redis_session = redisHealthy ? 'ok' : 'error';
+    } catch {
+        dependencies.redis_cache = 'error';
+        dependencies.redis_session = 'error';
+    }
 
     try {
         const kafkaClient = KafkaClient.getInstance();
-        checks.kafka = kafkaClient.isKafkaAvailable() ? 'ok' : 'down';
+        dependencies.kafka = kafkaClient.isKafkaAvailable() ? 'ok' : 'error';
     } catch {
-        checks.kafka = 'down';
+        dependencies.kafka = 'error';
     }
 
-    const allOk = Object.values(checks).every(v => v === 'ok');
-    res.status(allOk ? 200 : 503).json({ status: allOk ? 'healthy' : 'degraded', checks });
+    let status: 'ok' | 'degraded' | 'error' = 'ok';
+    if (dependencies.postgres === 'error') {
+        status = 'error';
+    } else if (Object.values(dependencies).some((value) => value === 'error')) {
+        status = 'degraded';
+    }
+
+    const httpStatus = status === 'ok' ? 200 : status === 'degraded' ? 200 : 503;
+    res.status(httpStatus).json({ status, dependencies });
 });
 
 // Initialize Kafka

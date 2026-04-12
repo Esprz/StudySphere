@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import text
 from src.models.postgres_models import BehaviorEvent, Base
 from typing import Dict, Any, Optional
 import uuid
@@ -10,9 +11,40 @@ class PostgresStore:
     def __init__(self, db_config):
         self.db = db_config
         Base.metadata.create_all(bind=self.db.engine)
+        self._ensure_behavior_event_schema()
 
     def get_session(self) -> Session:
         return self.db.get_session()
+
+    def _ensure_behavior_event_schema(self) -> None:
+        """Upgrade the shared ETL table in-place when the local DB is on an older schema."""
+        statements = [
+            """
+            ALTER TABLE etl_behavior_events
+            ADD COLUMN IF NOT EXISTS event_id VARCHAR
+            """,
+            """
+            ALTER TABLE etl_behavior_events
+            ADD COLUMN IF NOT EXISTS extra_data JSON
+            """,
+            """
+            ALTER TABLE etl_behavior_events
+            ADD COLUMN IF NOT EXISTS processed_at TIMESTAMP WITHOUT TIME ZONE
+            """,
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS ix_etl_behavior_events_event_id
+            ON etl_behavior_events (event_id)
+            WHERE event_id IS NOT NULL
+            """,
+        ]
+
+        try:
+            with self.get_session() as session:
+                for statement in statements:
+                    session.execute(text(statement))
+                session.commit()
+        except Exception as e:
+            logger.error(f"Failed to ensure ETL behavior event schema: {e}")
 
     def store_behavior_event(
         self,

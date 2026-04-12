@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import { PrismaClient } from '@prisma/client';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import { USER_ERRORS, GENERAL_ERRORS } from '../constants/errorMessages';
+import { eventService } from './eventService';
 
 const prisma = new PrismaClient();
 
@@ -24,6 +25,12 @@ export const signUp = async (
                 bio,
                 avatar_url
             },
+        });
+
+        await eventService.trackUserCreated(user.user_id, {
+            username: user.username,
+            display_name: user.display_name,
+            email: user.email,
         });
 
         const accessToken = generateAccessToken(user.user_id);

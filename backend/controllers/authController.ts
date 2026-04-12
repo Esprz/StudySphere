@@ -38,8 +38,16 @@ export const signIn = async (req: any, res: any) => {
 // sign up and returns user and token
 export const signUp = async (req: any, res: any) => {
     try {
-        const { username, display_name, email, password, bio = null, avatar_url = null } = req.body;
-        const { user, accessToken, refreshToken } = await authService.signUp(username, display_name, email, password, bio, avatar_url);
+        const { username, display_name, name, email, password, bio = null, avatar_url = null } = req.body;
+        const resolvedDisplayName = display_name || name || username;
+        const { user, accessToken, refreshToken } = await authService.signUp(
+            username,
+            resolvedDisplayName,
+            email,
+            password,
+            bio,
+            avatar_url
+        );
 
         // Set refreshToken in httpOnly cookie for security
         res.cookie('refreshToken', refreshToken, {

@@ -7,11 +7,11 @@ from .env_config import EnvConfig
 class PostgresStore:
     def __init__(self):
         self.db_connection_string = EnvConfig.DATABASE_URL
-        # row_factory=dict_row gives you dict-like rows
         self.psycopg_conn = psycopg.connect(
             self.db_connection_string, row_factory=dict_row
         )
-        self.psycopg_conn.autocommit = False  # explicit tx control if you want
+        # Read-heavy access is simpler and more resilient with autocommit enabled.
+        self.psycopg_conn.autocommit = True
 
     def get_session(self) -> psycopg.Connection:
         return self.psycopg_conn
@@ -138,30 +138,21 @@ class PostgresStore:
 
         sql = """
             SELECT 
-                p.id, 
+                p.post_id,
                 p.title, 
                 p.content, 
+                p.image,
+                p.extra,
                 p.created_at,
                 p.updated_at,
-                u.id as author_id,
-                u.username as author_name,
-                u.avatar_url as author_avatar,
-                COALESCE(
-                    (SELECT json_agg(
-                        json_build_object(
-                            'id', t.id,
-                            'name', t.name
-                        )
-                    )
-                    FROM post_tags pt
-                    JOIN tags t ON pt.tag_id = t.id
-                    WHERE pt.post_id = p.id
-                    ), '[]'::json
-                ) as tags
-            FROM posts p
-            JOIN users u ON p.author_id = u.id
-            WHERE p.id = ANY(%s)
-            ORDER BY array_position(%s, p.id::text)
+                p.user_id,
+                u.user_id AS author_id,
+                u.username AS author_name,
+                u.avatar_url AS author_avatar
+            FROM "Post" p
+            JOIN "User" u ON p.user_id = u.user_id
+            WHERE p.post_id = ANY(%s)
+            ORDER BY array_position(%s, p.post_id::text)
         """
         with self.psycopg_conn.cursor() as cur:
             cur.execute(sql, (post_ids, post_ids))

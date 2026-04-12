@@ -45,7 +45,7 @@ async def get_post_recommendations(
 
         posts = []
         for post in post_details:
-            post_id = post.get("id")
+            post_id = post.get("post_id") or post.get("id")
             if post_id in rec_info:
                 post["recommendation_score"] = rec_info[post_id].get("score")
                 post["recommendation_source"] = rec_info[post_id].get("source")

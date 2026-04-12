@@ -27,11 +27,11 @@ class VectorStore:
 
     def get_post_vector(self, post_id: str) -> Optional[List[float]]:
         """Convenience method for getting post vectors"""
-        return self.vector_store.get_vector(post_id, "realtime_posts")
+        return self.vector_store.get_vector("realtime_posts", post_id)
 
     def get_user_vector(self, user_id: str) -> Optional[List[float]]:
         """Convenience method for getting user vectors"""
-        return self.vector_store.get_vector(user_id, "realtime_users")
+        return self.vector_store.get_vector("realtime_users", user_id)
 
     # ==================== SEARCH METHODS ====================
 

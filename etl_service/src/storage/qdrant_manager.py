@@ -1,6 +1,5 @@
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
-import os
 
 
 class QdrantManager:
@@ -16,6 +15,13 @@ class QdrantManager:
         if not all(self.client.collection_exists(collection_name=collection_name) for collection_name in self.collections.values()):
             self._create_collections()
 
+    def add_vector(self, collection_type, vector_id: str, vector: list):
+        collection_name = self.collections[collection_type]
+        self.client.upsert(
+            collection_name=collection_name,
+            points=[PointStruct(id=vector_id, vector=vector)],
+        )
+
     def _create_collections(self):
         for collection_name in self.collections.values():
             try:
@@ -30,7 +36,11 @@ class QdrantManager:
 
     def get_vector(self, collection_type, vector_id: str):
         collection_name = self.collections[collection_type]
-        result = self.client.retrieve(collection_name=collection_name, ids=[vector_id])
+        result = self.client.retrieve(
+            collection_name=collection_name,
+            ids=[vector_id],
+            with_vectors=True,
+        )
         return result[0].vector if result else None
 
     def update_vector(self, collection_type, vector_id: str, vector: list):
@@ -46,7 +56,12 @@ class QdrantManager:
 
     def search_vectors(self, collection_type, query_vector: list, k: int = 5):
         collection_name = self.collections[collection_type]
-        result = self.client.search(
-            collection_name=collection_name, query_vector=query_vector, limit=k
+        result = self.client.query_points(
+            collection_name=collection_name,
+            query=query_vector,
+            limit=k,
+            with_payload=False,
+            with_vectors=False,
         )
-        return [point.id for point in result], [point.score for point in result]
+        points = getattr(result, "points", result)
+        return [point.id for point in points], [point.score for point in points]

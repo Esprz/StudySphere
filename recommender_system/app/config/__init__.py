@@ -1,11 +1,6 @@
 from .redis_config import redis_config
 
 from ..services.recall.content_based import ContentBasedRecall
-from ..services.recall.user_collaborative import UserCollaborativeRecall
-from ..services.recall.item_collaborative import ItemCollaborativeRecall
-from ..services.recall.trending_posts import TrendingPostsRecall
-from ..services.recall.cold_start import ColdStartRecall
-from ..services.recall.following_activity import FollowingActivityRecall
 
 from ..services.filters.seen_filter import SeenFilter
 from ..services.filters.duplicate_filter import DuplicateFilter
@@ -23,11 +18,6 @@ vector_store = VectorStore(qdrant_manager)
 
 recall_services = [
     ContentBasedRecall(vector_store=vector_store, db=postgres_store),
-    UserCollaborativeRecall(vector_store=vector_store, db=postgres_store),
-    ItemCollaborativeRecall(vector_store=vector_store, db=postgres_store),
-    TrendingPostsRecall(vector_store=vector_store, db=postgres_store),
-    FollowingActivityRecall(vector_store=vector_store, db=postgres_store),
-    ColdStartRecall(vector_store=vector_store, db=postgres_store),
 ]
 
 filter_services = [SeenFilter(), DuplicateFilter()]

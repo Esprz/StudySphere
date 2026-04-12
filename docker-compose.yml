@@ -18,6 +18,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    command: ["npm", "run", "dev"]
     ports:
       - "3000:5000"
     volumes:
@@ -29,6 +30,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
     env_file:
       - ./backend/.env.docker
     environment:
@@ -137,6 +140,19 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
       DYNAMIC_CONFIG_ENABLED: 'true'
 
+  kafka-init:
+    image: apache/kafka:3.7.0
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: "no"
+    command:
+      [
+        "/bin/bash",
+        "-lc",
+        "/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic post-events --partitions 3 --replication-factor 1 && /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic behavior-events --partitions 3 --replication-factor 1 && /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic user-events --partitions 3 --replication-factor 1 && /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic search-events --partitions 3 --replication-factor 1 && /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic embedding-updates --partitions 3 --replication-factor 1",
+      ]
+
   etl-service:
     build:
       context: ./etl_service
@@ -145,6 +161,8 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
       qdrant:
@@ -167,6 +185,8 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
       qdrant:
@@ -197,5 +217,4 @@ volumes:
   kafka_data:
   qdrant_data:
   redis_data:
-
 

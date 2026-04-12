@@ -21,4 +21,21 @@ const auth = async (req: any, res: any, next: any) => {
     }
 }
 
+export const attachUserIfAuthenticated = (req: any, _res: any, next: any) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return next();
+        }
+
+        const token = authHeader.split(' ')[1];
+        const decodedData = verifyAccessToken(token);
+        req.userId = (decodedData as any)?.userId;
+    } catch {
+        // Ignore invalid optional auth and continue as anonymous.
+    }
+
+    next();
+}
+
 export default auth;

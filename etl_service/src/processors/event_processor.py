@@ -137,10 +137,19 @@ class EventProcessor:
 
     # ==================== UTILITY METHODS ====================
 
-    def _notify_embedding_updated(self, entity_type: str, entity_id: str):
+    def _notify_embedding_updated(
+        self,
+        entity_type: str,
+        entity_id: str,
+        source_event_id: str | None = None,
+    ):
         if self.embedding_producer:
             try:
-                self.embedding_producer.publish(entity_type, entity_id)
+                self.embedding_producer.publish(
+                    entity_type,
+                    entity_id,
+                    source_event_id=source_event_id,
+                )
             except Exception as e:
                 logger.warning(f"Failed to publish embedding update: {e}")
 

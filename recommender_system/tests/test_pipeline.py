@@ -76,6 +76,35 @@ def _make_pipeline(recall_list, filter_list=None, diversity=None, with_db=True):
     )
 
 
+class FakeRedis:
+    CACHE_TTL = {"recommendations": 1800, "cold_start": 3600}
+
+    def __init__(self):
+        self.values: Dict[str, Any] = {}
+
+    async def get(self, key: str):
+        return self.values.get(key)
+
+    async def set(self, key: str, value: Any, ttl: int = None):
+        self.values[key] = value
+        return True
+
+    async def invalidate_pattern(self, pattern: str) -> int:
+        prefix = pattern.rstrip("*")
+        to_delete = [key for key in self.values if key.startswith(prefix)]
+        for key in to_delete:
+            del self.values[key]
+        return len(to_delete)
+
+    async def delete(self, *keys: str) -> int:
+        deleted = 0
+        for key in keys:
+            if key in self.values:
+                del self.values[key]
+                deleted += 1
+        return deleted
+
+
 SAMPLE_CANDIDATES = [
     {"item_id": f"post-{i}", "score": float(10 - i), "source": "stub"}
     for i in range(10)
@@ -168,3 +197,17 @@ async def test_cold_start_limits_active_services():
     ids = [r["item_id"] for r in recs]
     assert "cs-1" in ids
     assert "uc-1" not in ids
+
+
+@pytest.mark.asyncio
+async def test_pipeline_writes_feed_cache_entries():
+    pipe = _make_pipeline([StubRecall("content_based", SAMPLE_CANDIDATES)])
+    fake_redis = FakeRedis()
+    pipe.redis = fake_redis
+
+    await pipe.recommend("user-1", {}, limit=2, use_cache=False)
+
+    assert fake_redis.values["rec:feed:user-1"] == [
+        {"post_id": "post-0", "score": 10.0, "source": "stub"},
+        {"post_id": "post-1", "score": 9.0, "source": "stub"},
+    ]
