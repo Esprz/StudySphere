@@ -15,6 +15,7 @@ class UserEmbedder:
 
         self.decay_rate = float(os.getenv("USER_EMBED_DECAY_RATE", "0.95"))
         self.learning_rate = float(os.getenv("USER_EMBED_LEARNING_RATE", "0.1"))
+        self.momentum = float(os.getenv("EMBEDDING_MOMENTUM", "0.9"))
 
         # Behavior weights for different user actions
         self.behavior_weights = {
@@ -85,23 +86,37 @@ class UserEmbedder:
             update_weight = behavior_weight * time_decay * self.learning_rate
 
             # Update embedding using moving average
-            target_vector = np.array(target_vector)
-            current_embedding = np.array(current_embedding)
+            target_vector = np.array(target_vector, dtype=np.float32)
+            current_embedding = np.array(current_embedding, dtype=np.float32)
 
+            target_norm = np.linalg.norm(target_vector)
+            if target_norm == 0:
+                logger.warning(
+                    f"Skipping user embedding update for {user_id}: zero target vector"
+                )
+                return False
+            normalized_target = target_vector / target_norm
+
+            effective_momentum = min(max(self.momentum, 0.0), 1.0)
+            blended_target = (
+                effective_momentum * current_embedding
+                + (1.0 - effective_momentum) * normalized_target
+            )
             new_embedding = current_embedding + update_weight * (
-                target_vector - current_embedding
+                blended_target - current_embedding
             )
 
             norm = np.linalg.norm(new_embedding)
             if norm > 0:
                 new_embedding = new_embedding / norm
             else:
-                new_embedding = target_vector / max(np.linalg.norm(target_vector), 1e-9)
+                new_embedding = normalized_target
 
             self.vector_store.update_user_vector(user_id, new_embedding.tolist())
 
             logger.info(
-                f"✅ Updated user {user_id} embedding from {behavior_type} (weight: {update_weight:.3f})"
+                f"✅ Updated user {user_id} embedding from {behavior_type} "
+                f"(weight: {update_weight:.3f}, momentum: {effective_momentum:.2f})"
             )
             return True
 

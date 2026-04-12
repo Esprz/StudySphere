@@ -9,6 +9,8 @@ import commentRouter from './commentRouter';
 import followRouter from './followRouter';
 import userRouter from './userRouter';
 import recommendationRouter from './recommendationRouter';
+import focusRouter from './focusRoutes';
+import taskRouter from './taskRoutes';
 
 const router = express.Router();
 
@@ -21,5 +23,7 @@ router.use('/comment', commentRouter);
 router.use('/follow', followRouter);
 router.use('/user', userRouter);
 router.use('/recommendations', recommendationRouter);
+router.use('/focus', focusRouter);
+router.use('/task', taskRouter);
 
 export default router;

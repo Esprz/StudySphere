@@ -1,4 +1,6 @@
 node_modules
 migrations
+!prisma/migrations/
+!prisma/migrations/**
 dist
 .env*

@@ -5,7 +5,14 @@ import cookieParser from 'cookie-parser';
 import prisma from './utils/prisma';
 import router from './routes';
 import KafkaClient from './core/messaging/KafkaClient';
-import redis, { initRedis, isRedisConnected } from './utils/redis';
+import {
+    cacheRedis,
+    initRedis,
+    isRedisCacheConnected,
+    isRedisSessionConnected,
+    sessionRedis,
+} from './utils/redis';
+import { attachSessionContext } from './middleware/sessionContext.middleware';
 
 dotenv.config();
 
@@ -18,6 +25,7 @@ app.use(cors({
 }));
 app.use(cookieParser());
 app.use(express.json());
+app.use(attachSessionContext);
 
 app.use('/api', router);
 
@@ -41,11 +49,18 @@ app.get('/api/health', async (_req, res) => {
     }
 
     try {
-        const redisHealthy = isRedisConnected() && (await redis.ping()) === 'PONG';
+        const redisHealthy =
+            isRedisCacheConnected() && (await cacheRedis.ping()) === 'PONG';
         dependencies.redis_cache = redisHealthy ? 'ok' : 'error';
-        dependencies.redis_session = redisHealthy ? 'ok' : 'error';
     } catch {
         dependencies.redis_cache = 'error';
+    }
+
+    try {
+        const sessionHealthy =
+            isRedisSessionConnected() && (await sessionRedis.ping()) === 'PONG';
+        dependencies.redis_session = sessionHealthy ? 'ok' : 'error';
+    } catch {
         dependencies.redis_session = 'error';
     }
 
@@ -97,7 +112,8 @@ const gracefulShutdown = async () => {
     try {
         const kafkaClient = KafkaClient.getInstance();
         await kafkaClient.disconnect();
-        await redis.quit();
+        await cacheRedis.quit();
+        await sessionRedis.quit();
         await prisma.$disconnect();
     } catch (error) {
         console.error('Error during shutdown:', error);

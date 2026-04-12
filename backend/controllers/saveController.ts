@@ -13,7 +13,7 @@ export const savePost = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const save = await saveService.savePost(post_id, user_id);
+    const save = await saveService.savePost(post_id, user_id, req.sessionId);
 
     if (!save) {
       res.status(HTTP.CONFLICT.code).json({ message: SAVE_ERRORS.ALREADY_SAVED });

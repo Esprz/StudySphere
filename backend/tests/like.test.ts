@@ -46,7 +46,7 @@ describe('Like Routes', () => {
 
         expect(res.status).toBe(HTTP.CREATED.code);
         expect(res.body).toEqual(dummyLike);
-        expect(likeService.likePost).toHaveBeenCalledWith('101', 'test-user-id');
+        expect(likeService.likePost).toHaveBeenCalledWith('101', 'test-user-id', undefined);
     });
 
     test('POST /like/:post_id should return 409 if post is already liked', async () => {

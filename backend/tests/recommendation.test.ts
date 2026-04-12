@@ -2,7 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import recommendationRouter from '../routes/recommendationRouter';
 import prisma from '../utils/prisma';
-import redis, { isRedisConnected } from '../utils/redis';
+import { readCacheValue } from '../utils/redis';
 import { generateAccessToken } from '../utils/jwt';
 
 jest.mock('../utils/prisma', () => ({
@@ -16,12 +16,8 @@ jest.mock('../utils/prisma', () => ({
 
 jest.mock('../utils/redis', () => ({
     __esModule: true,
-    default: {
-        get: jest.fn(),
-        ping: jest.fn(),
-        quit: jest.fn(),
-    },
-    isRedisConnected: jest.fn(),
+    default: {},
+    readCacheValue: jest.fn(),
     initRedis: jest.fn(),
 }));
 
@@ -37,8 +33,7 @@ describe('Recommendation Routes', () => {
     });
 
     test('GET /recommendations/feed returns Redis-backed recommendations in cached order', async () => {
-        (isRedisConnected as jest.Mock).mockReturnValue(true);
-        (redis.get as jest.Mock).mockResolvedValue(
+        (readCacheValue as jest.Mock).mockResolvedValue(
             JSON.stringify([
                 { post_id: 'post-2', score: 0.9, source: 'content_based' },
                 { post_id: 'post-1', score: 0.7, source: 'content_based' },
@@ -70,7 +65,7 @@ describe('Recommendation Routes', () => {
     });
 
     test('GET /recommendations/feed falls back to chronological posts when Redis is unavailable', async () => {
-        (isRedisConnected as jest.Mock).mockReturnValue(false);
+        (readCacheValue as jest.Mock).mockResolvedValue(null);
         (prisma.post.findMany as jest.Mock).mockResolvedValue([
             {
                 post_id: 'post-3',

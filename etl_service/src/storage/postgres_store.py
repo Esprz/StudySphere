@@ -25,6 +25,22 @@ class PostgresStore:
             """,
             """
             ALTER TABLE etl_behavior_events
+            ADD COLUMN IF NOT EXISTS session_id VARCHAR
+            """,
+            """
+            ALTER TABLE etl_behavior_events
+            ADD COLUMN IF NOT EXISTS position INTEGER
+            """,
+            """
+            ALTER TABLE etl_behavior_events
+            ADD COLUMN IF NOT EXISTS dwell_ms INTEGER
+            """,
+            """
+            ALTER TABLE etl_behavior_events
+            ADD COLUMN IF NOT EXISTS source VARCHAR
+            """,
+            """
+            ALTER TABLE etl_behavior_events
             ADD COLUMN IF NOT EXISTS extra_data JSON
             """,
             """
@@ -34,7 +50,22 @@ class PostgresStore:
             """
             CREATE UNIQUE INDEX IF NOT EXISTS ix_etl_behavior_events_event_id
             ON etl_behavior_events (event_id)
-            WHERE event_id IS NOT NULL
+            """,
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS ux_etl_behavior_events_event_id
+            ON etl_behavior_events (event_id)
+            """,
+            """
+            CREATE INDEX IF NOT EXISTS ix_etl_behavior_events_session_id
+            ON etl_behavior_events (session_id)
+            """,
+            """
+            CREATE INDEX IF NOT EXISTS ix_etl_behavior_events_position
+            ON etl_behavior_events (position)
+            """,
+            """
+            CREATE INDEX IF NOT EXISTS ix_etl_behavior_events_dwell_ms
+            ON etl_behavior_events (dwell_ms)
             """,
         ]
 
@@ -54,6 +85,10 @@ class PostgresStore:
         search_term: str = None,
         extra_data: Dict[str, Any] = None,
         event_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        position: Optional[int] = None,
+        dwell_ms: Optional[int] = None,
+        source: Optional[str] = None,
     ) -> bool:
         try:
             row = {
@@ -63,6 +98,10 @@ class PostgresStore:
                 "post_id": post_id,
                 "event_type": event_type,
                 "search_term": search_term,
+                "session_id": session_id,
+                "position": position,
+                "dwell_ms": dwell_ms,
+                "source": source,
                 "extra_data": extra_data,
             }
 

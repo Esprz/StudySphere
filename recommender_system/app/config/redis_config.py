@@ -10,10 +10,10 @@ class RedisConfig:
     """Redis configuration and connection management for recommender system"""
 
     def __init__(self):
-        self.host = os.getenv("REDIS_HOST", "localhost")
-        self.port = int(os.getenv("REDIS_PORT", "6379"))
+        self.host = os.getenv("REDIS_CACHE_HOST", os.getenv("REDIS_HOST", "localhost"))
+        self.port = int(os.getenv("REDIS_CACHE_PORT", os.getenv("REDIS_PORT", "6379")))
         self.password = os.getenv("REDIS_PASSWORD")
-        self.db = int(os.getenv("REDIS_DB", "1"))  # Use DB 1 for recommender
+        self.db = int(os.getenv("REDIS_CACHE_DB", os.getenv("REDIS_DB", "1")))
         self.max_connections = int(os.getenv("REDIS_MAX_CONNECTIONS", "20"))
 
         # Connection pool settings

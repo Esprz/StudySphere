@@ -33,6 +33,8 @@ class UserEventConsumer(BaseConsumer):
                 self.process_user_updated(data)
             elif eventType == "USER_DELETED":
                 self.process_user_deleted(data)
+            elif eventType in {"USER_FOLLOWED", "USER_UNFOLLOWED"}:
+                self.process_follow_event(data, eventType)
             else:
                 logger.error(
                     f"❌ [User] Unknown event type: {eventType} for message: {raw_msg}"
@@ -53,3 +55,31 @@ class UserEventConsumer(BaseConsumer):
 
         except Exception as e:
             logger.error(f"❌ [User] Error processing user created event: {e}")
+
+    def process_user_updated(self, data):
+        try:
+            user_id = data.get("aggregateId")
+            self.processor.process_user_updated(user_id, data.get("data", {}))
+        except Exception as e:
+            logger.error(f"❌ [User] Error processing user updated event: {e}")
+
+    def process_user_deleted(self, data):
+        try:
+            user_id = data.get("aggregateId")
+            self.processor.process_user_deleted(user_id)
+        except Exception as e:
+            logger.error(f"❌ [User] Error processing user deleted event: {e}")
+
+    def process_follow_event(self, data, event_type: str):
+        try:
+            payload = data.get("data", {})
+            metadata = data.get("metadata", {})
+            self.processor.process_aux_behavior(
+                user_id=data.get("aggregateId"),
+                event_type=event_type,
+                event_id=data.get("eventId"),
+                source=metadata.get("source"),
+                extra_data=payload,
+            )
+        except Exception as e:
+            logger.error(f"❌ [User] Error processing {event_type}: {e}")

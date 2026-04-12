@@ -14,7 +14,7 @@ export const likePost = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const like = await likeService.likePost(post_id, user_id);
+    const like = await likeService.likePost(post_id, user_id, req.sessionId);
 
     if (!like) {
       res.status(HTTP.CONFLICT.code).json({ message: LIKE_ERRORS.ALREADY_LIKED });

@@ -1,7 +1,11 @@
 import prisma from '../utils/prisma';
 import { eventService } from './eventService';
 
-export const likePost = async (post_id: string, user_id: string) => {
+export const likePost = async (
+  post_id: string,
+  user_id: string,
+  sessionId?: string
+) => {
   // Mandatory: check if already liked to prevent duplicate likes
   const existing = await prisma.like.findFirst({
     where: { post_id, user_id },
@@ -15,7 +19,7 @@ export const likePost = async (post_id: string, user_id: string) => {
 
   setImmediate(async () => {
     try {
-      await eventService.trackPostLiked(post_id, user_id);
+      await eventService.trackPostLiked(post_id, user_id, sessionId);
     } catch (error) {
       console.error('Event tracking failed:', error);
     }

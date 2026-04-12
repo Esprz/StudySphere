@@ -4,6 +4,7 @@ confluent-kafka
 # Utilities
 python-dotenv
 loguru
+jsonschema
 
 # Database
 sqlalchemy

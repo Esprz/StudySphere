@@ -1,4 +1,5 @@
 import prisma from '../utils/prisma';
+import { eventService } from './eventService';
 
 export const createFollow = async (followee_username: string, follower_id: string) => {
   try {
@@ -12,7 +13,7 @@ export const createFollow = async (followee_username: string, follower_id: strin
     });
     if (existing) return null;
 
-    return await prisma.follow.create({
+    const follow = await prisma.follow.create({
       data: {
         followee: {
           connect: { username: followee_username }, // Connect to the followee by username
@@ -23,6 +24,16 @@ export const createFollow = async (followee_username: string, follower_id: strin
       },
     });
 
+    setImmediate(async () => {
+      try {
+        await eventService.trackUserFollowed(follower_id, follow.followee_id);
+      } catch (eventError) {
+        console.error('Follow tracking failed:', eventError);
+      }
+    });
+
+    return follow;
+
   } catch (error) {
     console.error('Error creating follow:', error);
     throw new Error('Failed to create follow');
@@ -31,7 +42,16 @@ export const createFollow = async (followee_username: string, follower_id: strin
 
 export const deleteFollow = async (followee_username: string, follower_id: string) => {
   try {
-    return await prisma.follow.deleteMany({
+    const existingFollow = await prisma.follow.findFirst({
+      where: {
+        followee: {
+          username: followee_username,
+        },
+        follower_id,
+      },
+    });
+
+    const deleted = await prisma.follow.deleteMany({
       where: {
         followee: {
           username: followee_username
@@ -39,6 +59,21 @@ export const deleteFollow = async (followee_username: string, follower_id: strin
         follower_id: follower_id
       }
     });
+
+    if (deleted.count > 0 && existingFollow) {
+      setImmediate(async () => {
+        try {
+          await eventService.trackUserUnfollowed(
+            follower_id,
+            existingFollow.followee_id
+          );
+        } catch (eventError) {
+          console.error('Unfollow tracking failed:', eventError);
+        }
+      });
+    }
+
+    return deleted;
   } catch (error) {
     console.error('Error deleting follow:', error);
     throw new Error('Failed to delete follow');
@@ -117,4 +152,3 @@ export const getSuggestedToFollow = async (user_id: string) => {
     throw new Error('Failed to fetch suggested users to follow');
   }
 }
-

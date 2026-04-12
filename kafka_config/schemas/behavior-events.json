@@ -1,0 +1,176 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StudySphere Behavior Events",
+  "type": "object",
+  "properties": {
+    "eventId": { "type": "string" },
+    "eventType": {
+      "type": "string",
+      "enum": [
+        "POST_VIEWED",
+        "POST_LIKED",
+        "POST_SAVED",
+        "SEARCH_PERFORMED",
+        "COMMENT_CREATED",
+        "START_FOCUS",
+        "END_FOCUS",
+        "ADD_TASK",
+        "COMPLETE_TASK"
+      ]
+    },
+    "aggregateId": { "type": "string" },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "version": { "type": "string" },
+    "sessionId": { "type": "string" },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "sessionId": { "type": "string" },
+        "source": { "type": "string" },
+        "environment": { "type": "string" },
+        "experimentBucket": { "type": "string" }
+      }
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "postId": { "type": "string" },
+        "parentId": { "type": ["string", "null"] },
+        "query": { "type": "string" },
+        "resultCount": { "type": "integer" },
+        "dwellMs": { "type": ["integer", "null"] },
+        "position": { "type": ["integer", "null"] },
+        "goalId": { "type": ["string", "null"] },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "sourceTrigger": { "type": ["string", "null"] },
+        "durationMs": { "type": ["integer", "null"] },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "completedAt": { "type": "string" },
+        "startedAt": { "type": "string" },
+        "endedAt": { "type": "string" },
+        "viewedAt": { "type": "string" },
+        "likedAt": { "type": "string" },
+        "savedAt": { "type": "string" }
+      }
+    }
+  },
+  "required": ["eventId", "eventType", "aggregateId", "timestamp", "version", "data"],
+  "allOf": [
+    {
+      "if": {
+        "properties": { "eventType": { "const": "POST_VIEWED" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "required": ["userId"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "eventType": { "const": "POST_LIKED" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "required": ["userId"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "eventType": { "const": "POST_SAVED" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "required": ["userId"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "eventType": { "const": "SEARCH_PERFORMED" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "required": ["query", "resultCount"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "eventType": { "const": "COMMENT_CREATED" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "required": ["userId", "postId"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "eventType": { "const": "START_FOCUS" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "required": ["userId"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "eventType": { "const": "END_FOCUS" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "required": ["userId"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "eventType": { "const": "ADD_TASK" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "required": ["userId", "content"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "eventType": { "const": "COMPLETE_TASK" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "required": ["userId"]
+          }
+        }
+      }
+    }
+  ]
+}

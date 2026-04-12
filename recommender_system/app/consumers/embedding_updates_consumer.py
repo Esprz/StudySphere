@@ -6,6 +6,7 @@ import time
 import threading
 from typing import Dict
 from confluent_kafka import Consumer, KafkaError
+from kafka_config.schemas.validate import validate_json_message
 from loguru import logger
 
 
@@ -56,7 +57,16 @@ class EmbeddingUpdatesConsumer:
                     continue
 
                 try:
-                    payload = json.loads(msg.value().decode("utf-8"))
+                    raw_msg = msg.value().decode("utf-8")
+                    is_valid, payload, error = validate_json_message(
+                        self.topic, raw_msg
+                    )
+                    if not is_valid or payload is None:
+                        logger.warning(
+                            f"Skipping malformed embedding-updates message: {error}"
+                        )
+                        continue
+
                     data = payload.get("data", {})
                     entity_type = data.get("embeddingType") or data.get("entityType", "")
                     entity_id = payload.get("aggregateId") or data.get("entityId", "")

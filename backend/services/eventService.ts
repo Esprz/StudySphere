@@ -36,9 +36,17 @@ class EventService {
   async trackPostViewed(
     postId: string,
     userId: string,
-    sessionId?: string
+    sessionId?: string,
+    dwellMs?: number,
+    position?: number
   ): Promise<void> {
-    await this.behaviorProducer.trackPostViewed(postId, userId, sessionId);
+    await this.behaviorProducer.trackPostViewed(
+      postId,
+      userId,
+      sessionId,
+      dwellMs,
+      position
+    );
   }
 
   async trackPostLiked(
@@ -60,13 +68,107 @@ class EventService {
   async trackSearchPerformed(
     userId: string,
     query: string,
+    resultCount: number,
     sessionId?: string
   ): Promise<void> {
-    await this.behaviorProducer.trackSearchPerformed(userId, query, sessionId);
+    await this.behaviorProducer.trackSearchPerformed(
+      userId,
+      query,
+      resultCount,
+      sessionId
+    );
+  }
+
+  async trackCommentCreated(
+    commentId: string,
+    userId: string,
+    postId: string,
+    parentId?: string,
+    sessionId?: string
+  ): Promise<void> {
+    await this.behaviorProducer.trackCommentCreated(
+      commentId,
+      userId,
+      postId,
+      parentId,
+      sessionId
+    );
   }
 
   async trackUserCreated(userId: string, userData: any): Promise<void> {
     await this.userProducer.trackUserCreated(userId, userData);
+  }
+
+  async trackUserFollowed(followerId: string, followeeId: string): Promise<void> {
+    await this.userProducer.trackUserFollowed(followerId, followeeId);
+  }
+
+  async trackUserUnfollowed(followerId: string, followeeId: string): Promise<void> {
+    await this.userProducer.trackUserUnfollowed(followerId, followeeId);
+  }
+
+  async trackFocusStarted(
+    focusTimeId: string,
+    userId: string,
+    goalId?: string,
+    tags?: string[],
+    sourceTrigger?: string,
+    sessionId?: string
+  ): Promise<void> {
+    await this.behaviorProducer.trackFocusStarted(
+      focusTimeId,
+      userId,
+      goalId,
+      tags,
+      sourceTrigger,
+      sessionId
+    );
+  }
+
+  async trackFocusEnded(
+    focusTimeId: string,
+    userId: string,
+    goalId?: string,
+    durationMs?: number,
+    sessionId?: string
+  ): Promise<void> {
+    await this.behaviorProducer.trackFocusEnded(
+      focusTimeId,
+      userId,
+      goalId,
+      durationMs,
+      sessionId
+    );
+  }
+
+  async trackTaskAdded(
+    taskId: string,
+    userId: string,
+    content: string,
+    goalId?: string,
+    sessionId?: string
+  ): Promise<void> {
+    await this.behaviorProducer.trackTaskAdded(
+      taskId,
+      userId,
+      content,
+      goalId,
+      sessionId
+    );
+  }
+
+  async trackTaskCompleted(
+    taskId: string,
+    userId: string,
+    goalId?: string,
+    sessionId?: string
+  ): Promise<void> {
+    await this.behaviorProducer.trackTaskCompleted(
+      taskId,
+      userId,
+      goalId,
+      sessionId
+    );
   }
 
 }

@@ -13,3 +13,4 @@ httpx>=0.25.2
 qdrant_client
 loguru>=0.7.0
 redis>=5.0.0
+jsonschema>=4.0.0

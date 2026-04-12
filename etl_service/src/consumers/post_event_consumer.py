@@ -52,6 +52,7 @@ class PostEventConsumer(BaseConsumer):
         try:
             post_data = data.get("data", {})
             post_id = data.get("aggregateId")
+            metadata = data.get("metadata", {})
 
             self.processor.process_post_created(
                 post_id=post_id,
@@ -60,6 +61,9 @@ class PostEventConsumer(BaseConsumer):
                 tags=post_data.get("tags", []),
                 author_id=post_data.get("authorId"),
                 timestamp=data.get("timestamp"),
+                event_id=data.get("eventId"),
+                source=metadata.get("source"),
+                extra_data=post_data,
             )
 
         except Exception as e:
@@ -76,21 +80,26 @@ class PostEventConsumer(BaseConsumer):
         logger.info(f"Processing post updated event: {data}")
 
         try:
-            embedding = self.processor.generate_post_embedding(
-                title=data.get("title", ""),
-                content=data.get("content", ""),
-                tags=data.get("tags", []),
+            post_data = data.get("data", {})
+            metadata = data.get("metadata", {})
+
+            self.processor.process_post_updated(
+                post_id=data.get("aggregateId"),
+                title=post_data.get("updatedFields", {}).get(
+                    "title", post_data.get("title", "")
+                ),
+                content=post_data.get("updatedFields", {}).get(
+                    "content", post_data.get("content", "")
+                ),
+                tags=post_data.get("updatedFields", {}).get(
+                    "tags", post_data.get("tags", [])
+                ),
+                author_id=post_data.get("authorId"),
+                timestamp=data.get("timestamp"),
+                event_id=data.get("eventId"),
+                source=metadata.get("source"),
+                extra_data=post_data,
             )
-
-            post_id = data.get("aggregateId")
-
-            if post_id and embedding:
-                self.vector_store.add_post_vector(post_id, embedding)
-                logger.info(f"✅ [Post] Updated post vector for post ID: {post_id}")
-            else:
-                logger.error(
-                    f"❌ [Post] Missing post_id or embedding for for data: {data}"
-                )
 
         except Exception as e:
             logger.error(
@@ -108,8 +117,7 @@ class PostEventConsumer(BaseConsumer):
         try:
             post_id = data.get("aggregateId")
             if post_id:
-                self.vector_store.delete_post_vector(post_id)
-                # TODO: Also update the deleted post related user vectors in the future
+                self.processor.process_post_deleted(post_id)
                 logger.info(f"✅ [Post] Deleted post vector for post ID: {post_id}")
             else:
                 logger.error(f"❌ [Post] Missing post_id for message: {post_id}")

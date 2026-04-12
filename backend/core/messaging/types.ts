@@ -10,7 +10,14 @@ export interface BaseEvent {
 
 export interface UserEvent extends BaseEvent {
     // aggregateId = userId
-    eventType: 'USER_CREATED' | 'USER_UPDATED' | 'USER_FOLLOWED' | 'USER_UNFOLLOWED' | 'USER_LOGIN' | 'USER_LOGOUT';
+    eventType:
+        | 'USER_CREATED'
+        | 'USER_UPDATED'
+        | 'USER_DELETED'
+        | 'USER_FOLLOWED'
+        | 'USER_UNFOLLOWED'
+        | 'USER_LOGIN'
+        | 'USER_LOGOUT';
 }
 
 export interface PostEvent extends BaseEvent {
@@ -20,6 +27,15 @@ export interface PostEvent extends BaseEvent {
 
 export interface BehaviorEvent extends BaseEvent {
     // aggregateId could be postId, userId, commentId, etc., depending on the behavior type
-    eventType: 'POST_VIEWED' | 'POST_LIKED' | 'POST_SAVED' | 'SEARCH_PERFORMED' | 'COMMENT_CREATED';
+    eventType:
+        | 'POST_VIEWED'
+        | 'POST_LIKED'
+        | 'POST_SAVED'
+        | 'SEARCH_PERFORMED'
+        | 'COMMENT_CREATED'
+        | 'START_FOCUS'
+        | 'END_FOCUS'
+        | 'ADD_TASK'
+        | 'COMPLETE_TASK';
     sessionId?: string;
 }

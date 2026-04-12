@@ -43,7 +43,7 @@ describe('Save Routes', () => {
 
         expect(res.status).toBe(201);
         expect(res.body).toEqual(dummySave);
-        expect(saveService.savePost).toHaveBeenCalledWith('101', 'test-user-id');
+        expect(saveService.savePost).toHaveBeenCalledWith('101', 'test-user-id', undefined);
     });
 
     test('POST /save/:post_id should return 409 if post is already saved', async () => {

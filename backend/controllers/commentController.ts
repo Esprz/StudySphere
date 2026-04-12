@@ -3,6 +3,7 @@ import * as commentService from '../services/commentService';
 import { HTTP } from '../constants/httpStatus';
 import { GENERAL_ERRORS } from '../constants/errorMessages';
 import { COMMENT_SUCCESS } from '../constants/successMessages';
+import { eventService } from '../services/eventService';
 export const createComment = async (req: Request, res: Response): Promise<void> => {
     try {
       const { post_id } = req.params;
@@ -15,6 +16,21 @@ export const createComment = async (req: Request, res: Response): Promise<void> 
       }
   
       const comment = await commentService.createComment(post_id, user_id, content, parent_id);
+
+      setImmediate(async () => {
+        try {
+          await eventService.trackCommentCreated(
+            comment.comment_id,
+            user_id,
+            post_id,
+            parent_id,
+            req.sessionId
+          );
+        } catch (error) {
+          console.error('Comment tracking failed:', error);
+        }
+      });
+
       res.status(HTTP.CREATED.code).json(comment);
     } catch {
       res.status(HTTP.INTERNAL_ERROR.code).json({ message: GENERAL_ERRORS.UNKNOWN });

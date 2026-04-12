@@ -2,6 +2,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from confluent_kafka import Consumer, KafkaError
 from config.kafka_config import KafkaConfig
+from kafka_config.schemas.validate import validate_json_message
 from loguru import logger
 
 
@@ -52,7 +53,15 @@ class BaseConsumer(ABC):
                         logger.error(f"Kafka error: {msg.error()}")
                         continue
 
-                self.handle_message(msg.value().decode("utf-8"))
+                raw_msg = msg.value().decode("utf-8")
+                is_valid, _, error = validate_json_message(self.topic_name, raw_msg)
+                if not is_valid:
+                    logger.warning(
+                        f"Skipping malformed message on {self.topic_name}: {error}"
+                    )
+                    continue
+
+                self.handle_message(raw_msg)
 
         except KeyboardInterrupt:
             logger.info(f"🛑 Stopping consumer for topic: {self.topic_name}")

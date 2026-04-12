@@ -32,6 +32,10 @@ services:
         condition: service_healthy
       kafka-init:
         condition: service_completed_successfully
+      redis-cache:
+        condition: service_healthy
+      redis-session:
+        condition: service_healthy
     env_file:
       - ./backend/.env.docker
     environment:
@@ -42,6 +46,12 @@ services:
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
       - KAFKA_BROKERS=kafka:9092
+      - REDIS_CACHE_HOST=redis-cache
+      - REDIS_CACHE_PORT=6379
+      - REDIS_CACHE_DB=1
+      - REDIS_SESSION_HOST=redis-session
+      - REDIS_SESSION_PORT=6379
+      - REDIS_SESSION_DB=0
     
   db:
     image: postgres:15
@@ -110,15 +120,29 @@ services:
       retries: 5
       start_period: 30s
 
-  # Redis Cache
-  redis:
+  redis-cache:
     image: redis:7-alpine
-    container_name: redis
+    container_name: redis-cache
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+      - redis_cache_data:/data
+    command: redis-server --appendonly no --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis-session:
+    image: redis:7-alpine
+    container_name: redis-session
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_session_data:/data
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy noeviction
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -174,6 +198,7 @@ services:
       - PYTHONUNBUFFERED=1
     volumes:
       - ./etl_service:/app
+      - ./kafka_config:/app/kafka_config:ro
   
   recommender:
     build:
@@ -191,20 +216,21 @@ services:
         condition: service_healthy
       qdrant:
         condition: service_healthy
-      redis:
+      redis-cache:
         condition: service_healthy
     volumes:
       - ./recommender_system:/app
+      - ./kafka_config:/app/kafka_config:ro
     env_file:
       - ./recommender_system/.env
     environment:
       - PYTHONUNBUFFERED=1
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       - KAFKA_BROKERS=kafka:9092
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - REDIS_CACHE_HOST=redis-cache
+      - REDIS_CACHE_PORT=6379
       - REDIS_PASSWORD=
-      - REDIS_DB=1
+      - REDIS_CACHE_DB=1
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -216,5 +242,5 @@ volumes:
   postgres_data:
   kafka_data:
   qdrant_data:
-  redis_data:
-
+  redis_cache_data:
+  redis_session_data:

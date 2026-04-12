@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import * as postService from '../services/postService';
 import { HTTP } from '../constants/httpStatus';
 import { POST_ERRORS, GENERAL_ERRORS } from '../constants/errorMessages';
+import { eventService } from '../services/eventService';
 export const searchPosts = async (req: Request, res: Response) => {
     try {
         const { q } = req.query;
@@ -11,6 +12,22 @@ export const searchPosts = async (req: Request, res: Response) => {
         }
 
         const posts = await postService.searchPosts(q);
+
+        if (req.userId) {
+            setImmediate(async () => {
+                try {
+                    await eventService.trackSearchPerformed(
+                        req.userId as string,
+                        q,
+                        posts.length,
+                        req.sessionId
+                    );
+                } catch (error) {
+                    console.error('Search tracking failed:', error);
+                }
+            });
+        }
+
         res.status(HTTP.OK.code).json(posts);
     } catch {
         res.status(HTTP.INTERNAL_ERROR.code).json({ message: GENERAL_ERRORS.UNKNOWN });

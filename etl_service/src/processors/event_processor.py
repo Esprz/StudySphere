@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from .embeddings.text_embedder import TextEmbedder
 from .embeddings.post_embedder import PostEmbedder
 from .embeddings.user_embedder import UserEmbedder
@@ -55,6 +55,10 @@ class EventProcessor:
         tags: List[str] = None,
         author_id: str = None,
         timestamp: str = None,
+        event_id: str = None,
+        session_id: str = None,
+        source: str = None,
+        extra_data: Dict[str, Any] = None,
     ) -> bool:
         post_success = self.post_embedder.process_post_created(
             post_id, title, content, tags
@@ -74,6 +78,10 @@ class EventProcessor:
                 user_id=author_id,
                 post_id=post_id,
                 event_type="POST_CREATED",
+                event_id=event_id,
+                session_id=session_id,
+                source=source,
+                extra_data=extra_data,
             )
 
         return post_success and user_success
@@ -86,6 +94,10 @@ class EventProcessor:
         tags: List[str] = None,
         author_id: str = None,
         timestamp: str = None,
+        event_id: str = None,
+        session_id: str = None,
+        source: str = None,
+        extra_data: Dict[str, Any] = None,
     ) -> bool:
         post_success = self.post_embedder.process_post_updated(
             post_id, title, content, tags
@@ -101,6 +113,16 @@ class EventProcessor:
             if user_success:
                 self._notify_embedding_updated("user", author_id)
 
+            self.postgres_store.store_behavior_event(
+                user_id=author_id,
+                post_id=post_id,
+                event_type="POST_UPDATED",
+                event_id=event_id,
+                session_id=session_id,
+                source=source,
+                extra_data=extra_data,
+            )
+
         return post_success and user_success
 
     def process_post_deleted(self, post_id: str) -> bool:
@@ -110,7 +132,17 @@ class EventProcessor:
     # ==================== BEHAVIOR EVENTS ====================
 
     def process_post_interaction(
-        self, user_id: str, post_id: str, behavior_type: str, timestamp: str
+        self,
+        user_id: str,
+        post_id: str,
+        behavior_type: str,
+        timestamp: str,
+        event_id: str = None,
+        session_id: str = None,
+        position: int = None,
+        dwell_ms: int = None,
+        source: str = None,
+        extra_data: Dict[str, Any] = None,
     ) -> bool:
         success = self.user_embedder.update_from_post_interaction(
             user_id, post_id, behavior_type, timestamp
@@ -121,19 +153,92 @@ class EventProcessor:
                 user_id=user_id,
                 post_id=post_id,
                 event_type=behavior_type,
+                event_id=event_id,
+                session_id=session_id,
+                position=position,
+                dwell_ms=dwell_ms,
+                source=source,
+                extra_data=extra_data,
             )
         return success
 
-    def process_search_behavior(self, user_id: str, search_query: str, timestamp: str) -> bool:
+    def process_search_behavior(
+        self,
+        user_id: str,
+        search_query: str,
+        timestamp: str,
+        event_id: str = None,
+        session_id: str = None,
+        source: str = None,
+        extra_data: Dict[str, Any] = None,
+    ) -> bool:
         success = self.user_embedder.update_from_search(user_id, search_query, timestamp)
         if success:
             self._notify_embedding_updated("user", user_id)
             self.postgres_store.store_behavior_event(
                 user_id=user_id,
-                event_type="SEARCH",
+                event_type="SEARCH_PERFORMED",
                 search_term=search_query,
+                event_id=event_id,
+                session_id=session_id,
+                source=source,
+                extra_data=extra_data,
             )
         return success
+
+    def process_comment_created(
+        self,
+        user_id: str,
+        post_id: str,
+        comment_id: str,
+        timestamp: str,
+        event_id: str = None,
+        session_id: str = None,
+        source: str = None,
+        extra_data: Dict[str, Any] = None,
+    ) -> bool:
+        success = self.user_embedder.update_from_post_interaction(
+            user_id, post_id, "POST_COMMENTED", timestamp
+        )
+        if success:
+            self._notify_embedding_updated("user", user_id)
+
+        self.postgres_store.store_behavior_event(
+            user_id=user_id,
+            post_id=post_id,
+            event_type="COMMENT_CREATED",
+            event_id=event_id,
+            session_id=session_id,
+            source=source,
+            extra_data={
+                "commentId": comment_id,
+                **(extra_data or {}),
+            },
+        )
+        return success
+
+    def process_aux_behavior(
+        self,
+        user_id: str,
+        event_type: str,
+        event_id: str = None,
+        post_id: str = None,
+        search_term: str = None,
+        session_id: str = None,
+        source: str = None,
+        extra_data: Dict[str, Any] = None,
+    ) -> bool:
+        stored = self.postgres_store.store_behavior_event(
+            user_id=user_id,
+            post_id=post_id,
+            event_type=event_type,
+            search_term=search_term,
+            event_id=event_id,
+            session_id=session_id,
+            source=source,
+            extra_data=extra_data,
+        )
+        return stored
 
     # ==================== UTILITY METHODS ====================
 

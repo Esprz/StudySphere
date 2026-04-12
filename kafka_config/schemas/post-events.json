@@ -1,32 +1,88 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StudySphere Post Events",
   "type": "object",
   "properties": {
+    "eventId": {
+      "type": "string"
+    },
     "eventType": {
       "type": "string",
       "enum": ["POST_CREATED", "POST_UPDATED", "POST_DELETED"]
     },
-    "postId": {
+    "aggregateId": {
       "type": "string"
-    },
-    "userId": {
-      "type": "string"
-    },
-    "content": {
-      "type": "object",
-      "properties": {
-        "title": { "type": "string" },
-        "body": { "type": "string" },
-        "tags": {
-          "type": "array",
-          "items": { "type": "string" }
-        }
-      }
     },
     "timestamp": {
       "type": "string",
       "format": "date-time"
+    },
+    "version": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "source": { "type": "string" },
+        "environment": { "type": "string" },
+        "experimentBucket": { "type": "string" }
+      }
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "authorId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "deletedAt": { "type": "string" },
+        "updatedFields": { "type": "object" }
+      },
+      "required": ["authorId"]
     }
   },
-  "required": ["eventType", "postId", "userId", "timestamp"]
+  "required": ["eventId", "eventType", "aggregateId", "timestamp", "version", "data"],
+  "allOf": [
+    {
+      "if": {
+        "properties": { "eventType": { "const": "POST_CREATED" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "required": ["authorId", "title", "content"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "eventType": { "const": "POST_UPDATED" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "required": ["authorId", "updatedFields"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "eventType": { "const": "POST_DELETED" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "required": ["authorId", "deletedAt"]
+          }
+        }
+      }
+    }
+  ]
 }

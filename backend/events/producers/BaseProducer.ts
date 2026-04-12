@@ -25,6 +25,7 @@ export abstract class BaseProducer<T extends BaseEvent> {
             data,
             metadata: {
                 ...metadata,
+                experimentBucket: metadata?.experimentBucket || 'control',
                 source: 'studysphere-backend',
                 environment: process.env.NODE_ENV || 'development',
             }

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, JSON, Integer, Float, ARRAY, UniqueConstraint
+from sqlalchemy import Column, String, DateTime, JSON, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime, timezone
 
@@ -14,5 +14,9 @@ class BehaviorEvent(Base):
     post_id = Column(String, index=True)
     event_type = Column(String, nullable=False)
     search_term = Column(String)
-    processed_at = Column(DateTime, default=datetime.now(timezone.utc))
+    session_id = Column(String, index=True)
+    position = Column(Integer)
+    dwell_ms = Column(Integer)
+    source = Column(String)
+    processed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     extra_data = Column(JSON)

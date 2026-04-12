@@ -19,8 +19,28 @@ const dummyFollowers = [
     { follow_id: '2', follower_id: 'user3', followee_id: 'user2' },
 ];
 const dummyFollowees = [
-    { follow_id: '1', follower_id: 'user2', followee_id: 'user1' },
-    { follow_id: '2', follower_id: 'user2', followee_id: 'user3' },
+    {
+        follow_id: '1',
+        follower_id: 'user2',
+        followee_id: 'user1',
+        followee: {
+            user_id: 'user1',
+            username: 'user1',
+            display_name: 'User One',
+            avatar_url: null,
+        },
+    },
+    {
+        follow_id: '2',
+        follower_id: 'user2',
+        followee_id: 'user3',
+        followee: {
+            user_id: 'user3',
+            username: 'user3',
+            display_name: 'User Three',
+            avatar_url: null,
+        },
+    },
 ];
 const dummyFollow = { follow_id: '1', follower_id: 'user2', followee_id: 'user1' };
 
@@ -72,7 +92,7 @@ describe('Follow Routes', () => {
 
         expect(res.status).toBe(HTTP.OK.code);
         expect(res.body).toEqual({ message: 'Follow deleted.' });
-        expect(followService.deleteFollow).toHaveBeenCalledWith('1');
+        expect(followService.deleteFollow).toHaveBeenCalledWith('1', 'user2');
     });
 
     test('GET /followers should return all followers for current user', async () => {
@@ -95,7 +115,20 @@ describe('Follow Routes', () => {
             .set('Authorization', `Bearer ${token}`);
 
         expect(res.status).toBe(HTTP.OK.code);
-        expect(res.body).toEqual(dummyFollowees);
+        expect(res.body).toEqual([
+            {
+                user_id: 'user1',
+                username: 'user1',
+                display_name: 'User One',
+                avatar_url: null,
+            },
+            {
+                user_id: 'user3',
+                username: 'user3',
+                display_name: 'User Three',
+                avatar_url: null,
+            },
+        ]);
         expect(followService.getFollowees).toHaveBeenCalledWith('user2');
     });
 
