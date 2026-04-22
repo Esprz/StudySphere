@@ -201,7 +201,12 @@ def emit_exposures(
                 timestamp=session.started_at,
                 rank_position=idx,
                 candidate_score=ranked.candidate_score,
-                exposure_reasons=_derive_exposure_reasons(user, session, post),
+                exposure_reasons=_derive_exposure_reasons(
+                    user=user,
+                    session=session,
+                    post=post,
+                    follow_graph=world_state.follow_graph,
+                ),
                 score_jitter=ranked.score_jitter,
                 score_breakdown=ranked.score_breakdown,
                 deterministic_exposure_score=ranked.deterministic_exposure_score,
@@ -231,7 +236,13 @@ def _deduplicate_posts(posts: list[PostRecord]) -> list[PostRecord]:
     return deduped
 
 
-def _derive_exposure_reasons(user: UserProfile, session: SessionContext, post: PostRecord) -> list[str]:
+def _derive_exposure_reasons(
+    *,
+    user: UserProfile,
+    session: SessionContext,
+    post: PostRecord,
+    follow_graph: dict[str, set[str]],
+) -> list[str]:
     reasons: list[str] = []
     if post.topic == user.primary_interest:
         reasons.append("primary_interest_match")
@@ -240,6 +251,9 @@ def _derive_exposure_reasons(user: UserProfile, session: SessionContext, post: P
 
     if post.topic == session.goal_topic:
         reasons.append("goal_aligned")
+
+    if post.author_id in follow_graph.get(user.user_id, set()):
+        reasons.append("social_match")
 
     if post.freshness_hours <= 24:
         reasons.append("recent")
@@ -278,7 +292,7 @@ def _score_weights_from_sources(sources: SourceBundle) -> dict[str, float]:
         return _default_score_weights()
 
     formula = str(entry.get("formula", ""))
-    pairs = re.findall(r"([0-9]*\.?[0-9]+)\*([a-zA-Z_][a-zA-Z0-9_]*)", formula)
+    pairs = re.findall(r"([0-9]*\.?[0-9]+)\s*\*\s*([a-zA-Z_][a-zA-Z0-9_]*)", formula)
     weights = {name: float(weight) for weight, name in pairs}
     required = set(_default_score_weights().keys())
     if not required.issubset(weights):

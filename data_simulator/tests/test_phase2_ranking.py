@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
+import copy
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
 
 from config.loader import load_sources
-from config.models import ActivityState, RunConfig
+from config.models import ActivityState, PostRecord, RunConfig, SessionContext, SourceBundle, UserProfile
 from core.random import make_rng
-from generators.ranking import build_candidate_pool
+from generators.ranking import _derive_exposure_reasons, _score_weights_from_sources, build_candidate_pool
 from pipeline.build_truth import build_truth
 
 
@@ -84,7 +85,86 @@ class TestPhase2Ranking(unittest.TestCase):
         ]
         self.assertEqual(sig_a, sig_b)
 
+    def test_score_formula_parser_handles_spaces_around_multiply(self) -> None:
+        tuned = copy.deepcopy(self.sources.sources)
+        for fn in tuned["decision_formulas"]["functions"]:
+            if fn.get("name") == "score_exposure":
+                fn["formula"] = (
+                    "clip_0_1(0.31 * topic_match + 0.21 * goal_alignment + 0.17 * activity_alignment "
+                    "+ 0.09 * freshness_bonus + 0.11 * observed_quality + 0.06 * social_bonus + 0.05 * exploration_bonus)"
+                )
+                break
+        bundle = SourceBundle(base_path=self.sources.base_path, sources=tuned)
+        weights = _score_weights_from_sources(bundle)
+
+        self.assertEqual(weights["topic_match"], 0.31)
+        self.assertEqual(weights["goal_alignment"], 0.21)
+        self.assertEqual(weights["activity_alignment"], 0.17)
+        self.assertEqual(weights["freshness_bonus"], 0.09)
+        self.assertEqual(weights["observed_quality"], 0.11)
+        self.assertEqual(weights["social_bonus"], 0.06)
+        self.assertEqual(weights["exploration_bonus"], 0.05)
+
+    def test_social_retrieval_reason_is_labeled_social_match(self) -> None:
+        user = UserProfile(
+            user_id="u_1",
+            primary_interest="Data Science",
+            secondary_interests=["Machine Learning"],
+            learning_intensity="medium",
+            sleep_habit_skew=0.5,
+            posting_tendency="medium",
+            interaction_tendency="high",
+            curiosity_level=0.6,
+            diligence_level=0.6,
+            social_affinity=0.8,
+            exploration_rate=0.2,
+            drift_rate=0.1,
+            created_at=self.now,
+        )
+        session = SessionContext(
+            session_id="s_1",
+            user_id=user.user_id,
+            activity_id="a_1",
+            surface="feed",
+            started_at=self.now,
+            wall_clock_time=self.now,
+            hour_segment="evening",
+            day_type="weekday",
+            academic_season="regular_term",
+            goal_topic="Software Development",
+            activity_intent="Concept_Learning",
+            candidate_pool_size=80,
+            items_exposed_count=0,
+            session_duration_seconds=900,
+            fatigue_start=0.1,
+            activity_transition_count=0,
+        )
+        post = PostRecord(
+            post_id="p_1",
+            author_id="u_followed",
+            topic="Biology",
+            subtopic="cell biology",
+            format="short_post",
+            creator_type="peer_student",
+            difficulty=3,
+            true_latent_quality=0.4,
+            observed_quality=0.4,
+            freshness_hours=72,
+            study_context="regular_week",
+            utility_style="overview",
+            social_affordance="low_discussion",
+            created_at=self.now,
+        )
+
+        reasons = _derive_exposure_reasons(
+            user=user,
+            session=session,
+            post=post,
+            follow_graph={user.user_id: {"u_followed"}},
+        )
+        self.assertIn("social_match", reasons)
+        self.assertNotIn("exploration", reasons)
+
 
 if __name__ == "__main__":
     unittest.main()
-
