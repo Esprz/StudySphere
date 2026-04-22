@@ -150,6 +150,7 @@ class InteractionRecord:
     final_prob: float | None = None
     prob_jitter: float | None = None
     sampling_policy: str | None = None
+    sampling_policy_version: str | None = None
     sampled_outcome: bool | None = None
 
 
@@ -168,6 +169,7 @@ class FocusSessionRecord:
     deterministic_focus_prob: float | None = None
     final_focus_prob: float | None = None
     sampling_policy: str | None = None
+    sampling_policy_version: str | None = None
 
 
 @dataclass(frozen=True)
@@ -186,6 +188,26 @@ class SessionOutcomes:
     new_tasks: list[dict[str, Any]] = field(default_factory=list)
     completed_tasks: list[str] = field(default_factory=list)
     strongest_post_id: str | None = None
+    propensity_logs: list["PropensityLogRecord"] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class PropensityLogRecord:
+    log_id: str
+    decision_stage: str
+    user_id: str
+    session_id: str
+    timestamp: datetime
+    post_id: str | None = None
+    exposure_id: str | None = None
+    goal_id: str | None = None
+    deterministic_prob: float | None = None
+    final_prob: float | None = None
+    prob_jitter: float | None = None
+    sampling_policy: str | None = None
+    sampling_policy_version: str | None = None
+    sampled_outcome: bool | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -211,3 +233,4 @@ class WorldState:
     exposures: list[ExposureRecord] = field(default_factory=list)
     interactions: list[InteractionRecord] = field(default_factory=list)
     focus_sessions: list[FocusSessionRecord] = field(default_factory=list)
+    propensity_logs: list[PropensityLogRecord] = field(default_factory=list)

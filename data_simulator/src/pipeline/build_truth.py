@@ -51,6 +51,7 @@ def build_truth(
         exposures=[],
         interactions=[],
         focus_sessions=[],
+        propensity_logs=[],
     )
 
     world_clock = source_bundle.require("world_clock")
@@ -118,7 +119,7 @@ def build_truth(
                 items_per_session=config.items_per_session,
             )
             # Phase 3: consume exposures into interaction events with propensity traces.
-            interaction_records, final_activity, transition_count = simulate_session_interactions(
+            interaction_records, final_activity, transition_count, interaction_propensity_logs = simulate_session_interactions(
                 user=user,
                 session=session,
                 activity_state=activity,
@@ -146,6 +147,8 @@ def build_truth(
             world_state.sessions.append(session)
             world_state.exposures.extend(exposure_records)
             world_state.interactions.extend(interaction_records)
+            world_state.propensity_logs.extend(interaction_propensity_logs)
+            world_state.propensity_logs.extend(outcomes.propensity_logs)
             update_world_state_after_session(
                 user=user,
                 session=session,

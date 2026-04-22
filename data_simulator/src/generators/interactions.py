@@ -5,11 +5,22 @@ from __future__ import annotations
 import random
 from datetime import timedelta
 
-from config.models import ActivityState, ExposureRecord, InteractionRecord, PostRecord, SessionContext, SourceBundle, UserProfile, WorldState
+from config.models import (
+    ActivityState,
+    ExposureRecord,
+    InteractionRecord,
+    PostRecord,
+    PropensityLogRecord,
+    SessionContext,
+    SourceBundle,
+    UserProfile,
+    WorldState,
+)
 from core.ids import new_id
 from core.time import clip_0_1
 from generators.ranking import compute_activity_alignment, compute_goal_alignment, compute_topic_match
 from generators.sessions import maybe_transition_activity_intent
+from policies.propensity import make_propensity_log
 
 
 def compute_view_probability(
@@ -92,6 +103,7 @@ def sample_negative_signal_after_skip(
         final_prob=final_prob,
         prob_jitter=prob_jitter,
         sampling_policy="internal_heuristic_v1",
+        sampling_policy_version="1.0",
         sampled_outcome=False,
     )
 
@@ -126,6 +138,7 @@ def generate_view_interaction(
         final_prob=final_prob,
         prob_jitter=prob_jitter,
         sampling_policy="internal_heuristic_v1",
+        sampling_policy_version="1.0",
         sampled_outcome=True,
     )
 
@@ -209,21 +222,23 @@ def simulate_session_interactions(
     world_state: WorldState,
     sources: SourceBundle,
     rng: random.Random,
-) -> tuple[list[InteractionRecord], ActivityState, int]:
+) -> tuple[list[InteractionRecord], ActivityState, int, list[PropensityLogRecord]]:
     """Simulate ordered interaction events for one session's ranked exposures."""
     if not exposures:
-        return [], activity_state, 0
+        return [], activity_state, 0, []
 
     params = _session_params(sources)
     transition_every = int(params.get("intent_transition_check_every_n_exposures", 3))
     transition_prob = float(params.get("intent_transition_base_probability", 0.12))
 
     interactions: list[InteractionRecord] = []
+    propensity_logs: list[PropensityLogRecord] = []
     current_activity = activity_state
     transition_count = 0
     fatigue = session.fatigue_start
     view_count = 0
     event_offset_s = 0
+    decision_offset_s = 0
 
     ordered_exposures = sorted(exposures, key=lambda x: x.rank_position)
     for exposure_index, exposure in enumerate(ordered_exposures, start=1):
@@ -258,6 +273,25 @@ def simulate_session_interactions(
         final_view_prob = round(clip_0_1(max(deterministic_view_prob, floor_prob) + view_prob_jitter), 6)
 
         should_view = rng.random() < final_view_prob
+        propensity_logs.append(
+            make_propensity_log(
+                decision_stage="view_decision",
+                user_id=user.user_id,
+                session_id=session.session_id,
+                timestamp=session.started_at + timedelta(seconds=decision_offset_s),
+                post_id=post.post_id,
+                exposure_id=exposure.exposure_id,
+                goal_id=current_activity.goal_id,
+                deterministic_prob=deterministic_view_prob,
+                final_prob=final_view_prob,
+                prob_jitter=view_prob_jitter,
+                rng=rng,
+                sampled_outcome=should_view,
+                metadata={"off_interest_click_floor": floor_prob},
+            )
+        )
+        decision_offset_s += 1
+
         if not should_view:
             # Skip branch: emit a negative signal and increase fatigue modestly.
             negative_event = sample_negative_signal_after_skip(
@@ -358,7 +392,26 @@ def simulate_session_interactions(
             action_prob_jitter=action_prob_jitter,
         )
 
-        if rng.random() < like_prob:
+        like_outcome = rng.random() < like_prob
+        propensity_logs.append(
+            make_propensity_log(
+                decision_stage="like_decision",
+                user_id=user.user_id,
+                session_id=session.session_id,
+                timestamp=session.started_at + timedelta(seconds=decision_offset_s),
+                post_id=post.post_id,
+                exposure_id=exposure.exposure_id,
+                goal_id=current_activity.goal_id,
+                deterministic_prob=deterministic_like,
+                final_prob=like_prob,
+                prob_jitter=action_prob_jitter,
+                rng=rng,
+                sampled_outcome=like_outcome,
+            )
+        )
+        decision_offset_s += 1
+
+        if like_outcome:
             like_event = _generate_action_event(
                 event_type="like",
                 user=user,
@@ -375,7 +428,26 @@ def simulate_session_interactions(
             event_offset_s += 1
             interactions.append(like_event)
 
-        if rng.random() < save_prob:
+        save_outcome = rng.random() < save_prob
+        propensity_logs.append(
+            make_propensity_log(
+                decision_stage="save_decision",
+                user_id=user.user_id,
+                session_id=session.session_id,
+                timestamp=session.started_at + timedelta(seconds=decision_offset_s),
+                post_id=post.post_id,
+                exposure_id=exposure.exposure_id,
+                goal_id=current_activity.goal_id,
+                deterministic_prob=deterministic_save,
+                final_prob=save_prob,
+                prob_jitter=action_prob_jitter,
+                rng=rng,
+                sampled_outcome=save_outcome,
+            )
+        )
+        decision_offset_s += 1
+
+        if save_outcome:
             save_event = _generate_action_event(
                 event_type="save",
                 user=user,
@@ -392,7 +464,26 @@ def simulate_session_interactions(
             event_offset_s += 1
             interactions.append(save_event)
 
-        if rng.random() < comment_prob:
+        comment_outcome = rng.random() < comment_prob
+        propensity_logs.append(
+            make_propensity_log(
+                decision_stage="comment_decision",
+                user_id=user.user_id,
+                session_id=session.session_id,
+                timestamp=session.started_at + timedelta(seconds=decision_offset_s),
+                post_id=post.post_id,
+                exposure_id=exposure.exposure_id,
+                goal_id=current_activity.goal_id,
+                deterministic_prob=deterministic_comment,
+                final_prob=comment_prob,
+                prob_jitter=action_prob_jitter,
+                rng=rng,
+                sampled_outcome=comment_outcome,
+            )
+        )
+        decision_offset_s += 1
+
+        if comment_outcome:
             comment_event = _generate_action_event(
                 event_type="comment",
                 user=user,
@@ -410,7 +501,26 @@ def simulate_session_interactions(
             interactions.append(comment_event)
 
         hide_prob = _hide_after_view_probability(user, post, fatigue)
-        if rng.random() < hide_prob:
+        hide_outcome = rng.random() < hide_prob
+        propensity_logs.append(
+            make_propensity_log(
+                decision_stage="hide_after_view_decision",
+                user_id=user.user_id,
+                session_id=session.session_id,
+                timestamp=session.started_at + timedelta(seconds=decision_offset_s),
+                post_id=post.post_id,
+                exposure_id=exposure.exposure_id,
+                goal_id=current_activity.goal_id,
+                deterministic_prob=hide_prob,
+                final_prob=hide_prob,
+                prob_jitter=0.0,
+                rng=rng,
+                sampled_outcome=hide_outcome,
+            )
+        )
+        decision_offset_s += 1
+
+        if hide_outcome:
             hide_event = InteractionRecord(
                 interaction_id=new_id("i", rng=rng),
                 event_type="hide",
@@ -425,6 +535,7 @@ def simulate_session_interactions(
                 final_prob=hide_prob,
                 prob_jitter=0.0,
                 sampling_policy="internal_heuristic_v1",
+                sampling_policy_version="1.0",
                 sampled_outcome=True,
             )
             event_offset_s += 1
@@ -438,7 +549,7 @@ def simulate_session_interactions(
             sources=sources,
         )
 
-    return interactions, current_activity, transition_count
+    return interactions, current_activity, transition_count, propensity_logs
 
 
 def generate_quick_bounce_event(
@@ -620,6 +731,7 @@ def _generate_action_event(
         final_prob=final_prob,
         prob_jitter=prob_jitter,
         sampling_policy="internal_heuristic_v1",
+        sampling_policy_version="1.0",
         sampled_outcome=True,
     )
 

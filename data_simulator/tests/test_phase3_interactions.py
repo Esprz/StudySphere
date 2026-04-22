@@ -67,6 +67,7 @@ class TestPhase3Interactions(unittest.TestCase):
             self.assertIsNotNone(interaction.final_prob)
             self.assertIsNotNone(interaction.prob_jitter)
             self.assertEqual(interaction.sampling_policy, "internal_heuristic_v1")
+            self.assertEqual(interaction.sampling_policy_version, "1.0")
             self.assertIsInstance(interaction.sampled_outcome, bool)
 
     def test_quick_bounce_path_works(self) -> None:
@@ -100,7 +101,7 @@ class TestPhase3Interactions(unittest.TestCase):
         tuned_sources["jitter_noise_rules"]["rules"]["view_probability_jitter"]["range"] = [0.0, 0.0]
         tuned = SourceBundle(base_path=self.sources.base_path, sources=tuned_sources)
 
-        interactions, _, _ = simulate_session_interactions(
+        interactions, _, _, _ = simulate_session_interactions(
             user=user,
             session=session,
             activity_state=activity,

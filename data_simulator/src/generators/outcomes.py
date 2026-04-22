@@ -11,6 +11,7 @@ from config.models import (
     FocusSessionRecord,
     InteractionRecord,
     PostRecord,
+    PropensityLogRecord,
     SessionContext,
     SessionOutcomes,
     SourceBundle,
@@ -22,6 +23,7 @@ from core.ids import new_id
 from core.time import clip_0_1
 from generators.interactions import compute_utility_match, normalize_detail_dwell
 from generators.ranking import compute_goal_alignment
+from policies.propensity import make_propensity_log
 
 
 def select_strongest_session_post(
@@ -95,6 +97,9 @@ def generate_session_outcomes(
     if strongest_post is None:
         return SessionOutcomes()
 
+    propensity_logs: list[PropensityLogRecord] = []
+    decision_offset_s = 0
+
     focus_prob = compute_focus_probability(
         user=user,
         strongest_post=strongest_post,
@@ -103,6 +108,23 @@ def generate_session_outcomes(
         interactions=interactions,
         sources=sources,
     )
+    focus_outcome = rng.random() < focus_prob
+    propensity_logs.append(
+        make_propensity_log(
+            decision_stage="focus_decision",
+            user_id=user.user_id,
+            session_id=session.session_id,
+            timestamp=session.started_at + timedelta(seconds=decision_offset_s),
+            post_id=strongest_post.post_id,
+            goal_id=active_goal.goal_id,
+            deterministic_prob=focus_prob,
+            final_prob=focus_prob,
+            prob_jitter=0.0,
+            rng=rng,
+            sampled_outcome=focus_outcome,
+        )
+    )
+    decision_offset_s += 1
     focus_session = (
         _generate_focus_session(
             user=user,
@@ -113,7 +135,7 @@ def generate_session_outcomes(
             final_focus_prob=focus_prob,
             rng=rng,
         )
-        if rng.random() < focus_prob
+        if focus_outcome
         else None
     )
 
@@ -124,7 +146,25 @@ def generate_session_outcomes(
         activity_state=activity_state,
         interactions=interactions,
     )
-    if strongest_post.author_id != user.user_id and rng.random() < follow_prob:
+    follow_outcome = strongest_post.author_id != user.user_id and rng.random() < follow_prob
+    propensity_logs.append(
+        make_propensity_log(
+            decision_stage="follow_decision",
+            user_id=user.user_id,
+            session_id=session.session_id,
+            timestamp=session.started_at + timedelta(seconds=decision_offset_s),
+            post_id=strongest_post.post_id,
+            goal_id=active_goal.goal_id,
+            deterministic_prob=follow_prob,
+            final_prob=follow_prob,
+            prob_jitter=0.0,
+            rng=rng,
+            sampled_outcome=follow_outcome,
+            metadata={"target_author_id": strongest_post.author_id},
+        )
+    )
+    decision_offset_s += 1
+    if follow_outcome:
         follow_events.append((user.user_id, strongest_post.author_id))
 
     new_tasks: list[dict[str, object]] = []
@@ -133,7 +173,24 @@ def generate_session_outcomes(
         strongest_post=strongest_post,
         activity_state=activity_state,
     )
-    if rng.random() < task_creation_prob:
+    task_create_outcome = rng.random() < task_creation_prob
+    propensity_logs.append(
+        make_propensity_log(
+            decision_stage="task_create_decision",
+            user_id=user.user_id,
+            session_id=session.session_id,
+            timestamp=session.started_at + timedelta(seconds=decision_offset_s),
+            post_id=strongest_post.post_id,
+            goal_id=active_goal.goal_id,
+            deterministic_prob=task_creation_prob,
+            final_prob=task_creation_prob,
+            prob_jitter=0.0,
+            rng=rng,
+            sampled_outcome=task_create_outcome,
+        )
+    )
+    decision_offset_s += 1
+    if task_create_outcome:
         new_tasks.append(
             {
                 "task_id": new_id("t", rng=rng),
@@ -151,7 +208,24 @@ def generate_session_outcomes(
         interactions=interactions,
         focus_session=focus_session,
     )
-    if rng.random() < task_completion_prob:
+    task_complete_outcome = rng.random() < task_completion_prob
+    propensity_logs.append(
+        make_propensity_log(
+            decision_stage="task_complete_decision",
+            user_id=user.user_id,
+            session_id=session.session_id,
+            timestamp=session.started_at + timedelta(seconds=decision_offset_s),
+            post_id=strongest_post.post_id,
+            goal_id=active_goal.goal_id,
+            deterministic_prob=task_completion_prob,
+            final_prob=task_completion_prob,
+            prob_jitter=0.0,
+            rng=rng,
+            sampled_outcome=task_complete_outcome,
+        )
+    )
+    decision_offset_s += 1
+    if task_complete_outcome:
         existing = list(world_state.user_memory.get(user.user_id, {}).get("pending_tasks", []))
         if existing:
             completed_tasks.append(str(existing[0].get("task_id")))
@@ -164,6 +238,7 @@ def generate_session_outcomes(
         new_tasks=new_tasks,
         completed_tasks=completed_tasks,
         strongest_post_id=strongest_post.post_id,
+        propensity_logs=propensity_logs,
     )
 
 
@@ -197,6 +272,7 @@ def _generate_focus_session(
         deterministic_focus_prob=deterministic_focus_prob,
         final_focus_prob=final_focus_prob,
         sampling_policy="internal_heuristic_v1",
+        sampling_policy_version="1.0",
     )
 
 
@@ -314,7 +390,7 @@ def _focus_coefficients(sources: SourceBundle) -> dict[str, float]:
     if constant_match:
         defaults["base"] = float(constant_match.group(1))
 
-    pairs = re.findall(r"([0-9]*\.?[0-9]+)\*([a-zA-Z_][a-zA-Z0-9_]*)", formula)
+    pairs = re.findall(r"([0-9]*\.?[0-9]+)\s*\*\s*([a-zA-Z_][a-zA-Z0-9_]*)", formula)
     for weight, name in pairs:
         if name in defaults:
             defaults[name] = float(weight)
