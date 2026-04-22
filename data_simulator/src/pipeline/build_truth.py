@@ -10,6 +10,7 @@ from core.random import make_rng
 from core.time import derive_global_time_context
 from generators.content import generate_initial_content
 from generators.goals import generate_initial_goals, select_active_goal
+from generators.interactions import simulate_session_interactions
 from generators.ranking import build_candidate_pool, emit_exposures, rank_candidates_for_exposure
 from generators.sessions import generate_activity_state, open_session, sample_active_users
 from generators.state_updates import initialize_follow_graph, seed_content_memory, seed_user_memory
@@ -22,6 +23,7 @@ def build_truth(
     *,
     now: datetime | None = None,
 ) -> WorldState:
+    """Generate deterministic structured truth for users, sessions, exposures, and interactions."""
     now_utc = now or datetime.now(timezone.utc).replace(second=0, microsecond=0)
     rng = make_rng(config.seed)
 
@@ -47,6 +49,7 @@ def build_truth(
 
     world_clock = source_bundle.require("world_clock")
     for tick in range(config.timeline_ticks):
+        # Each tick represents a coarse session window in the world timeline.
         time_tick = now_utc + timedelta(hours=tick * 6)
         global_time_context = derive_global_time_context(time_tick, world_clock)
         active_users = sample_active_users(
@@ -61,6 +64,7 @@ def build_truth(
             if not user_goals:
                 continue
 
+            # Build session context, then derive ranked exposures from current state.
             active_goal = select_active_goal(user, user_goals, time_tick)
             session = open_session(
                 user=user,
@@ -107,9 +111,25 @@ def build_truth(
                 rng=rng,
                 items_per_session=config.items_per_session,
             )
-            session = replace(session, items_exposed_count=len(exposure_records))
+            # Phase 3: consume exposures into interaction events with propensity traces.
+            interaction_records, final_activity, transition_count = simulate_session_interactions(
+                user=user,
+                session=session,
+                activity_state=activity,
+                exposures=exposure_records,
+                world_state=world_state,
+                sources=source_bundle,
+                rng=rng,
+            )
+            session = replace(
+                session,
+                items_exposed_count=len(exposure_records),
+                activity_intent=final_activity.activity_intent,
+                activity_transition_count=transition_count,
+            )
             world_state.sessions.append(session)
             world_state.exposures.extend(exposure_records)
+            world_state.interactions.extend(interaction_records)
             world_state.user_memory[user.user_id]["recent_sessions"].append(session.session_id)
 
     return world_state
