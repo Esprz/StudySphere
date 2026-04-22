@@ -276,7 +276,6 @@ def simulate_session_interactions(
             )
             event_offset_s += 1
             interactions.append(negative_event)
-            _apply_content_memory_event(world_state, negative_event)
             fatigue = update_fatigue_after_skip(fatigue, exposure.rank_position, sources)
             continue
 
@@ -296,7 +295,6 @@ def simulate_session_interactions(
         )
         event_offset_s += 1
         interactions.append(view_event)
-        _apply_content_memory_event(world_state, view_event)
         view_count += 1
 
         if is_quick_bounce(dwell_ms, sources):
@@ -376,7 +374,6 @@ def simulate_session_interactions(
             )
             event_offset_s += 1
             interactions.append(like_event)
-            _apply_content_memory_event(world_state, like_event)
 
         if rng.random() < save_prob:
             save_event = _generate_action_event(
@@ -394,7 +391,6 @@ def simulate_session_interactions(
             )
             event_offset_s += 1
             interactions.append(save_event)
-            _apply_content_memory_event(world_state, save_event)
 
         if rng.random() < comment_prob:
             comment_event = _generate_action_event(
@@ -412,7 +408,6 @@ def simulate_session_interactions(
             )
             event_offset_s += 1
             interactions.append(comment_event)
-            _apply_content_memory_event(world_state, comment_event)
 
         hide_prob = _hide_after_view_probability(user, post, fatigue)
         if rng.random() < hide_prob:
@@ -434,7 +429,6 @@ def simulate_session_interactions(
             )
             event_offset_s += 1
             interactions.append(hide_event)
-            _apply_content_memory_event(world_state, hide_event)
 
         fatigue = update_fatigue_after_view(
             fatigue=fatigue,
@@ -682,21 +676,3 @@ def _negative_strength(sources: SourceBundle, event_type: str) -> str:
         if entry.get("event_type") == event_type:
             return str(entry.get("strength", "weak_negative"))
     return "weak_negative"
-
-
-def _apply_content_memory_event(world_state: WorldState, event: InteractionRecord) -> None:
-    """Increment content-memory counters for interaction types with persisted counts."""
-    counters = {
-        "view": "view_count",
-        "like": "like_count",
-        "save": "save_count",
-        "comment": "comment_count",
-        "hide": "hide_count",
-    }
-    field = counters.get(event.event_type)
-    if field is None:
-        return
-    memory = world_state.content_memory.get(event.post_id)
-    if memory is None:
-        return
-    memory[field] = int(memory.get(field, 0)) + 1

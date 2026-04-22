@@ -58,6 +58,7 @@ class UserGoal:
     progress_state: str
     start_at: datetime
     end_at: datetime
+    progress: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -176,6 +177,15 @@ class RankedCandidate:
     score_jitter: float
     candidate_score: float
     score_breakdown: dict[str, float]
+
+
+@dataclass(frozen=True)
+class SessionOutcomes:
+    focus_session: FocusSessionRecord | None = None
+    follow_events: list[tuple[str, str]] = field(default_factory=list)
+    new_tasks: list[dict[str, Any]] = field(default_factory=list)
+    completed_tasks: list[str] = field(default_factory=list)
+    strongest_post_id: str | None = None
 
 
 @dataclass(frozen=True)

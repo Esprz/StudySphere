@@ -11,9 +11,15 @@ from core.time import derive_global_time_context
 from generators.content import generate_initial_content
 from generators.goals import generate_initial_goals, select_active_goal
 from generators.interactions import simulate_session_interactions
+from generators.outcomes import generate_session_outcomes
 from generators.ranking import build_candidate_pool, emit_exposures, rank_candidates_for_exposure
 from generators.sessions import generate_activity_state, open_session, sample_active_users
-from generators.state_updates import initialize_follow_graph, seed_content_memory, seed_user_memory
+from generators.state_updates import (
+    initialize_follow_graph,
+    seed_content_memory,
+    seed_user_memory,
+    update_world_state_after_session,
+)
 from generators.users import generate_user_profiles
 
 
@@ -121,6 +127,16 @@ def build_truth(
                 sources=source_bundle,
                 rng=rng,
             )
+            outcomes = generate_session_outcomes(
+                user=user,
+                session=session,
+                activity_state=final_activity,
+                active_goal=active_goal,
+                interactions=interaction_records,
+                world_state=world_state,
+                sources=source_bundle,
+                rng=rng,
+            )
             session = replace(
                 session,
                 items_exposed_count=len(exposure_records),
@@ -130,6 +146,17 @@ def build_truth(
             world_state.sessions.append(session)
             world_state.exposures.extend(exposure_records)
             world_state.interactions.extend(interaction_records)
-            world_state.user_memory[user.user_id]["recent_sessions"].append(session.session_id)
+            update_world_state_after_session(
+                user=user,
+                session=session,
+                activity_state=final_activity,
+                active_goal=active_goal,
+                interactions=interaction_records,
+                outcomes=outcomes,
+                world_state=world_state,
+                sources=source_bundle,
+                rng=rng,
+                now=time_tick,
+            )
 
     return world_state
