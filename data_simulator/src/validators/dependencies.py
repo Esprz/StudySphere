@@ -103,6 +103,7 @@ def _validate_runtime_dependencies(
     goal_ids = {goal.goal_id for goals in world_state.goals_by_user.values() for goal in goals}
 
     exposures_by_id = {exposure.exposure_id: exposure for exposure in world_state.exposures}
+    interactions_by_id = {interaction.interaction_id: interaction for interaction in world_state.interactions}
     required_score_signals = {
         "topic_match",
         "goal_alignment",
@@ -192,6 +193,76 @@ def _validate_runtime_dependencies(
                     message="stochastic interaction is missing deterministic/final probability signal",
                     context={"interaction_id": interaction.interaction_id, "event_type": interaction.event_type},
                 )
+        if interaction.event_type == "comment" and interaction.reply_to_interaction_id is not None:
+            parent = interactions_by_id.get(interaction.reply_to_interaction_id)
+            if parent is None:
+                _add_issue(
+                    issues,
+                    code="missing_dependency_reference",
+                    message="reply_to_interaction_id does not exist",
+                    context={
+                        "interaction_id": interaction.interaction_id,
+                        "reply_to_interaction_id": interaction.reply_to_interaction_id,
+                    },
+                )
+                continue
+            if parent.event_type != "comment":
+                _add_issue(
+                    issues,
+                    code="cross_entity_dependency_mismatch",
+                    message="reply_to_interaction_id must point to a comment event",
+                    context={
+                        "interaction_id": interaction.interaction_id,
+                        "reply_to_interaction_id": interaction.reply_to_interaction_id,
+                        "parent_event_type": parent.event_type,
+                    },
+                )
+            if parent.post_id != interaction.post_id:
+                _add_issue(
+                    issues,
+                    code="cross_entity_dependency_mismatch",
+                    message="reply comment must target a parent comment on the same post",
+                    context={
+                        "interaction_id": interaction.interaction_id,
+                        "parent_interaction_id": parent.interaction_id,
+                        "post_id": interaction.post_id,
+                        "parent_post_id": parent.post_id,
+                    },
+                )
+            if parent.timestamp > interaction.timestamp:
+                _add_issue(
+                    issues,
+                    code="future_step_signal_usage",
+                    message="reply comment timestamp is earlier than parent comment timestamp",
+                    context={
+                        "interaction_id": interaction.interaction_id,
+                        "parent_interaction_id": parent.interaction_id,
+                    },
+                )
+            if interaction.reply_to_user_id is not None and interaction.reply_to_user_id != parent.user_id:
+                _add_issue(
+                    issues,
+                    code="cross_entity_dependency_mismatch",
+                    message="reply_to_user_id must match parent comment user_id",
+                    context={
+                        "interaction_id": interaction.interaction_id,
+                        "reply_to_user_id": interaction.reply_to_user_id,
+                        "parent_user_id": parent.user_id,
+                    },
+                )
+            if interaction.reply_delay_seconds is not None:
+                observed = int((interaction.timestamp - parent.timestamp).total_seconds())
+                if observed < 0 or int(interaction.reply_delay_seconds) > observed:
+                    _add_issue(
+                        issues,
+                        code="cross_entity_dependency_mismatch",
+                        message="reply_delay_seconds is inconsistent with parent/child timestamps",
+                        context={
+                            "interaction_id": interaction.interaction_id,
+                            "reply_delay_seconds": interaction.reply_delay_seconds,
+                            "observed_delay_seconds": observed,
+                        },
+                    )
 
     for focus in world_state.focus_sessions:
         if focus.user_id not in user_ids:

@@ -35,7 +35,13 @@ def build_truth(
 
     users = generate_user_profiles(config, source_bundle, rng, now=now_utc)
     goals_by_user = generate_initial_goals(users, source_bundle, rng, now=now_utc)
-    posts = generate_initial_content(users, source_bundle, rng, now=now_utc)
+    posts = generate_initial_content(
+        users,
+        source_bundle,
+        rng,
+        now=now_utc,
+        goals_by_user=goals_by_user,
+    )
     follow_graph = initialize_follow_graph(users)
     user_memory = seed_user_memory(users, goals_by_user)
     content_memory = seed_content_memory(posts)

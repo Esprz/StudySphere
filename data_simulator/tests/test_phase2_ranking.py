@@ -114,6 +114,8 @@ class TestPhase2Ranking(unittest.TestCase):
             sleep_habit_skew=0.5,
             posting_tendency="medium",
             interaction_tendency="high",
+            writing_style_family="analytical",
+            register_level="technical",
             curiosity_level=0.6,
             diligence_level=0.6,
             social_affinity=0.8,
@@ -145,6 +147,7 @@ class TestPhase2Ranking(unittest.TestCase):
             topic="Biology",
             subtopic="cell biology",
             format="short_post",
+            post_style="knowledge_share",
             creator_type="peer_student",
             difficulty=3,
             true_latent_quality=0.4,
@@ -153,6 +156,7 @@ class TestPhase2Ranking(unittest.TestCase):
             study_context="regular_week",
             utility_style="overview",
             social_affordance="low_discussion",
+            goal_relation_type="off_topic_noise",
             created_at=self.now,
         )
 

@@ -123,6 +123,8 @@ class TestPhase3Interactions(unittest.TestCase):
             sleep_habit_skew=0.5,
             posting_tendency="medium",
             interaction_tendency="high",
+            writing_style_family="question_asking",
+            register_level="plain",
             curiosity_level=1.0,
             diligence_level=0.7,
             social_affinity=0.6,
@@ -136,6 +138,7 @@ class TestPhase3Interactions(unittest.TestCase):
             topic="Biology",
             subtopic="biology foundations",
             format="short_post",
+            post_style="resource_share",
             creator_type="peer_student",
             difficulty=3,
             true_latent_quality=0.5,
@@ -144,6 +147,7 @@ class TestPhase3Interactions(unittest.TestCase):
             study_context="regular_week",
             utility_style="overview",
             social_affordance="low_discussion",
+            goal_relation_type="off_topic_noise",
             created_at=now,
         )
         on_interest_post = PostRecord(
@@ -152,6 +156,7 @@ class TestPhase3Interactions(unittest.TestCase):
             topic="Data Science",
             subtopic="data science foundations",
             format="short_post",
+            post_style="knowledge_share",
             creator_type="peer_student",
             difficulty=3,
             true_latent_quality=0.5,
@@ -160,6 +165,7 @@ class TestPhase3Interactions(unittest.TestCase):
             study_context="regular_week",
             utility_style="overview",
             social_affordance="low_discussion",
+            goal_relation_type="interest_adjacent",
             created_at=now,
         )
 

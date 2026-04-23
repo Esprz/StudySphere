@@ -233,6 +233,7 @@ def simulate_session_interactions(
 
     interactions: list[InteractionRecord] = []
     propensity_logs: list[PropensityLogRecord] = []
+    comments_by_post_id: dict[str, list[InteractionRecord]] = _index_comments_by_post_id(world_state.interactions)
     current_activity = activity_state
     transition_count = 0
     fatigue = session.fatigue_start
@@ -484,21 +485,42 @@ def simulate_session_interactions(
         decision_offset_s += 1
 
         if comment_outcome:
+            reply_target = _sample_reply_target(
+                post_comment_history=comments_by_post_id.get(post.post_id, []),
+                user=user,
+                sources=sources,
+                rng=rng,
+            )
+            reply_delay_seconds = _sample_reply_delay_seconds(
+                is_reply=reply_target is not None,
+                sources=sources,
+                rng=rng,
+            )
+            if reply_target is None:
+                comment_timestamp_offset_s = event_offset_s + reply_delay_seconds
+            else:
+                parent_offset_s = int((reply_target.timestamp - session.started_at).total_seconds())
+                comment_timestamp_offset_s = max(event_offset_s, parent_offset_s) + reply_delay_seconds
             comment_event = _generate_action_event(
                 event_type="comment",
                 user=user,
                 exposure=exposure,
                 post=post,
                 rng=rng,
-                timestamp_offset_s=event_offset_s,
+                timestamp_offset_s=comment_timestamp_offset_s,
                 session_started_at=session.started_at,
                 deterministic_prob=deterministic_comment,
                 final_prob=comment_prob,
                 prob_jitter=action_prob_jitter,
                 comment_text=f"Useful take on {post.topic.lower()}.",
+                reply_to_interaction_id=None if reply_target is None else reply_target.interaction_id,
+                reply_to_user_id=None if reply_target is None else reply_target.user_id,
+                thread_depth=0 if reply_target is None else min(3, int(reply_target.thread_depth or 0) + 1),
+                reply_delay_seconds=reply_delay_seconds,
             )
-            event_offset_s += 1
+            event_offset_s = comment_timestamp_offset_s + 1
             interactions.append(comment_event)
+            comments_by_post_id.setdefault(post.post_id, []).append(comment_event)
 
         hide_prob = _hide_after_view_probability(user, post, fatigue)
         hide_outcome = rng.random() < hide_prob
@@ -716,6 +738,10 @@ def _generate_action_event(
     final_prob: float,
     prob_jitter: float,
     comment_text: str | None,
+    reply_to_interaction_id: str | None = None,
+    reply_to_user_id: str | None = None,
+    thread_depth: int | None = None,
+    reply_delay_seconds: int | None = None,
 ) -> InteractionRecord:
     """Build a generic post-view action event (`like`/`save`/`comment`)."""
     return InteractionRecord(
@@ -727,6 +753,10 @@ def _generate_action_event(
         exposure_id=exposure.exposure_id,
         timestamp=session_started_at + timedelta(seconds=timestamp_offset_s),
         comment_text=comment_text,
+        reply_to_interaction_id=reply_to_interaction_id,
+        reply_to_user_id=reply_to_user_id,
+        thread_depth=thread_depth,
+        reply_delay_seconds=reply_delay_seconds,
         deterministic_prob=deterministic_prob,
         final_prob=final_prob,
         prob_jitter=prob_jitter,
@@ -788,3 +818,51 @@ def _negative_strength(sources: SourceBundle, event_type: str) -> str:
         if entry.get("event_type") == event_type:
             return str(entry.get("strength", "weak_negative"))
     return "weak_negative"
+
+
+def _sample_reply_target(
+    *,
+    post_comment_history: list[InteractionRecord],
+    user: UserProfile,
+    sources: SourceBundle,
+    rng: random.Random,
+) -> InteractionRecord | None:
+    """Optionally choose an earlier comment on the same post as a reply target."""
+    params = _session_params(sources)
+    base = float(params.get("reply_probability_base", 0.16))
+    social_weight = float(params.get("reply_probability_social_affinity_weight", 0.26))
+    reply_prob = clip_0_1(base + social_weight * user.social_affinity)
+    if rng.random() >= reply_prob:
+        return None
+
+    if not post_comment_history:
+        return None
+    return rng.choice(post_comment_history)
+
+
+def _sample_reply_delay_seconds(
+    *,
+    is_reply: bool,
+    sources: SourceBundle,
+    rng: random.Random,
+) -> int:
+    """Sample comment delay in seconds from session dynamics ranges."""
+    params = _session_params(sources)
+    if is_reply:
+        lo_hi = params.get("reply_comment_delay_seconds_range", [5, 90])
+    else:
+        lo_hi = params.get("top_level_comment_delay_seconds_range", [10, 180])
+    lo, hi = int(lo_hi[0]), int(lo_hi[1])
+    if hi < lo:
+        lo, hi = hi, lo
+    return rng.randint(max(0, lo), max(0, hi))
+
+
+def _index_comments_by_post_id(interactions: list[InteractionRecord]) -> dict[str, list[InteractionRecord]]:
+    """Build one per-post comment index to avoid repeated global scans."""
+    index: dict[str, list[InteractionRecord]] = {}
+    for interaction in interactions:
+        if interaction.event_type != "comment":
+            continue
+        index.setdefault(interaction.post_id, []).append(interaction)
+    return index

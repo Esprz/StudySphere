@@ -14,9 +14,35 @@ def validate_schema(world_state: WorldState) -> list[ValidationIssue]:
     """Validate required fields, numeric ranges, and type constraints."""
     issues: list[ValidationIssue] = []
     allowed_interaction_events = {"scroll_past", "hide", "view", "quick_bounce", "like", "save", "comment"}
+    allowed_writing_styles = {"concise", "reflective", "analytical", "casual", "question_asking"}
+    allowed_register_levels = {"plain", "polished", "technical"}
+    allowed_post_styles = {
+        "knowledge_share",
+        "progress_update",
+        "achievement_update",
+        "question_help",
+        "resource_share",
+        "reflection",
+        "build_in_public",
+    }
+    allowed_goal_relation_types = {"on_goal", "interest_adjacent", "off_topic_noise"}
 
     for user in world_state.users:
         _check_type(issues, "schema", "user_id_type", isinstance(user.user_id, str), {"user_id": user.user_id})
+        _check_type(
+            issues,
+            "schema",
+            "user_writing_style_family_enum",
+            user.writing_style_family in allowed_writing_styles,
+            {"user_id": user.user_id, "writing_style_family": user.writing_style_family},
+        )
+        _check_type(
+            issues,
+            "schema",
+            "user_register_level_enum",
+            user.register_level in allowed_register_levels,
+            {"user_id": user.user_id, "register_level": user.register_level},
+        )
         _check_range(issues, "user_curiosity_range", user.curiosity_level, 0.0, 1.0, {"user_id": user.user_id})
         _check_range(issues, "user_diligence_range", user.diligence_level, 0.0, 1.0, {"user_id": user.user_id})
         _check_range(issues, "user_social_affinity_range", user.social_affinity, 0.0, 1.0, {"user_id": user.user_id})
@@ -38,6 +64,20 @@ def validate_schema(world_state: WorldState) -> list[ValidationIssue]:
             )
 
     for post in world_state.posts:
+        _check_type(
+            issues,
+            "schema",
+            "post_style_enum",
+            post.post_style in allowed_post_styles,
+            {"post_id": post.post_id, "post_style": post.post_style},
+        )
+        _check_type(
+            issues,
+            "schema",
+            "post_goal_relation_type_enum",
+            post.goal_relation_type in allowed_goal_relation_types,
+            {"post_id": post.post_id, "goal_relation_type": post.goal_relation_type},
+        )
         _check_range(issues, "post_difficulty_range", float(post.difficulty), 1.0, 5.0, {"post_id": post.post_id})
         _check_range(issues, "post_true_quality_range", post.true_latent_quality, 0.0, 1.0, {"post_id": post.post_id})
         _check_range(issues, "post_observed_quality_range", post.observed_quality, 0.0, 1.0, {"post_id": post.post_id})
@@ -100,6 +140,71 @@ def validate_schema(world_state: WorldState) -> list[ValidationIssue]:
                 isinstance(interaction.sampled_outcome, bool),
                 {"interaction_id": interaction.interaction_id},
             )
+        if interaction.thread_depth is not None:
+            _check_range(
+                issues,
+                "interaction_thread_depth_range",
+                float(interaction.thread_depth),
+                0.0,
+                3.0,
+                {"interaction_id": interaction.interaction_id},
+            )
+        if interaction.reply_delay_seconds is not None:
+            _check_type(
+                issues,
+                "schema",
+                "interaction_reply_delay_non_negative",
+                int(interaction.reply_delay_seconds) >= 0,
+                {
+                    "interaction_id": interaction.interaction_id,
+                    "reply_delay_seconds": interaction.reply_delay_seconds,
+                },
+            )
+        if interaction.event_type != "comment":
+            _check_type(
+                issues,
+                "schema",
+                "non_comment_has_no_reply_metadata",
+                interaction.reply_to_interaction_id is None
+                and interaction.reply_to_user_id is None
+                and interaction.thread_depth is None
+                and interaction.reply_delay_seconds is None,
+                {"interaction_id": interaction.interaction_id, "event_type": interaction.event_type},
+            )
+        else:
+            if interaction.reply_to_interaction_id is None:
+                _check_type(
+                    issues,
+                    "schema",
+                    "top_level_comment_reply_user_null",
+                    interaction.reply_to_user_id is None,
+                    {"interaction_id": interaction.interaction_id},
+                )
+                _check_type(
+                    issues,
+                    "schema",
+                    "top_level_comment_depth_zero",
+                    interaction.thread_depth in (None, 0),
+                    {"interaction_id": interaction.interaction_id, "thread_depth": interaction.thread_depth},
+                )
+            else:
+                _check_type(
+                    issues,
+                    "schema",
+                    "reply_comment_has_reply_user",
+                    isinstance(interaction.reply_to_user_id, str) and interaction.reply_to_user_id != "",
+                    {
+                        "interaction_id": interaction.interaction_id,
+                        "reply_to_user_id": interaction.reply_to_user_id,
+                    },
+                )
+                _check_type(
+                    issues,
+                    "schema",
+                    "reply_comment_depth_positive",
+                    interaction.thread_depth is not None and int(interaction.thread_depth) >= 1,
+                    {"interaction_id": interaction.interaction_id, "thread_depth": interaction.thread_depth},
+                )
 
     for focus in world_state.focus_sessions:
         _check_type(

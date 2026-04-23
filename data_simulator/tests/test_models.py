@@ -31,6 +31,8 @@ class TestModels(unittest.TestCase):
             sleep_habit_skew=0.7,
             posting_tendency="medium",
             interaction_tendency="likes_and_saves",
+            writing_style_family="reflective",
+            register_level="plain",
             curiosity_level=0.6,
             diligence_level=0.8,
             social_affinity=0.4,
@@ -86,6 +88,7 @@ class TestModels(unittest.TestCase):
             topic="Software Development",
             subtopic="distributed systems",
             format="project_log",
+            post_style="progress_update",
             creator_type="project_builder",
             difficulty=4,
             true_latent_quality=0.8,
@@ -94,6 +97,7 @@ class TestModels(unittest.TestCase):
             study_context="project_deadline",
             utility_style="worked_example",
             social_affordance="question_inviting",
+            goal_relation_type="on_goal",
             created_at=now,
         )
         exposure = ExposureRecord(
@@ -146,4 +150,3 @@ class TestModels(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

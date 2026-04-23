@@ -38,6 +38,8 @@ def generate_user_profiles(
                 sleep_habit_skew=_sample_float_range(persona_axes, "sleep_habit_skew", rng),
                 posting_tendency=_sample_enum(persona_axes, "posting_tendency", rng),
                 interaction_tendency=_sample_enum(persona_axes, "interaction_tendency", rng),
+                writing_style_family=_sample_enum(persona_axes, "writing_style_family", rng),
+                register_level=_sample_enum(persona_axes, "register_level", rng),
                 curiosity_level=_sample_float_range(persona_axes, "curiosity_level", rng),
                 diligence_level=_sample_float_range(persona_axes, "diligence_level", rng),
                 social_affinity=_sample_float_range(persona_axes, "social_affinity", rng),

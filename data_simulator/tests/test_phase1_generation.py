@@ -36,6 +36,8 @@ class TestPhase1Generation(unittest.TestCase):
             self.assertIn(user.learning_intensity, fields["learning_intensity"]["allowed_values"])
             self.assertIn(user.posting_tendency, fields["posting_tendency"]["allowed_values"])
             self.assertIn(user.interaction_tendency, fields["interaction_tendency"]["allowed_values"])
+            self.assertIn(user.writing_style_family, fields["writing_style_family"]["allowed_values"])
+            self.assertIn(user.register_level, fields["register_level"]["allowed_values"])
             self.assertTrue(0.0 <= user.sleep_habit_skew <= 1.0)
             self.assertTrue(0.0 <= user.curiosity_level <= 1.0)
             self.assertTrue(0.0 <= user.diligence_level <= 1.0)
@@ -110,4 +112,3 @@ class TestPhase1Generation(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

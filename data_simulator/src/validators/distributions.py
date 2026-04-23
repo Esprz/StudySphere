@@ -23,6 +23,7 @@ def validate_batch_distributions(world_state: WorldState) -> list[ValidationIssu
     concentration = summary["concentration"]
     quality = summary["quality_distribution"]
     activity = summary["user_activity"]
+    goal_relation = summary["goal_relation_distribution"]
 
     if totals["exposures"] == 0:
         _add_issue(
@@ -122,6 +123,22 @@ def validate_batch_distributions(world_state: WorldState) -> list[ValidationIssu
             message="true_latent_quality has low variance; expected a skewed beta-like distribution",
             context={"true_quality_std": quality["true_quality_std"]},
         )
+    if goal_relation["off_topic_noise_share"] > 0.35:
+        _add_issue(
+            issues,
+            severity="warning",
+            code="off_topic_noise_share_too_high",
+            message="off-topic content share is too high for intended goal-driven simulation",
+            context={"off_topic_noise_share": goal_relation["off_topic_noise_share"]},
+        )
+    if goal_relation["off_topic_noise_share"] < 0.02:
+        _add_issue(
+            issues,
+            severity="warning",
+            code="off_topic_noise_share_too_low",
+            message="off-topic content share is near zero; random exploration is underrepresented",
+            context={"off_topic_noise_share": goal_relation["off_topic_noise_share"]},
+        )
 
     return issues
 
@@ -133,12 +150,15 @@ def summarize_batch_metrics(world_state: WorldState) -> dict[str, Any]:
 
     topic_counts = Counter()
     creator_counts = Counter()
+    goal_relation_counts = Counter()
     for exposure in world_state.exposures:
         post = posts_by_id.get(exposure.post_id)
         if post is None:
             continue
         topic_counts[post.topic] += 1
         creator_counts[post.author_id] += 1
+    for post in world_state.posts:
+        goal_relation_counts[post.goal_relation_type] += 1
 
     interaction_counts = Counter(item.event_type for item in world_state.interactions)
     view_interactions = [item for item in world_state.interactions if item.event_type == "view"]
@@ -225,6 +245,13 @@ def summarize_batch_metrics(world_state: WorldState) -> dict[str, Any]:
         "quality_distribution": {
             "true_quality_mean": round(mean(true_quality_values) if true_quality_values else 0.0, 6),
             "true_quality_std": round(_stddev(true_quality_values), 6),
+        },
+        "goal_relation_distribution": {
+            "counts": dict(goal_relation_counts),
+            "off_topic_noise_share": round(
+                goal_relation_counts.get("off_topic_noise", 0) / float(max(1, len(world_state.posts))),
+                6,
+            ),
         },
     }
 

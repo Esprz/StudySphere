@@ -38,6 +38,8 @@ class UserProfile:
     sleep_habit_skew: float
     posting_tendency: str
     interaction_tendency: str
+    writing_style_family: str
+    register_level: str
     curiosity_level: float
     diligence_level: float
     social_affinity: float
@@ -102,6 +104,7 @@ class PostRecord:
     topic: str
     subtopic: str
     format: str
+    post_style: str
     creator_type: str
     difficulty: int
     true_latent_quality: float
@@ -110,6 +113,7 @@ class PostRecord:
     study_context: str
     utility_style: str
     social_affordance: str
+    goal_relation_type: str
     created_at: datetime
 
 
@@ -144,6 +148,10 @@ class InteractionRecord:
     feed_dwell_ms: int | None = None
     dwell_ms: int | None = None
     comment_text: str | None = None
+    reply_to_interaction_id: str | None = None
+    reply_to_user_id: str | None = None
+    thread_depth: int | None = None
+    reply_delay_seconds: int | None = None
     reason_code: str | None = None
     negative_signal_strength: str | None = None
     deterministic_prob: float | None = None
@@ -239,9 +247,14 @@ class CommentRenderTarget:
     interaction_type: str
     primary_interest: str
     interaction_tendency: str
+    writing_style_family: str
+    register_level: str
     curiosity_level: float
     social_affinity: float
     exploration_rate: float
+    reply_to_interaction_id: str | None = None
+    thread_depth: int | None = None
+    reply_delay_seconds: int | None = None
 
 
 @dataclass(frozen=True)
