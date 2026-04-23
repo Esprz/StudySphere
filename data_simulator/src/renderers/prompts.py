@@ -55,6 +55,7 @@ def build_post_render_prompt(
     return PostRenderPrompt(
         prompt_id=new_id("pp"),
         post_id=post.post_id,
+        author_id=post.author_id,
         topic=post.topic,
         subtopic=post.subtopic,
         content_format=post.format,

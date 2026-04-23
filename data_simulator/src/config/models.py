@@ -238,6 +238,7 @@ class PostRenderPrompt:
 
     prompt_id: str
     post_id: str
+    author_id: str
     topic: str
     subtopic: str
     content_format: str

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 from typing import Any
 
@@ -163,20 +164,27 @@ def prepare_scale_text_batches(
     openai_builder = OpenAISeedBatchBuilder(model_name=openai_model_name)
     gemini_builder = GeminiBatchBuilder(model_name=gemini_model_name)
 
+    user_provider_assignments = _build_user_provider_assignments(
+        world_state.users,
+        gemini_share_percentage=gemini_share_percentage,
+    )
+
     post_targets = select_seed_post_targets(world_state, limit=post_target_count)
-    post_prompts = [
-        build_post_render_prompt(post, author_profile=users_by_id.get(post.author_id))
-        for post in post_targets
-    ]
-    post_split = _split_prompts_by_provider(post_prompts, gemini_share_percentage=gemini_share_percentage)
+    post_prompts_by_provider = {"openai": [], "gemini": []}
+    for post in post_targets:
+        provider = user_provider_assignments.get(post.author_id, "openai")
+        post_prompts_by_provider[provider].append(
+            build_post_render_prompt(post, author_profile=users_by_id.get(post.author_id))
+        )
+    post_prompts = post_prompts_by_provider["openai"] + post_prompts_by_provider["gemini"]
 
     artifacts: dict[str, Any] = {
         "status": "prepared_posts_only" if rendered_posts_path is None else "prepared",
         "post_prompts": post_prompts,
         "comment_prompts": [],
         "post_request_counts": {
-            "openai": len(post_split["openai"]),
-            "gemini": len(post_split["gemini"]),
+            "openai": len(post_prompts_by_provider["openai"]),
+            "gemini": len(post_prompts_by_provider["gemini"]),
         },
         "comment_request_counts": {
             "openai": 0,
@@ -194,16 +202,17 @@ def prepare_scale_text_batches(
                 stage_name="scale_posts",
                 openai_builder=openai_builder,
                 gemini_builder=gemini_builder,
-                openai_prompts=post_split["openai"],
-                gemini_prompts=post_split["gemini"],
+                openai_prompts=post_prompts_by_provider["openai"],
+                gemini_prompts=post_prompts_by_provider["gemini"],
                 request_kind="posts",
             )
         )
         split_report = {
             "stage": "posts",
             "gemini_share_percentage": gemini_share_percentage,
-            "openai_prompt_ids": [prompt.prompt_id for prompt in post_split["openai"]],
-            "gemini_prompt_ids": [prompt.prompt_id for prompt in post_split["gemini"]],
+            "openai_prompt_ids": [prompt.prompt_id for prompt in post_prompts_by_provider["openai"]],
+            "gemini_prompt_ids": [prompt.prompt_id for prompt in post_prompts_by_provider["gemini"]],
+            "provider_user_counts": _count_provider_assignments(user_provider_assignments),
         }
         artifacts["files"]["scale_posts_provider_split"] = str(
             _write_json(split_report, Path(output_dir).expanduser().resolve() / "scale_posts_provider_split.json")
@@ -213,19 +222,20 @@ def prepare_scale_text_batches(
         return artifacts
 
     rendered_posts_by_post_id = _load_rendered_posts_sidecars(rendered_posts_path)
-    comment_target_groups = select_seed_comment_target_groups(
+    comment_target_groups = select_scale_comment_target_groups_by_provider(
         world_state,
+        user_provider_assignments=user_provider_assignments,
         limit=comment_target_count,
         max_comments_per_post_request=max_comments_per_post_request,
     )
-    comment_prompts: list[CommentSetRenderPrompt] = []
+    comment_prompts_by_provider = {"openai": [], "gemini": []}
     missing_rendered_post_ids: set[str] = set()
-    for post, interactions in comment_target_groups:
+    for provider, post, interactions in comment_target_groups:
         rendered_post = rendered_posts_by_post_id.get(post.post_id)
         if rendered_post is None:
             missing_rendered_post_ids.add(post.post_id)
             continue
-        comment_prompts.append(
+        comment_prompts_by_provider[provider].append(
             build_comment_render_prompt(
                 post,
                 rendered_post=rendered_post,
@@ -235,12 +245,11 @@ def prepare_scale_text_batches(
                 ],
             )
         )
-
-    comment_split = _split_prompts_by_provider(comment_prompts, gemini_share_percentage=gemini_share_percentage)
+    comment_prompts = comment_prompts_by_provider["openai"] + comment_prompts_by_provider["gemini"]
     artifacts["comment_prompts"] = comment_prompts
     artifacts["comment_request_counts"] = {
-        "openai": len(comment_split["openai"]),
-        "gemini": len(comment_split["gemini"]),
+        "openai": len(comment_prompts_by_provider["openai"]),
+        "gemini": len(comment_prompts_by_provider["gemini"]),
     }
     artifacts["missing_rendered_post_ids"] = sorted(missing_rendered_post_ids)
     if missing_rendered_post_ids:
@@ -254,17 +263,18 @@ def prepare_scale_text_batches(
                 stage_name="scale_comment_sets",
                 openai_builder=openai_builder,
                 gemini_builder=gemini_builder,
-                openai_prompts=comment_split["openai"],
-                gemini_prompts=comment_split["gemini"],
+                openai_prompts=comment_prompts_by_provider["openai"],
+                gemini_prompts=comment_prompts_by_provider["gemini"],
                 request_kind="comment_sets",
             )
         )
         split_report = {
             "stage": "comment_sets",
             "gemini_share_percentage": gemini_share_percentage,
-            "openai_prompt_ids": [prompt.prompt_id for prompt in comment_split["openai"]],
-            "gemini_prompt_ids": [prompt.prompt_id for prompt in comment_split["gemini"]],
+            "openai_prompt_ids": [prompt.prompt_id for prompt in comment_prompts_by_provider["openai"]],
+            "gemini_prompt_ids": [prompt.prompt_id for prompt in comment_prompts_by_provider["gemini"]],
             "missing_rendered_post_ids": sorted(missing_rendered_post_ids),
+            "provider_user_counts": _count_provider_assignments(user_provider_assignments),
         }
         artifacts["files"]["scale_comment_sets_provider_split"] = str(
             _write_json(split_report, Path(output_dir).expanduser().resolve() / "scale_comment_sets_provider_split.json")
@@ -941,6 +951,41 @@ def select_seed_comment_target_groups(
     return groups[:limit]
 
 
+def select_scale_comment_target_groups_by_provider(
+    world_state: WorldState,
+    *,
+    user_provider_assignments: dict[str, str],
+    limit: int | None,
+    max_comments_per_post_request: int,
+) -> list[tuple[str, PostRecord, list[InteractionRecord]]]:
+    """Group scale comment targets by post and assigned provider.
+
+    This preserves the one-post request shape while ensuring every request is
+    provider-consistent at the user level: a single user's comments always go to
+    the same model, even if that means one post fans out into two provider shards.
+    """
+    posts_by_id = {post.post_id: post for post in world_state.posts}
+    grouped: dict[tuple[str, str], list[InteractionRecord]] = {}
+    for interaction in sorted(world_state.interactions, key=lambda item: (item.timestamp, item.interaction_id)):
+        if interaction.event_type != "comment":
+            continue
+        provider = user_provider_assignments.get(interaction.user_id, "openai")
+        grouped.setdefault((interaction.post_id, provider), []).append(interaction)
+
+    groups: list[tuple[str, PostRecord, list[InteractionRecord]]] = []
+    chunk_size = max(1, max_comments_per_post_request)
+    for (post_id, provider), interactions in grouped.items():
+        post = posts_by_id.get(post_id)
+        if post is None:
+            continue
+        for start in range(0, len(interactions), chunk_size):
+            groups.append((provider, post, interactions[start : start + chunk_size]))
+    groups.sort(key=lambda item: (item[1].created_at, item[1].post_id, item[0]), reverse=True)
+    if limit is None:
+        return groups
+    return groups[:limit]
+
+
 def write_provider_batch_artifacts(
     *,
     output_dir: str | Path,
@@ -1045,6 +1090,7 @@ def _batch_registry_record(
     if isinstance(prompt, PostRenderPrompt):
         record.update(
             {
+                "author_id": prompt.author_id,
                 "content_format": prompt.content_format,
                 "difficulty": prompt.difficulty,
             }
@@ -1052,32 +1098,38 @@ def _batch_registry_record(
         return record
     record.update(
         {
+            "commenter_user_ids": [target.user_id for target in prompt.comment_targets],
             "comment_interaction_ids": [target.interaction_id for target in prompt.comment_targets],
         }
     )
     return record
 
 
-def _split_prompts_by_provider(
-    prompts: list[PostRenderPrompt | CommentSetRenderPrompt],
+def _build_user_provider_assignments(
+    users: list[UserProfile],
     *,
     gemini_share_percentage: int,
-) -> dict[str, list[PostRenderPrompt | CommentSetRenderPrompt]]:
-    """Deterministically split prompts across Gemini/OpenAI by stable content keys."""
-    ordered = sorted(prompts, key=_provider_split_key)
-    gemini_count = round(len(ordered) * (gemini_share_percentage / 100.0))
-    return {
-        "gemini": ordered[:gemini_count],
-        "openai": ordered[gemini_count:],
-    }
+) -> dict[str, str]:
+    """Assign each user to one provider so all of their text stays model-consistent."""
+    ordered_users = sorted(users, key=lambda user: _stable_user_shuffle_key(user.user_id))
+    gemini_count = round(len(ordered_users) * (gemini_share_percentage / 100.0))
+    assignments: dict[str, str] = {}
+    for index, user in enumerate(ordered_users):
+        assignments[user.user_id] = "gemini" if index < gemini_count else "openai"
+    return assignments
 
 
-def _provider_split_key(prompt: PostRenderPrompt | CommentSetRenderPrompt) -> tuple[str, str]:
-    """Build a stable split key that does not depend on random prompt ids."""
-    if isinstance(prompt, PostRenderPrompt):
-        return (prompt.post_id, "post")
-    interaction_key = ",".join(target.interaction_id for target in prompt.comment_targets)
-    return (prompt.post_id, interaction_key)
+def _stable_user_shuffle_key(user_id: str) -> str:
+    """Return a stable shuffle key so provider assignment is deterministic across stages."""
+    return hashlib.sha256(user_id.encode("utf-8")).hexdigest()
+
+
+def _count_provider_assignments(user_provider_assignments: dict[str, str]) -> dict[str, int]:
+    """Count how many users are assigned to each provider."""
+    counts = {"openai": 0, "gemini": 0}
+    for provider in user_provider_assignments.values():
+        counts[provider] = counts.get(provider, 0) + 1
+    return counts
 
 
 def _load_rendered_posts_sidecars(path: str | Path) -> dict[str, RenderedPostText]:

@@ -25,7 +25,7 @@ class TestPhase9ScaleText(unittest.TestCase):
         self.now = datetime(2026, 4, 22, 20, 0, tzinfo=timezone.utc)
 
     def test_prepare_scale_posts_split_between_openai_and_gemini(self) -> None:
-        """Scale post requests should split deterministically by configured Gemini share."""
+        """Scale post requests should split deterministically by configured user-level Gemini share."""
         world_state = build_truth(
             RunConfig(seed=9101, user_count=28, timeline_ticks=4, items_per_session=10),
             self.sources,
@@ -44,7 +44,9 @@ class TestPhase9ScaleText(unittest.TestCase):
 
             self.assertEqual(artifacts["status"], "prepared_posts_only")
             self.assertEqual(artifacts["comment_stage_status"], "blocked_missing_rendered_posts")
-            self.assertEqual(artifacts["post_request_counts"], {"openai": 3, "gemini": 2})
+            self.assertEqual(sum(artifacts["post_request_counts"].values()), 5)
+            self.assertGreaterEqual(artifacts["post_request_counts"]["openai"], 0)
+            self.assertGreaterEqual(artifacts["post_request_counts"]["gemini"], 0)
             self.assertEqual(artifacts["comment_request_counts"], {"openai": 0, "gemini": 0})
 
             files = artifacts["files"]
@@ -52,8 +54,16 @@ class TestPhase9ScaleText(unittest.TestCase):
             self.assertTrue(Path(files["scale_posts_gemini_batch_input"]).is_file())
             split_report = json.loads(Path(files["scale_posts_provider_split"]).read_text(encoding="utf-8"))
             self.assertEqual(split_report["gemini_share_percentage"], 40)
-            self.assertEqual(len(split_report["gemini_prompt_ids"]), 2)
-            self.assertEqual(len(split_report["openai_prompt_ids"]), 3)
+            self.assertEqual(len(split_report["gemini_prompt_ids"]) + len(split_report["openai_prompt_ids"]), 5)
+            self.assertEqual(split_report["provider_user_counts"]["openai"], 17)
+            self.assertEqual(split_report["provider_user_counts"]["gemini"], 11)
+            _assert_users_do_not_cross_providers(
+                files=files,
+                openai_post_key="scale_posts_openai_prompt_registry",
+                gemini_post_key="scale_posts_gemini_prompt_registry",
+                openai_comment_key="missing",
+                gemini_comment_key="missing",
+            )
 
     def test_comment_stage_waits_for_rendered_post_sidecars(self) -> None:
         """Comment-set batch preparation must not proceed until rendered post text exists."""
@@ -127,6 +137,13 @@ class TestPhase9ScaleText(unittest.TestCase):
             files = artifacts["files"]
             self.assertTrue(
                 any(key.startswith("scale_comment_sets_openai") or key.startswith("scale_comment_sets_gemini") for key in files)
+            )
+            _assert_users_do_not_cross_providers(
+                files=files,
+                openai_post_key="scale_posts_openai_prompt_registry",
+                gemini_post_key="scale_posts_gemini_prompt_registry",
+                openai_comment_key="scale_comment_sets_openai_prompt_registry",
+                gemini_comment_key="scale_comment_sets_gemini_prompt_registry",
             )
 
     def test_collect_scale_batch_results_supports_gemini_jsonl_outputs(self) -> None:
@@ -235,6 +252,38 @@ def _read_jsonl(path: Path) -> list[dict[str, object]]:
             if stripped:
                 records.append(json.loads(stripped))
     return records
+
+
+def _assert_users_do_not_cross_providers(
+    *,
+    files: dict[str, str],
+    openai_post_key: str,
+    gemini_post_key: str,
+    openai_comment_key: str,
+    gemini_comment_key: str,
+) -> None:
+    """Assert the same user never appears in both provider registries."""
+    seen: dict[str, str] = {}
+    for provider, key, field in (
+        ("openai", openai_post_key, "author_id"),
+        ("gemini", gemini_post_key, "author_id"),
+    ):
+        if key not in files:
+            continue
+        for record in _read_jsonl(Path(files[key])):
+            user_id = str(record[field])
+            if user_id in seen:
+                assert seen[user_id] == provider
+            seen[user_id] = provider
+    for provider, key in (("openai", openai_comment_key), ("gemini", gemini_comment_key)):
+        if key not in files:
+            continue
+        for record in _read_jsonl(Path(files[key])):
+            for user_id in record.get("commenter_user_ids", []):
+                user_key = str(user_id)
+                if user_key in seen:
+                    assert seen[user_key] == provider
+                seen[user_key] = provider
 
 
 if __name__ == "__main__":
