@@ -152,8 +152,8 @@ class TestPhase8SeedText(unittest.TestCase):
             for key in ("rendered_posts", "rendered_comments", "text_validation_report"):
                 self.assertTrue(Path(files[key]).is_file(), f"missing file for {key}")
 
-    def test_prepare_batch_artifacts_use_responses_api_and_grouped_comments(self) -> None:
-        """Batch preparation should use Responses API with strict JSON schema and post-level comment grouping."""
+    def test_prepare_batch_artifacts_use_responses_api_and_gate_comments_on_rendered_posts(self) -> None:
+        """Batch preparation should only unlock comment requests after rendered post sidecars exist."""
         world_state = build_truth(
             RunConfig(seed=8101, user_count=28, timeline_ticks=4, items_per_session=10),
             self.sources,
@@ -170,26 +170,16 @@ class TestPhase8SeedText(unittest.TestCase):
                 max_comments_per_post_request=4,
             )
 
-            self.assertEqual(prepared["status"], "prepared")
-            self.assertEqual(len(prepared["comment_prompts"]), 3)
-            self.assertTrue(all(len(prompt.comment_targets) >= 1 for prompt in prepared["comment_prompts"]))
+            self.assertEqual(prepared["status"], "prepared_posts_only")
+            self.assertEqual(prepared["comment_stage_status"], "blocked_missing_rendered_posts")
+            self.assertEqual(len(prepared["comment_prompts"]), 0)
             self.assertTrue(all(request["url"] == "/v1/responses" for request in prepared["post_requests"]))
-            self.assertTrue(all(request["url"] == "/v1/responses" for request in prepared["comment_requests"]))
+            self.assertEqual(prepared["comment_requests"], [])
 
             post_body = prepared["post_requests"][0]["body"]
-            comment_body = prepared["comment_requests"][0]["body"]
             self.assertEqual(post_body["text"]["format"]["type"], "json_schema")
             self.assertTrue(post_body["text"]["format"]["strict"])
-            self.assertEqual(comment_body["text"]["format"]["type"], "json_schema")
-            self.assertTrue(comment_body["text"]["format"]["strict"])
-            self.assertIn("comments", comment_body["text"]["format"]["schema"]["properties"])
-
-            manifest = json.loads(
-                Path(prepared["files"]["openai_comment_sets_submit_manifest"]).read_text(encoding="utf-8")
-            )
-            self.assertEqual(manifest["endpoint"], "/v1/responses")
-            self.assertEqual(manifest["completion_window"], "24h")
-            self.assertEqual(manifest["request_kind"], "comment_sets")
+            self.assertNotIn("openai_comment_sets_submit_manifest", prepared["files"])
 
     def test_collect_and_retry_prepare_are_separate(self) -> None:
         """Collect should only map outputs and failures; retry preparation should be explicit and separate."""
@@ -211,19 +201,12 @@ class TestPhase8SeedText(unittest.TestCase):
             )
 
             post_manifest_path = Path(prepared["files"]["openai_posts_submit_manifest"])
-            comment_manifest_path = Path(prepared["files"]["openai_comment_sets_submit_manifest"])
             post_registry = _read_jsonl(Path(prepared["files"]["openai_posts_prompt_registry"]))
-            comment_registry = _read_jsonl(Path(prepared["files"]["openai_comment_sets_prompt_registry"]))
 
             post_status_path = root / "post_batch_status.json"
             post_output_path = root / "post_batch_output.jsonl"
             post_error_path = root / "post_batch_errors.jsonl"
-            comment_status_path = root / "comment_batch_status.json"
-            comment_output_path = root / "comment_batch_output.jsonl"
-            comment_error_path = root / "comment_batch_errors.jsonl"
-
             post_status_path.write_text(json.dumps({"id": "batch_posts_1", "status": "completed"}), encoding="utf-8")
-            comment_status_path.write_text(json.dumps({"id": "batch_comments_1", "status": "completed"}), encoding="utf-8")
 
             first_post = post_registry[0]
             post_output = {
@@ -248,6 +231,53 @@ class TestPhase8SeedText(unittest.TestCase):
             }
             post_output_path.write_text(json.dumps(post_output) + "\n", encoding="utf-8")
             post_error_path.write_text("", encoding="utf-8")
+
+            post_collect = collect_openai_seed_batch_results(
+                batch_kind="posts",
+                manifest_path=post_manifest_path,
+                batch_status_path=post_status_path,
+                output_jsonl_path=post_output_path,
+                error_jsonl_path=post_error_path,
+            )
+
+            posts_by_id = {post.post_id: post for post in world_state.posts}
+            rendered_posts_path = root / "seed_rendered_posts.jsonl"
+            rendered_post_sidecars = [
+                RenderedPostText(
+                    render_id=f"rpost_{item['post_id']}",
+                    post_id=str(item["post_id"]),
+                    prompt_id=str(item["prompt_id"]),
+                    model_name="gpt-5.4-nano",
+                    provider="openai_batch",
+                    title=f"{posts_by_id[str(item['post_id'])].topic} title",
+                    content=(
+                        f"Concrete seed post text about {posts_by_id[str(item['post_id'])].topic} "
+                        f"and {posts_by_id[str(item['post_id'])].subtopic}."
+                    ),
+                    validator_status="collected",
+                )
+                for item in post_registry
+            ]
+            rendered_posts_path.write_text(
+                "".join(json.dumps(record.__dict__, sort_keys=True) + "\n" for record in rendered_post_sidecars),
+                encoding="utf-8",
+            )
+            comment_prepared = prepare_openai_seed_batches(
+                world_state,
+                output_dir=root,
+                seed_model_name="gpt-5.4-nano",
+                rendered_posts_path=rendered_posts_path,
+                post_target_count=2,
+                comment_target_count=1,
+                max_comments_per_post_request=4,
+            )
+            comment_manifest_path = Path(comment_prepared["files"]["openai_comment_sets_submit_manifest"])
+            comment_registry = _read_jsonl(Path(comment_prepared["files"]["openai_comment_sets_prompt_registry"]))
+
+            comment_status_path = root / "comment_batch_status.json"
+            comment_output_path = root / "comment_batch_output.jsonl"
+            comment_error_path = root / "comment_batch_errors.jsonl"
+            comment_status_path.write_text(json.dumps({"id": "batch_comments_1", "status": "completed"}), encoding="utf-8")
 
             first_comment = comment_registry[0]
             failed_comment_id = first_comment["comment_interaction_ids"][0]
@@ -284,13 +314,6 @@ class TestPhase8SeedText(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            post_collect = collect_openai_seed_batch_results(
-                batch_kind="posts",
-                manifest_path=post_manifest_path,
-                batch_status_path=post_status_path,
-                output_jsonl_path=post_output_path,
-                error_jsonl_path=post_error_path,
-            )
             comment_collect = collect_openai_seed_batch_results(
                 batch_kind="comment_sets",
                 manifest_path=comment_manifest_path,

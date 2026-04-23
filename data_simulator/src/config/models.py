@@ -27,6 +27,12 @@ class RunConfig:
     items_per_session: int = 12
     max_candidate_pool_size: int = 80
     render_text: bool = False
+    render_scale_text: bool = False
+    render_scale_text_strict: bool = False
+    scale_openai_model_name: str = "gpt-5-nano"
+    scale_gemini_model_name: str = "gemini-2.5-flash-lite"
+    scale_gemini_share_percentage: int = 0
+    scale_rendered_posts_path: str | None = None
 
 
 @dataclass(frozen=True)
@@ -233,7 +239,10 @@ class PostRenderPrompt:
     prompt_id: str
     post_id: str
     topic: str
+    subtopic: str
     content_format: str
+    post_style: str
+    goal_relation_type: str
     difficulty: int
     messages: list[PromptMessage]
 
@@ -264,6 +273,10 @@ class CommentSetRenderPrompt:
     prompt_id: str
     post_id: str
     topic: str
+    subtopic: str
+    post_format: str
+    post_style: str
+    goal_relation_type: str
     comment_targets: list[CommentRenderTarget]
     messages: list[PromptMessage]
 

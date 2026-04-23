@@ -1,4 +1,4 @@
-"""Text rendering adapters for stubbed seed rendering and OpenAI Batch artifacts."""
+"""Text rendering adapters for stub rendering and batch-artifact preparation."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from config.models import (
+    CommentRenderTarget,
     CommentSetRenderPrompt,
     PostRenderPrompt,
     RenderedCommentText,
@@ -63,7 +64,7 @@ class StubSeedTextRenderer:
         return rendered
 
 
-class OpenAISeedBatchBuilder:
+class OpenAIBatchBuilder:
     """Build OpenAI Batch API input/output artifacts without requiring live network calls."""
 
     provider_name = "openai_batch"
@@ -183,6 +184,120 @@ class OpenAISeedBatchBuilder:
         return outputs
 
 
+class GeminiBatchBuilder:
+    """Build Gemini Batch API input/output artifacts for file-backed JSONL jobs.
+
+    The official Gemini Batch API expects each JSONL line to contain a user-defined
+    `key` and a valid `GenerateContentRequest` under `request`. Structured output is
+    enforced through `generation_config.response_mime_type=application/json` plus
+    `generation_config.response_json_schema`.
+    """
+
+    provider_name = "gemini_batch"
+
+    def __init__(self, *, model_name: str = "gemini-2.5-flash-lite") -> None:
+        self.model_name = model_name
+
+    def build_post_requests(self, post_prompts: list[PostRenderPrompt]) -> list[dict[str, Any]]:
+        """Convert post prompt packages into Gemini Batch JSONL request objects."""
+        requests: list[dict[str, Any]] = []
+        for prompt in post_prompts:
+            requests.append(
+                {
+                    "key": prompt.prompt_id,
+                    "request": _gemini_generate_content_request(
+                        messages=prompt.messages,
+                        schema=_post_response_schema(),
+                    ),
+                }
+            )
+        return requests
+
+    def build_comment_set_requests(self, comment_prompts: list[CommentSetRenderPrompt]) -> list[dict[str, Any]]:
+        """Convert comment-set prompts into Gemini Batch JSONL request objects."""
+        requests: list[dict[str, Any]] = []
+        for prompt in comment_prompts:
+            requests.append(
+                {
+                    "key": prompt.prompt_id,
+                    "request": _gemini_generate_content_request(
+                        messages=prompt.messages,
+                        schema=_comment_set_response_schema(prompt),
+                    ),
+                }
+            )
+        return requests
+
+    def write_batch_input(
+        self,
+        requests: list[dict[str, Any]],
+        path: str | Path,
+    ) -> Path:
+        """Write Gemini Batch input JSONL file."""
+        target = Path(path).expanduser().resolve()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with target.open("w", encoding="utf-8") as handle:
+            for request in requests:
+                handle.write(json.dumps(_to_jsonable(request), sort_keys=True))
+                handle.write("\n")
+        return target
+
+    def write_batch_manifest(
+        self,
+        *,
+        batch_input_path: str | Path,
+        request_count: int,
+        path: str | Path,
+        request_kind: str,
+        prompt_registry_path: str | Path,
+    ) -> Path:
+        """Write a local manifest describing the manual Gemini file-batch submission."""
+        target = Path(path).expanduser().resolve()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "provider": self.provider_name,
+            "model_name": self.model_name,
+            "request_kind": request_kind,
+            "batch_input_path": str(Path(batch_input_path).expanduser().resolve()),
+            "prompt_registry_path": str(Path(prompt_registry_path).expanduser().resolve()),
+            "request_count": request_count,
+            "notes": [
+                "Upload the JSONL file with the Gemini File API using mime_type=jsonl.",
+                "Create a file-backed batch job for the same model named in this manifest.",
+                "Each JSONL line uses `key` to map outputs back to prompts.",
+                "Batch submission, collection, and retry preparation are separate steps.",
+            ],
+        }
+        target.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        return target
+
+    def parse_batch_output(self, path: str | Path) -> dict[str, Any]:
+        """Parse Gemini Batch output JSONL into key -> structured payload."""
+        outputs: dict[str, Any] = {}
+        source = Path(path).expanduser().resolve()
+        with source.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                stripped = line.strip()
+                if not stripped:
+                    continue
+                payload = json.loads(stripped)
+                key = str(payload.get("key", ""))
+                if not key:
+                    continue
+                text_payload = _extract_gemini_output_text(payload)
+                if not text_payload:
+                    continue
+                try:
+                    outputs[key] = json.loads(text_payload)
+                except json.JSONDecodeError:
+                    outputs[key] = text_payload.strip()
+        return outputs
+
+
+# Backward-compatible alias while older seed-only call sites are phased out.
+OpenAISeedBatchBuilder = OpenAIBatchBuilder
+
+
 def _responses_body(
     *,
     model_name: str,
@@ -285,3 +400,69 @@ def _stub_post_content(prompt: PostRenderPrompt) -> str:
         f"This {prompt.content_format.replace('_', ' ')} is about {prompt.topic.lower()}. "
         f"It targets a {difficulty_label} level and stays focused on the structured topic."
     )
+
+
+def _gemini_generate_content_request(
+    *,
+    messages: list[Any],
+    schema: dict[str, Any],
+) -> dict[str, Any]:
+    """Build one Gemini `GenerateContentRequest` with structured JSON output."""
+    system_parts = [{"text": message.content} for message in messages if message.role == "system"]
+    contents = [
+        {
+            "role": "model" if message.role == "assistant" else "user",
+            "parts": [{"text": message.content}],
+        }
+        for message in messages
+        if message.role != "system"
+    ]
+    request: dict[str, Any] = {
+        "contents": contents,
+        "generation_config": {
+            "temperature": 0.4,
+            "response_mime_type": "application/json",
+            "response_json_schema": schema,
+        },
+    }
+    if system_parts:
+        request["system_instruction"] = {"parts": system_parts}
+    return request
+
+
+def _extract_gemini_output_text(payload: dict[str, Any]) -> str:
+    """Extract JSON text from common Gemini batch output shapes."""
+    response = payload.get("response")
+    if isinstance(response, dict):
+        candidate_text = _extract_gemini_candidate_text(response)
+        if candidate_text:
+            return candidate_text
+
+    inline_response = payload.get("inlineResponse")
+    if isinstance(inline_response, dict):
+        candidate_text = _extract_gemini_candidate_text(inline_response)
+        if candidate_text:
+            return candidate_text
+
+    candidate_text = _extract_gemini_candidate_text(payload)
+    return candidate_text
+
+
+def _extract_gemini_candidate_text(payload: dict[str, Any]) -> str:
+    """Extract text from Gemini `candidates[].content.parts[].text` structures."""
+    candidates = payload.get("candidates")
+    if not isinstance(candidates, list):
+        return ""
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            continue
+        content = candidate.get("content")
+        if not isinstance(content, dict):
+            continue
+        parts = content.get("parts")
+        if not isinstance(parts, list):
+            continue
+        texts = [str(part.get("text", "")).strip() for part in parts if isinstance(part, dict) and part.get("text")]
+        if texts:
+            return "".join(texts)
+    return ""

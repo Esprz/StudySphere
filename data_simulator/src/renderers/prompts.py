@@ -56,7 +56,10 @@ def build_post_render_prompt(
         prompt_id=new_id("pp"),
         post_id=post.post_id,
         topic=post.topic,
+        subtopic=post.subtopic,
         content_format=post.format,
+        post_style=post.post_style,
+        goal_relation_type=post.goal_relation_type,
         difficulty=post.difficulty,
         messages=[system, user],
     )
@@ -105,6 +108,10 @@ def build_comment_render_prompt(
         prompt_id=new_id("cp"),
         post_id=post.post_id,
         topic=post.topic,
+        subtopic=post.subtopic,
+        post_format=post.format,
+        post_style=post.post_style,
+        goal_relation_type=post.goal_relation_type,
         comment_targets=comment_targets,
         messages=[system, user],
     )

@@ -1,4 +1,4 @@
-"""Top-level simulator run pipeline with optional Phase 8 seed-text artifacts."""
+"""Top-level simulator run pipeline with optional Phase 8/9 text artifacts."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from config.models import RunConfig
 from exporters.analytics_logs import export_analytics_logs
 from exporters.simulator_json import export_simulator_jsonl
 from pipeline.build_truth import build_truth
-from pipeline.render_text import render_seed_text
+from pipeline.render_text import prepare_openai_seed_batches, prepare_scale_text_batches
 from pipeline.validate import validate_world_state, write_validation_report
 
 
@@ -39,10 +39,20 @@ def run_simulation(
     validation_report_path = write_validation_report(validation_report, root / "validation_report.json")
     text_artifacts = None
     if config.render_text:
-        text_artifacts = render_seed_text(
+        text_artifacts = prepare_openai_seed_batches(
             world_state,
             output_dir=root,
             seed_model_name="gpt-5.4-nano",
+        )
+    scale_text_artifacts = None
+    if config.render_scale_text:
+        scale_text_artifacts = prepare_scale_text_batches(
+            world_state,
+            output_dir=root,
+            openai_model_name=config.scale_openai_model_name,
+            gemini_model_name=config.scale_gemini_model_name,
+            gemini_share_percentage=config.scale_gemini_share_percentage,
+            rendered_posts_path=config.scale_rendered_posts_path,
         )
 
     summary = _build_run_summary(
@@ -53,6 +63,7 @@ def run_simulation(
         validation_report=validation_report,
         validation_report_path=validation_report_path,
         text_artifacts=text_artifacts,
+        scale_text_artifacts=scale_text_artifacts,
     )
     summary_path = root / "run_summary.json"
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
@@ -70,10 +81,15 @@ def _build_run_summary(
     validation_report: dict[str, Any],
     validation_report_path: Path,
     text_artifacts: dict[str, Any] | None,
+    scale_text_artifacts: dict[str, Any] | None,
 ) -> dict[str, Any]:
     """Build one compact run summary payload for output bundle introspection."""
     return {
-        "status": validation_report.get("status", "unknown"),
+        "status": _merge_run_status(
+            validation_status=validation_report.get("status", "unknown"),
+            seed_text_status=None if text_artifacts is None else text_artifacts.get("status"),
+            scale_text_status=None if scale_text_artifacts is None else scale_text_artifacts.get("status"),
+        ),
         "output_dir": str(output_dir),
         "run_config": asdict(config),
         "record_counts": validation_report.get("total_records_by_type", {}),
@@ -83,13 +99,25 @@ def _build_run_summary(
             "hard_fail_count_by_validator": validation_report.get("hard_fail_count_by_validator", {}),
             "soft_fail_count_by_validator": validation_report.get("soft_fail_count_by_validator", {}),
         },
-        "text_render": None
+        "seed_text_batch": None
         if text_artifacts is None
         else {
             "status": text_artifacts.get("status"),
-            "rendered_post_count": len(text_artifacts.get("rendered_posts", [])),
-            "rendered_comment_count": len(text_artifacts.get("rendered_comments", [])),
+            "prepared_post_request_count": len(text_artifacts.get("post_requests", [])),
+            "prepared_comment_request_count": len(text_artifacts.get("comment_requests", [])),
             "files": text_artifacts.get("files", {}),
+        },
+        "scale_text_batch": None
+        if scale_text_artifacts is None
+        else {
+            "status": scale_text_artifacts.get("status"),
+            "comment_stage_status": scale_text_artifacts.get("comment_stage_status"),
+            "prepared_post_request_count": sum(scale_text_artifacts.get("post_request_counts", {}).values()),
+            "prepared_comment_request_count": sum(scale_text_artifacts.get("comment_request_counts", {}).values()),
+            "post_request_counts_by_provider": scale_text_artifacts.get("post_request_counts", {}),
+            "comment_request_counts_by_provider": scale_text_artifacts.get("comment_request_counts", {}),
+            "files": scale_text_artifacts.get("files", {}),
+            "missing_rendered_post_ids": scale_text_artifacts.get("missing_rendered_post_ids", []),
         },
         "files": {
             "entities": {name: str(path) for name, path in entity_files.items()},
@@ -123,7 +151,41 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--render-text",
         action="store_true",
-        help="Render seed text sidecars and OpenAI Batch input artifacts",
+        help="Prepare OpenAI Batch artifacts for seed post/comment text",
+    )
+    parser.add_argument(
+        "--render-scale-text",
+        action="store_true",
+        help="Prepare scale-stage OpenAI/Gemini Batch artifacts",
+    )
+    parser.add_argument(
+        "--scale-openai-model-name",
+        type=str,
+        default="gpt-5-nano",
+        help="OpenAI model used for the OpenAI share of scale batches",
+    )
+    parser.add_argument(
+        "--scale-gemini-model-name",
+        type=str,
+        default="gemini-2.5-flash-lite",
+        help="Gemini model used for the Gemini share of scale batches",
+    )
+    parser.add_argument(
+        "--scale-gemini-share-percentage",
+        type=int,
+        default=0,
+        help="Percentage of scale prompts routed to Gemini; remaining prompts go to OpenAI",
+    )
+    parser.add_argument(
+        "--scale-rendered-posts-path",
+        type=str,
+        default=None,
+        help="Collected rendered-post sidecars used to unlock comment-set batch preparation",
+    )
+    parser.add_argument(
+        "--render-scale-text-strict",
+        action="store_true",
+        help="Reserved flag; kept for config compatibility while scale is batch-only",
     )
     parser.add_argument(
         "--now",
@@ -132,6 +194,25 @@ def _parse_args() -> argparse.Namespace:
         help="Optional ISO timestamp override, e.g. 2026-04-22T16:00:00+00:00",
     )
     return parser.parse_args()
+
+
+def _merge_run_status(
+    *,
+    validation_status: str,
+    seed_text_status: str | None,
+    scale_text_status: str | None,
+) -> str:
+    """Promote any failed text-render stage into the top-level run status."""
+    statuses = [validation_status]
+    if seed_text_status is not None:
+        statuses.append(seed_text_status)
+    if scale_text_status is not None:
+        statuses.append(scale_text_status)
+    if "failed" in statuses:
+        return "failed"
+    if "passed_with_warnings" in statuses or "prepared_with_warnings" in statuses:
+        return "passed_with_warnings"
+    return validation_status
 
 
 def main() -> None:
@@ -146,6 +227,12 @@ def main() -> None:
         items_per_session=args.items_per_session,
         max_candidate_pool_size=args.max_candidate_pool_size,
         render_text=args.render_text,
+        render_scale_text=args.render_scale_text,
+        render_scale_text_strict=args.render_scale_text_strict,
+        scale_openai_model_name=args.scale_openai_model_name,
+        scale_gemini_model_name=args.scale_gemini_model_name,
+        scale_gemini_share_percentage=args.scale_gemini_share_percentage,
+        scale_rendered_posts_path=args.scale_rendered_posts_path,
     )
     summary = run_simulation(
         config=config,
