@@ -20,7 +20,7 @@ class TestPhase7Export(unittest.TestCase):
 
     def setUp(self) -> None:
         """Load canonical sources and choose deterministic run settings."""
-        self.design_final_dir = Path(__file__).resolve().parents[1] / "design" / "design_final"
+        self.design_final_dir = Path(__file__).resolve().parents[1] / "default_source_bundle"
         self.sources = load_sources(self.design_final_dir)
         self.now = datetime(2026, 4, 22, 18, 0, tzinfo=timezone.utc)
         self.config = RunConfig(

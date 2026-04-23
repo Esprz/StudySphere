@@ -1,0 +1,25 @@
+{
+  "version": "1.0",
+  "axis": "content_lifecycle",
+  "rules": {
+    "new_content_injection": {
+      "description": "Inject fresh posts while the simulation timeline is running.",
+      "frequency": "periodic",
+      "default_posts_per_tick_range": [
+        0,
+        8
+      ]
+    },
+    "freshness_windows_hours": {
+      "very_fresh": 6,
+      "fresh": 24,
+      "recent": 72,
+      "aging": 168
+    },
+    "exploration_policy": {
+      "description": "Reserve a bounded share of exposures for newer or less-proven content.",
+      "min_exploration_share": 0.05,
+      "max_exploration_share": 0.2
+    }
+  }
+}

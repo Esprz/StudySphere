@@ -1,0 +1,51 @@
+{
+  "version": "1.0",
+  "purpose": "Bounded stochasticity rules. Noise should create realism, not overwrite the main causal structure.",
+  "rules": {
+    "candidate_score_jitter": {
+      "type": "additive_uniform",
+      "range": [
+        -0.02,
+        0.02
+      ],
+      "usage": "Add after deterministic exposure score is computed."
+    },
+    "view_probability_jitter": {
+      "type": "additive_uniform",
+      "range": [
+        -0.015,
+        0.015
+      ],
+      "usage": "Add after deterministic view probability is computed and before clipping to [0, 1]."
+    },
+    "post_action_probability_jitter": {
+      "type": "additive_uniform",
+      "range": [
+        -0.01,
+        0.01
+      ],
+      "usage": "Use for like/save/comment sampling."
+    },
+    "off_interest_click_floor": {
+      "type": "base_plus_curiosity_bonus",
+      "base": 0.01,
+      "curiosity_multiplier": 0.03,
+      "max": 0.05,
+      "usage": "Allow a small chance of viewing weakly relevant content."
+    },
+    "exploration_slot_share": {
+      "type": "bounded_share",
+      "range": [
+        0.03,
+        0.15
+      ],
+      "usage": "Reserve a small share of exposure slots for off-interest or low-history items."
+    }
+  },
+  "constraints": [
+    "Noise cannot reverse a hard invalid dependency.",
+    "Noise cannot create like/save/comment without a preceding view.",
+    "Noise should not exceed the strongest deterministic relevance signal.",
+    "Off-interest clicks should be rare and should still respect exposure first."
+  ]
+}

@@ -27,7 +27,7 @@ class TestPhase8SeedText(unittest.TestCase):
 
     def setUp(self) -> None:
         """Load design sources and a deterministic reference timestamp."""
-        self.design_final_dir = Path(__file__).resolve().parents[1] / "design" / "design_final"
+        self.design_final_dir = Path(__file__).resolve().parents[1] / "default_source_bundle"
         self.sources = load_sources(self.design_final_dir)
         self.now = datetime(2026, 4, 22, 18, 0, tzinfo=timezone.utc)
 
@@ -344,6 +344,66 @@ class TestPhase8SeedText(unittest.TestCase):
             )
             self.assertTrue(Path(retry_files["retry_batch_input"]).is_file())
             self.assertTrue(Path(retry_files["retry_submit_manifest"]).is_file())
+
+    def test_collect_tolerates_missing_error_file_when_batch_has_no_errors(self) -> None:
+        """Collect should not fail when error_jsonl_path is passed but the file does not exist."""
+        world_state = build_truth(
+            RunConfig(seed=8103, user_count=20, timeline_ticks=2, items_per_session=8),
+            self.sources,
+            now=self.now,
+        )
+
+        with tempfile.TemporaryDirectory(prefix="sim_phase8_missing_error_") as tmp:
+            root = Path(tmp)
+            prepared = prepare_openai_seed_batches(
+                world_state,
+                output_dir=root,
+                seed_model_name="gpt-5.4-nano",
+                post_target_count=1,
+            )
+            manifest_path = Path(prepared["files"]["openai_posts_submit_manifest"])
+            registry = _read_jsonl(Path(prepared["files"]["openai_posts_prompt_registry"]))
+            prompt_id = registry[0]["prompt_id"]
+
+            batch_status_path = root / "post_batch_status.json"
+            output_jsonl_path = root / "post_batch_output.jsonl"
+            missing_error_path = root / "post_batch_errors.jsonl"
+            batch_status_path.write_text(json.dumps({"id": "batch_posts_2", "status": "completed"}), encoding="utf-8")
+            output_jsonl_path.write_text(
+                json.dumps(
+                    {
+                        "custom_id": prompt_id,
+                        "response": {
+                            "body": {
+                                "output": [
+                                    {
+                                        "type": "message",
+                                        "content": [
+                                            {
+                                                "type": "output_text",
+                                                "text": json.dumps({"title": "t", "content": "c"}),
+                                            }
+                                        ],
+                                    }
+                                ]
+                            }
+                        },
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            collect_report = collect_openai_seed_batch_results(
+                batch_kind="posts",
+                manifest_path=manifest_path,
+                batch_status_path=batch_status_path,
+                output_jsonl_path=output_jsonl_path,
+                error_jsonl_path=missing_error_path,
+            )
+
+            self.assertEqual(collect_report["failed_custom_ids"], [])
+            self.assertEqual(len(collect_report["rendered_posts"]), 1)
 
 
 def _read_jsonl(path: Path) -> list[dict[str, object]]:

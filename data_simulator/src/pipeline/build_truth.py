@@ -110,6 +110,7 @@ def build_truth(
             )
             ranked = rank_candidates_for_exposure(
                 user=user,
+                session=session,
                 activity_state=activity,
                 candidates=candidate_pool,
                 world_state=world_state,

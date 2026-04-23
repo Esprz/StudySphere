@@ -43,6 +43,7 @@ def run_simulation(
             world_state,
             output_dir=root,
             seed_model_name="gpt-5.4-nano",
+            rendered_posts_path=config.seed_rendered_posts_path,
         )
     scale_text_artifacts = None
     if config.render_scale_text:
@@ -144,14 +145,20 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--design-root",
         type=Path,
-        default=Path(__file__).resolve().parents[2] / "design" / "design_final",
-        help="Path to design_final root",
+        default=Path(__file__).resolve().parents[2] / "default_source_bundle",
+        help="Path to runtime source bundle root",
     )
     parser.add_argument("--output-dir", type=Path, required=True, help="Output directory for exported artifacts")
     parser.add_argument(
         "--render-text",
         action="store_true",
         help="Prepare OpenAI Batch artifacts for seed post/comment text",
+    )
+    parser.add_argument(
+        "--seed-rendered-posts-path",
+        type=str,
+        default=None,
+        help="Collected rendered-post sidecars used to unlock seed comment-set batch preparation",
     )
     parser.add_argument(
         "--render-scale-text",
@@ -227,6 +234,7 @@ def main() -> None:
         items_per_session=args.items_per_session,
         max_candidate_pool_size=args.max_candidate_pool_size,
         render_text=args.render_text,
+        seed_rendered_posts_path=args.seed_rendered_posts_path,
         render_scale_text=args.render_scale_text,
         render_scale_text_strict=args.render_scale_text_strict,
         scale_openai_model_name=args.scale_openai_model_name,

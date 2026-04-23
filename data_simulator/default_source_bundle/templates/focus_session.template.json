@@ -1,0 +1,35 @@
+{
+  "template_name": "focus_session",
+  "required_fields": [
+    "focus_id",
+    "user_id",
+    "session_id",
+    "trigger_post_id",
+    "related_goal_id",
+    "topic",
+    "started_at",
+    "ended_at",
+    "duration_minutes",
+    "trigger_strength"
+  ],
+  "optional_fields": [
+    "deterministic_focus_prob",
+    "final_focus_prob",
+    "sampling_policy"
+  ],
+  "example": {
+    "focus_id": "f_001",
+    "user_id": "u_001",
+    "session_id": "s_001",
+    "trigger_post_id": "p_001",
+    "related_goal_id": "g_001",
+    "topic": "Software Development",
+    "started_at": "2026-04-21T20:10:00Z",
+    "ended_at": "2026-04-21T21:00:00Z",
+    "duration_minutes": 50,
+    "trigger_strength": 0.74,
+    "deterministic_focus_prob": 0.43,
+    "final_focus_prob": 0.43,
+    "sampling_policy": "internal_heuristic_v1"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "version": "1.0",
+  "axis": "content",
+  "formats": [
+    "short_post",
+    "experience_post",
+    "resource_post",
+    "qa_post",
+    "study_note",
+    "project_log",
+    "reflection_post"
+  ],
+  "post_styles": [
+    "knowledge_share",
+    "progress_update",
+    "achievement_update",
+    "question_help",
+    "resource_share",
+    "reflection",
+    "build_in_public"
+  ],
+  "creator_types": [
+    "peer_student",
+    "top_performer",
+    "mentor_like",
+    "beginner_sharer",
+    "project_builder"
+  ],
+  "difficulty_levels": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "study_contexts": [
+    "regular_week",
+    "exam_week",
+    "project_deadline",
+    "career_switch",
+    "habit_reset",
+    "portfolio_push"
+  ],
+  "utility_styles": [
+    "overview",
+    "worked_example",
+    "checklist",
+    "reference_dump",
+    "personal_reflection",
+    "comparison_breakdown"
+  ],
+  "social_affordances": [
+    "low_discussion",
+    "question_inviting",
+    "high_agreement",
+    "controversial",
+    "accountability_friendly"
+  ],
+  "goal_relation_types": [
+    "on_goal",
+    "interest_adjacent",
+    "off_topic_noise"
+  ],
+  "goal_relation_sampling": {
+    "off_topic_base": 0.06,
+    "off_topic_exploration_weight": 0.35,
+    "on_goal_base_with_goals": 0.66,
+    "on_goal_exploration_weight": 0.22
+  },
+  "post_style_by_goal_relation": {
+    "on_goal": [
+      "progress_update",
+      "knowledge_share",
+      "question_help",
+      "build_in_public"
+    ],
+    "interest_adjacent": [
+      "knowledge_share",
+      "resource_share",
+      "reflection",
+      "question_help"
+    ],
+    "off_topic_noise": [
+      "reflection",
+      "achievement_update",
+      "resource_share"
+    ]
+  }
+}

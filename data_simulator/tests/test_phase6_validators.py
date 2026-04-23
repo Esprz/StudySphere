@@ -23,7 +23,7 @@ class TestPhase6Validators(unittest.TestCase):
 
     def setUp(self) -> None:
         """Load canonical sources and generate one baseline valid world state."""
-        design_final_dir = Path(__file__).resolve().parents[1] / "design" / "design_final"
+        design_final_dir = Path(__file__).resolve().parents[1] / "default_source_bundle"
         self.sources = load_sources(design_final_dir)
         self.now = datetime(2026, 4, 22, 16, 0, tzinfo=timezone.utc)
         self.base_state = build_truth(

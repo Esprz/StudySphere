@@ -1,0 +1,113 @@
+{
+  "version": "1.0",
+  "derived_from": [
+    "../user_interst_topics.json"
+  ],
+  "axis": "interest",
+  "categories": [
+    {
+      "category_code": "HC",
+      "category": "Hardcore_Cognitive",
+      "themes": [
+        {
+          "slug": "mathematical_logic",
+          "label": "Mathematical Logic"
+        },
+        {
+          "slug": "theoretical_physics",
+          "label": "Theoretical Physics"
+        },
+        {
+          "slug": "economics_finance",
+          "label": "Economics & Finance"
+        },
+        {
+          "slug": "legal_political_systems",
+          "label": "Legal & Political Systems"
+        },
+        {
+          "slug": "biological_sciences",
+          "label": "Biological Sciences"
+        }
+      ]
+    },
+    {
+      "category_code": "SA",
+      "category": "Skill_Acquisition",
+      "themes": [
+        {
+          "slug": "software_development",
+          "label": "Software Development"
+        },
+        {
+          "slug": "data_science_ai",
+          "label": "Data Science & AI"
+        },
+        {
+          "slug": "language_learning",
+          "label": "Language Learning"
+        },
+        {
+          "slug": "digital_design",
+          "label": "Digital Design"
+        },
+        {
+          "slug": "applied_engineering",
+          "label": "Applied Engineering"
+        }
+      ]
+    },
+    {
+      "category_code": "SS",
+      "category": "Soft_Power_And_Strategy",
+      "themes": [
+        {
+          "slug": "strategic_management",
+          "label": "Strategic Management"
+        },
+        {
+          "slug": "applied_psychology",
+          "label": "Applied Psychology"
+        },
+        {
+          "slug": "critical_thinking",
+          "label": "Critical Thinking"
+        },
+        {
+          "slug": "leadership_soft_skills",
+          "label": "Leadership & Soft Skills"
+        },
+        {
+          "slug": "conflict_resolution",
+          "label": "Conflict Resolution"
+        }
+      ]
+    },
+    {
+      "category_code": "MA",
+      "category": "Meaning_And_Appreciation",
+      "themes": [
+        {
+          "slug": "philosophy_ethics",
+          "label": "Philosophy & Ethics"
+        },
+        {
+          "slug": "history_civilization",
+          "label": "History & Civilization"
+        },
+        {
+          "slug": "arts_aesthetics",
+          "label": "Arts & Aesthetics"
+        },
+        {
+          "slug": "humanities_literature",
+          "label": "Humanities & Literature"
+        },
+        {
+          "slug": "mindfulness_wellness",
+          "label": "Mindfulness & Wellness"
+        }
+      ]
+    }
+  ]
+}

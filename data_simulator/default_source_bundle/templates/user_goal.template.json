@@ -1,0 +1,34 @@
+{
+  "template_name": "user_goal",
+  "required_fields": [
+    "goal_id",
+    "user_id",
+    "goal_category",
+    "goal_type",
+    "related_topics",
+    "priority",
+    "strength",
+    "progress_state",
+    "start_at",
+    "end_at"
+  ],
+  "example": {
+    "goal_id": "g_001",
+    "user_id": "u_001",
+    "goal_category": "Career_And_Performance",
+    "goal_type": "Technical_Upskilling",
+    "related_topics": [
+      "Software Development",
+      "Data Science & AI"
+    ],
+    "priority": 0.9,
+    "strength": 0.82,
+    "progress_state": "active",
+    "start_at": "2026-04-10T00:00:00Z",
+    "end_at": "2026-06-20T00:00:00Z"
+  },
+  "field_notes": {
+    "priority": "Bounded float in [0.0, 1.0]. Higher means this goal is more likely to become the active session goal.",
+    "strength": "Bounded float in [0.0, 1.0]. Higher means the goal is more persistent and more likely to convert into focus or completion."
+  }
+}

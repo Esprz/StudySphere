@@ -19,7 +19,7 @@ class TestPhase4OutcomesState(unittest.TestCase):
     """Validate Phase-4 outcome generation and world-state mutation behavior."""
 
     def setUp(self) -> None:
-        design_final_dir = Path(__file__).resolve().parents[1] / "design" / "design_final"
+        design_final_dir = Path(__file__).resolve().parents[1] / "default_source_bundle"
         self.sources = load_sources(design_final_dir)
         self.now = datetime(2026, 4, 22, 14, 0, tzinfo=timezone.utc)
 

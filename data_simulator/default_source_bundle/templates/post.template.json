@@ -1,0 +1,39 @@
+{
+  "template_name": "post",
+  "required_fields": [
+    "post_id",
+    "author_id",
+    "topic",
+    "subtopic",
+    "format",
+    "post_style",
+    "creator_type",
+    "difficulty",
+    "true_latent_quality",
+    "observed_quality",
+    "freshness_hours",
+    "study_context",
+    "utility_style",
+    "social_affordance",
+    "goal_relation_type",
+    "created_at"
+  ],
+  "example": {
+    "post_id": "p_001",
+    "author_id": "u_017",
+    "topic": "Software Development",
+    "subtopic": "distributed systems debugging",
+    "format": "project_log",
+    "post_style": "progress_update",
+    "creator_type": "project_builder",
+    "difficulty": 4,
+    "true_latent_quality": 0.83,
+    "observed_quality": 0.51,
+    "freshness_hours": 18,
+    "study_context": "project_deadline",
+    "utility_style": "worked_example",
+    "social_affordance": "question_inviting",
+    "goal_relation_type": "on_goal",
+    "created_at": "2026-04-21T12:00:00Z"
+  }
+}

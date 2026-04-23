@@ -10,7 +10,7 @@ from config.loader import SOURCE_FILES, load_sources, validate_source_bundle
 
 class TestSourceLoader(unittest.TestCase):
     def setUp(self) -> None:
-        self.design_final_dir = Path(__file__).resolve().parents[1] / "design" / "design_final"
+        self.design_final_dir = Path(__file__).resolve().parents[1] / "default_source_bundle"
 
     def test_load_sources_smoke(self) -> None:
         bundle = load_sources(self.design_final_dir)
@@ -25,4 +25,3 @@ class TestSourceLoader(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

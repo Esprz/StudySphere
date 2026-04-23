@@ -1,0 +1,39 @@
+{
+  "version": "1.0",
+  "axis": "session_dynamics",
+  "parameters": {
+    "base_view_probability": 0.22,
+    "position_decay_per_rank": 0.035,
+    "fatigue_increase_per_view": 0.08,
+    "fatigue_increase_per_skip": 0.02,
+    "fatigue_recovery_between_sessions": 0.15,
+    "intent_transition_check_every_n_exposures": 3,
+    "intent_transition_base_probability": 0.12,
+    "quick_bounce_dwell_threshold_ms": 4000,
+    "reply_probability_base": 0.16,
+    "reply_probability_social_affinity_weight": 0.26,
+    "top_level_comment_delay_seconds_range": [
+      10,
+      180
+    ],
+    "reply_comment_delay_seconds_range": [
+      5,
+      90
+    ],
+    "max_meaningful_views_per_session": 6,
+    "feed_dwell_ms_range": [
+      250,
+      2600
+    ],
+    "detail_dwell_ms_range": [
+      2500,
+      120000
+    ]
+  },
+  "notes": [
+    "Fatigue should reduce p(view) and p(deep_action) as the session progresses.",
+    "Position bias and fatigue should both affect view probability.",
+    "Quick bounce should reduce the chance of another immediate deep click in the same session.",
+    "Activity intent may transition within one session when repeated skips, repeated saves, or time pressure change the user's short-term objective."
+  ]
+}

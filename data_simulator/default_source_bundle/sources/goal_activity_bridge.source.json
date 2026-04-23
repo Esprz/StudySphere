@@ -1,0 +1,60 @@
+{
+  "version": "1.0",
+  "bridge": "goal_to_activity_intent",
+  "mappings": [
+    {
+      "goal": "Standardized_Exams",
+      "activity_intent_weights": {
+        "Exam_Preparation": 0.45,
+        "Concept_Learning": 0.2,
+        "Problem_Solving": 0.2,
+        "Revision_Queueing": 0.15
+      }
+    },
+    {
+      "goal": "Technical_Upskilling",
+      "activity_intent_weights": {
+        "Concept_Learning": 0.25,
+        "Project_Execution": 0.3,
+        "Portfolio_Building": 0.25,
+        "Reference_Saving": 0.2
+      }
+    },
+    {
+      "goal": "Routine_Establishment",
+      "activity_intent_weights": {
+        "Study_Planning": 0.3,
+        "Accountability_Checkin": 0.25,
+        "Reflection": 0.25,
+        "Revision_Queueing": 0.2
+      }
+    },
+    {
+      "goal": "Attention_Span_Recovery",
+      "activity_intent_weights": {
+        "Reflection": 0.25,
+        "Study_Planning": 0.25,
+        "Concept_Learning": 0.2,
+        "Reference_Saving": 0.3
+      }
+    },
+    {
+      "goal": "Curiosity_Satisfaction",
+      "activity_intent_weights": {
+        "Research_Exploration": 0.35,
+        "Concept_Learning": 0.25,
+        "Discussion": 0.2,
+        "Resource_Collecting": 0.2
+      }
+    },
+    {
+      "goal": "Creative_Expansion",
+      "activity_intent_weights": {
+        "Research_Exploration": 0.2,
+        "Writing_And_Synthesis": 0.25,
+        "Project_Execution": 0.2,
+        "Reflection": 0.35
+      }
+    }
+  ]
+}

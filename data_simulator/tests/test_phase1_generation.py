@@ -18,7 +18,7 @@ from pipeline.build_truth import build_truth
 
 class TestPhase1Generation(unittest.TestCase):
     def setUp(self) -> None:
-        design_final_dir = Path(__file__).resolve().parents[1] / "design" / "design_final"
+        design_final_dir = Path(__file__).resolve().parents[1] / "default_source_bundle"
         self.sources = load_sources(design_final_dir)
         self.now = datetime(2026, 4, 21, 20, 0, tzinfo=timezone.utc)
 

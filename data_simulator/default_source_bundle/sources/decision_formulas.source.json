@@ -1,0 +1,109 @@
+{
+  "version": "1.0",
+  "purpose": "Canonical formulas for ranking and action sampling.",
+  "functions": [
+    {
+      "name": "score_exposure",
+      "output_signal": "deterministic_exposure_score",
+      "output_range": "[0.0, 1.0]",
+      "inputs": [
+        "topic_match",
+        "goal_alignment",
+        "activity_alignment",
+        "freshness_bonus",
+        "observed_quality",
+        "social_bonus",
+        "exploration_bonus"
+      ],
+      "formula": "clip_0_1(0.30*topic_match + 0.20*goal_alignment + 0.18*activity_alignment + 0.10*freshness_bonus + 0.12*observed_quality + 0.05*social_bonus + 0.05*exploration_bonus)",
+      "notes": [
+        "Topic relevance remains the strongest single driver.",
+        "Goal and activity alignment are separate because they capture medium-term and short-term intent.",
+        "Observed quality matters more than social bonus."
+      ]
+    },
+    {
+      "name": "compute_view_probability",
+      "output_signal": "deterministic_view_prob",
+      "output_range": "[0.0, 1.0]",
+      "inputs": [
+        "candidate_score",
+        "rank_position",
+        "fatigue",
+        "curiosity_level",
+        "target_difficulty",
+        "post_difficulty",
+        "hook_strength"
+      ],
+      "formula": "clip_0_1(base_view_probability + 0.45*candidate_score + 0.08*curiosity_level + 0.06*hook_strength - 0.035*(rank_position-1) - 0.18*fatigue - 0.06*difficulty_distance)",
+      "derived_terms": [
+        "difficulty_distance = abs(target_difficulty - post_difficulty) / 4.0"
+      ],
+      "notes": [
+        "Position bias and fatigue are explicit penalties.",
+        "Candidate score carries most of the relevance signal into click-through."
+      ]
+    },
+    {
+      "name": "sample_like_probability",
+      "output_signal": "like_probability",
+      "output_range": "[0.0, 1.0]",
+      "inputs": [
+        "topic_match",
+        "activity_alignment",
+        "observed_quality",
+        "social_affinity",
+        "detail_dwell_norm",
+        "action_prob_jitter"
+      ],
+      "formula": "clip_0_1(0.10 + 0.24*topic_match + 0.12*activity_alignment + 0.20*observed_quality + 0.08*social_affinity + 0.12*detail_dwell_norm + action_prob_jitter)"
+    },
+    {
+      "name": "sample_save_probability",
+      "output_signal": "save_probability",
+      "output_range": "[0.0, 1.0]",
+      "inputs": [
+        "goal_alignment",
+        "activity_alignment",
+        "utility_match",
+        "observed_quality",
+        "detail_dwell_norm",
+        "action_prob_jitter"
+      ],
+      "formula": "clip_0_1(0.08 + 0.24*goal_alignment + 0.18*activity_alignment + 0.20*utility_match + 0.12*observed_quality + 0.12*detail_dwell_norm + action_prob_jitter)",
+      "notes": [
+        "Save should lean more toward utility and future usefulness than pure resonance."
+      ]
+    },
+    {
+      "name": "sample_comment_probability",
+      "output_signal": "comment_probability",
+      "output_range": "[0.0, 1.0]",
+      "inputs": [
+        "activity_alignment",
+        "social_affinity",
+        "discussion_affordance",
+        "detail_dwell_norm",
+        "action_prob_jitter"
+      ],
+      "formula": "clip_0_1(0.03 + 0.16*activity_alignment + 0.22*social_affinity + 0.20*discussion_affordance + 0.10*detail_dwell_norm + action_prob_jitter)"
+    },
+    {
+      "name": "sample_focus_trigger",
+      "output_signal": "focus_probability",
+      "output_range": "[0.0, 1.0]",
+      "inputs": [
+        "diligence_level",
+        "goal_strength",
+        "goal_alignment",
+        "saved_in_session",
+        "liked_in_session",
+        "detail_dwell_norm"
+      ],
+      "formula": "clip_0_1(0.05 + 0.24*diligence_level + 0.18*goal_strength + 0.20*goal_alignment + 0.12*saved_in_session + 0.05*liked_in_session + 0.12*detail_dwell_norm)",
+      "notes": [
+        "Focus should be meaningfully harder to trigger than view or save."
+      ]
+    }
+  ]
+}

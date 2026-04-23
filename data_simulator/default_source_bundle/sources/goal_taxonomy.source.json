@@ -1,0 +1,57 @@
+{
+  "version": "1.0",
+  "derived_from": [
+    "../target_type.json"
+  ],
+  "axis": "goal",
+  "categories": [
+    {
+      "category_code": "AC",
+      "category": "Academic_And_Certification",
+      "description": "Fixed deadlines, formal evaluation, and high-stakes academic outcomes.",
+      "goals": [
+        "Standardized_Exams",
+        "Professional_Licensing",
+        "Degree_Requirements",
+        "Competitive_Rankings",
+        "Formal_Accreditation"
+      ]
+    },
+    {
+      "category_code": "CP",
+      "category": "Career_And_Performance",
+      "description": "Career entry, work performance, skill signaling, and practical upskilling.",
+      "goals": [
+        "Job_Market_Entry",
+        "Promotional_Growth",
+        "Technical_Upskilling",
+        "Workplace_Productivity",
+        "Industry_Authority"
+      ]
+    },
+    {
+      "category_code": "DC",
+      "category": "Discipline_And_Consistency",
+      "description": "Habit formation, anti-procrastination, attention recovery, and consistency.",
+      "goals": [
+        "Routine_Establishment",
+        "Streak_Maintenance",
+        "Attention_Span_Recovery",
+        "Behavioral_Discipline",
+        "Accountability_Proofing"
+      ]
+    },
+    {
+      "category_code": "PG",
+      "category": "Personal_Growth_And_Enrichment",
+      "description": "Curiosity, broad development, creativity, and long-term self-improvement.",
+      "goals": [
+        "Mental_Model_Upgrade",
+        "Curiosity_Satisfaction",
+        "Holistic_Development",
+        "Creative_Expansion",
+        "Self_Actualization"
+      ]
+    }
+  ]
+}

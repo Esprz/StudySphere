@@ -1,0 +1,63 @@
+{
+  "version": "1.0",
+  "axis": "interaction",
+  "events": [
+    {
+      "event_type": "exposure",
+      "stage": "feed",
+      "requires_previous_event": null
+    },
+    {
+      "event_type": "scroll_past",
+      "stage": "feed_negative",
+      "requires_previous_event": "exposure"
+    },
+    {
+      "event_type": "view",
+      "stage": "detail_open",
+      "requires_previous_event": "exposure"
+    },
+    {
+      "event_type": "quick_bounce",
+      "stage": "post_view_negative",
+      "requires_previous_event": "view"
+    },
+    {
+      "event_type": "like",
+      "stage": "post_view_action",
+      "requires_previous_event": "view"
+    },
+    {
+      "event_type": "save",
+      "stage": "post_view_action",
+      "requires_previous_event": "view"
+    },
+    {
+      "event_type": "comment",
+      "stage": "post_view_action",
+      "requires_previous_event": "view",
+      "optional_metadata_fields": [
+        "comment_text",
+        "reply_to_interaction_id",
+        "reply_to_user_id",
+        "thread_depth",
+        "reply_delay_seconds"
+      ]
+    },
+    {
+      "event_type": "hide",
+      "stage": "explicit_negative",
+      "requires_previous_event": "exposure"
+    },
+    {
+      "event_type": "follow",
+      "stage": "downstream_action",
+      "requires_previous_event": "view"
+    },
+    {
+      "event_type": "focus_session",
+      "stage": "downstream_outcome",
+      "requires_previous_event": "session_end"
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "version": "1.0",
+  "purpose": "Global calendar and seasonality context for simulation time.",
+  "clock_type": "datetime_based",
+  "contexts": {
+    "hour_segments": [
+      {
+        "name": "early_morning",
+        "hours": [5, 6, 7]
+      },
+      {
+        "name": "morning",
+        "hours": [8, 9, 10, 11]
+      },
+      {
+        "name": "afternoon",
+        "hours": [12, 13, 14, 15, 16]
+      },
+      {
+        "name": "evening",
+        "hours": [17, 18, 19, 20]
+      },
+      {
+        "name": "late_night",
+        "hours": [21, 22, 23, 0, 1]
+      }
+    ],
+    "day_types": [
+      "weekday",
+      "weekend"
+    ],
+    "academic_seasons": [
+      {
+        "name": "regular_term",
+        "urgency_bonus": 0.0,
+        "fatigue_bonus": 0.0,
+        "intent_bias": {}
+      },
+      {
+        "name": "midterm_window",
+        "urgency_bonus": 0.12,
+        "fatigue_bonus": 0.08,
+        "intent_bias": {
+          "Exam_Preparation": 0.18,
+          "Revision_Queueing": 0.12
+        }
+      },
+      {
+        "name": "finals_week",
+        "urgency_bonus": 0.25,
+        "fatigue_bonus": 0.16,
+        "intent_bias": {
+          "Exam_Preparation": 0.28,
+          "Revision_Queueing": 0.18,
+          "Concept_Learning": -0.08
+        }
+      },
+      {
+        "name": "project_deadline_window",
+        "urgency_bonus": 0.18,
+        "fatigue_bonus": 0.1,
+        "intent_bias": {
+          "Project_Execution": 0.24,
+          "Portfolio_Building": 0.12
+        }
+      },
+      {
+        "name": "break_period",
+        "urgency_bonus": -0.08,
+        "fatigue_bonus": -0.05,
+        "intent_bias": {
+          "Research_Exploration": 0.1,
+          "Reflection": 0.08
+        }
+      }
+    ]
+  },
+  "required_outputs_per_session": [
+    "wall_clock_time",
+    "hour_segment",
+    "day_type",
+    "academic_season"
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "version": "1.0",
+  "bridge": "interest_theme_to_activity_and_content",
+  "mappings": [
+    {
+      "theme": "Software Development",
+      "activity_intent_weights": {
+        "Problem_Solving": 0.3,
+        "Project_Execution": 0.3,
+        "Portfolio_Building": 0.15,
+        "Reference_Saving": 0.25
+      },
+      "preferred_formats": [
+        "project_log",
+        "resource_post",
+        "qa_post",
+        "study_note"
+      ]
+    },
+    {
+      "theme": "Data Science & AI",
+      "activity_intent_weights": {
+        "Concept_Learning": 0.3,
+        "Research_Exploration": 0.25,
+        "Project_Execution": 0.2,
+        "Reference_Saving": 0.25
+      },
+      "preferred_formats": [
+        "study_note",
+        "resource_post",
+        "experience_post",
+        "qa_post"
+      ]
+    },
+    {
+      "theme": "Language Learning",
+      "activity_intent_weights": {
+        "Concept_Learning": 0.25,
+        "Skill_Demonstration": 0.2,
+        "Accountability_Checkin": 0.25,
+        "Revision_Queueing": 0.3
+      },
+      "preferred_formats": [
+        "short_post",
+        "reflection_post",
+        "study_note",
+        "resource_post"
+      ]
+    },
+    {
+      "theme": "Critical Thinking",
+      "activity_intent_weights": {
+        "Writing_And_Synthesis": 0.25,
+        "Discussion": 0.3,
+        "Concept_Learning": 0.2,
+        "Reflection": 0.25
+      },
+      "preferred_formats": [
+        "experience_post",
+        "qa_post",
+        "reflection_post",
+        "study_note"
+      ]
+    },
+    {
+      "theme": "Mindfulness & Wellness",
+      "activity_intent_weights": {
+        "Reflection": 0.35,
+        "Accountability_Checkin": 0.3,
+        "Study_Planning": 0.2,
+        "Resource_Collecting": 0.15
+      },
+      "preferred_formats": [
+        "reflection_post",
+        "short_post",
+        "resource_post",
+        "experience_post"
+      ]
+    }
+  ]
+}

@@ -14,7 +14,7 @@ from core.time import clip_0_1, derive_global_time_context
 
 class TestCoreHelpers(unittest.TestCase):
     def setUp(self) -> None:
-        design_final_dir = Path(__file__).resolve().parents[1] / "design" / "design_final"
+        design_final_dir = Path(__file__).resolve().parents[1] / "default_source_bundle"
         self.sources = load_sources(design_final_dir)
 
     def test_rng_is_deterministic(self) -> None:
@@ -45,4 +45,3 @@ class TestCoreHelpers(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

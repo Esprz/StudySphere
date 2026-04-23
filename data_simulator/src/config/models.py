@@ -27,6 +27,7 @@ class RunConfig:
     items_per_session: int = 12
     max_candidate_pool_size: int = 80
     render_text: bool = False
+    seed_rendered_posts_path: str | None = None
     render_scale_text: bool = False
     render_scale_text_strict: bool = False
     scale_openai_model_name: str = "gpt-5-nano"

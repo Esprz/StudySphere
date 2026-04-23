@@ -124,6 +124,7 @@ def score_exposure(
 
 def rank_candidates_for_exposure(
     user: UserProfile,
+    session: SessionContext,
     activity_state: ActivityState,
     candidates: list[PostRecord],
     world_state: WorldState,
@@ -138,7 +139,7 @@ def rank_candidates_for_exposure(
         topic_match = compute_topic_match(user, post)
         goal_alignment = compute_goal_alignment(activity_state, post)
         activity_alignment = compute_activity_alignment(activity_state, post)
-        freshness_bonus = compute_freshness_bonus(post)
+        freshness_bonus = compute_freshness_bonus(post, now=session.started_at)
         observed_quality = world_state.content_memory.get(post.post_id, {}).get("observed_quality", post.observed_quality)
         social_bonus = compute_social_bonus(user, post, world_state.follow_graph)
         exploration_bonus = compute_exploration_bonus(user, post)

@@ -1,0 +1,118 @@
+{
+  "version": "1.0",
+  "axis": "persona",
+  "fields": [
+    {
+      "name": "primary_interest_count",
+      "type": "integer",
+      "allowed_values": [
+        1
+      ]
+    },
+    {
+      "name": "secondary_interest_count",
+      "type": "integer_range",
+      "allowed_values": [
+        1,
+        3
+      ]
+    },
+    {
+      "name": "learning_intensity",
+      "type": "enum",
+      "allowed_values": [
+        "light",
+        "medium",
+        "heavy"
+      ]
+    },
+    {
+      "name": "sleep_habit_skew",
+      "type": "float_range",
+      "allowed_values": [
+        0.0,
+        1.0
+      ],
+      "note": "Closer to 0 means morning-oriented, closer to 1 means night-oriented."
+    },
+    {
+      "name": "posting_tendency",
+      "type": "enum",
+      "allowed_values": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    {
+      "name": "interaction_tendency",
+      "type": "enum",
+      "allowed_values": [
+        "view_only",
+        "likes_and_saves",
+        "discussion_oriented",
+        "creator_oriented"
+      ]
+    },
+    {
+      "name": "writing_style_family",
+      "type": "enum",
+      "allowed_values": [
+        "concise",
+        "reflective",
+        "analytical",
+        "casual",
+        "question_asking"
+      ]
+    },
+    {
+      "name": "register_level",
+      "type": "enum",
+      "allowed_values": [
+        "plain",
+        "polished",
+        "technical"
+      ]
+    },
+    {
+      "name": "curiosity_level",
+      "type": "float_range",
+      "allowed_values": [
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "diligence_level",
+      "type": "float_range",
+      "allowed_values": [
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "social_affinity",
+      "type": "float_range",
+      "allowed_values": [
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "exploration_rate",
+      "type": "float_range",
+      "allowed_values": [
+        0.0,
+        0.5
+      ]
+    },
+    {
+      "name": "drift_rate",
+      "type": "float_range",
+      "allowed_values": [
+        0.0,
+        0.3
+      ]
+    }
+  ]
+}

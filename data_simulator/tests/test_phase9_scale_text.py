@@ -20,7 +20,7 @@ class TestPhase9ScaleText(unittest.TestCase):
     """Validate batch-only phase 9 preparation, provider split, and collection."""
 
     def setUp(self) -> None:
-        self.design_final_dir = Path(__file__).resolve().parents[1] / "design" / "design_final"
+        self.design_final_dir = Path(__file__).resolve().parents[1] / "default_source_bundle"
         self.sources = load_sources(self.design_final_dir)
         self.now = datetime(2026, 4, 22, 20, 0, tzinfo=timezone.utc)
 

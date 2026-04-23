@@ -1,0 +1,42 @@
+{
+  "version": "1.0",
+  "bridge": "goal_category_to_interest_category",
+  "mappings": [
+    {
+      "goal_category": "Academic_And_Certification",
+      "interest_category_weights": {
+        "Hardcore_Cognitive": 0.4,
+        "Skill_Acquisition": 0.3,
+        "Soft_Power_And_Strategy": 0.15,
+        "Meaning_And_Appreciation": 0.15
+      }
+    },
+    {
+      "goal_category": "Career_And_Performance",
+      "interest_category_weights": {
+        "Hardcore_Cognitive": 0.15,
+        "Skill_Acquisition": 0.5,
+        "Soft_Power_And_Strategy": 0.25,
+        "Meaning_And_Appreciation": 0.1
+      }
+    },
+    {
+      "goal_category": "Discipline_And_Consistency",
+      "interest_category_weights": {
+        "Hardcore_Cognitive": 0.1,
+        "Skill_Acquisition": 0.25,
+        "Soft_Power_And_Strategy": 0.15,
+        "Meaning_And_Appreciation": 0.5
+      }
+    },
+    {
+      "goal_category": "Personal_Growth_And_Enrichment",
+      "interest_category_weights": {
+        "Hardcore_Cognitive": 0.2,
+        "Skill_Acquisition": 0.2,
+        "Soft_Power_And_Strategy": 0.2,
+        "Meaning_And_Appreciation": 0.4
+      }
+    }
+  ]
+}

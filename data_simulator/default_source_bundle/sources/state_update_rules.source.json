@@ -1,0 +1,82 @@
+{
+  "version": "1.0",
+  "axis": "state_update",
+  "goal_progress_rules": [
+    {
+      "signal": "focus_session",
+      "effect": "increase_goal_progress",
+      "weight": 0.45
+    },
+    {
+      "signal": "save_on_goal_aligned_post",
+      "effect": "increase_goal_progress",
+      "weight": 0.2
+    },
+    {
+      "signal": "comment_on_goal_aligned_post",
+      "effect": "increase_goal_progress",
+      "weight": 0.12
+    },
+    {
+      "signal": "repeated_hide_on_goal_topic",
+      "effect": "decrease_goal_strength",
+      "weight": 0.2
+    }
+  ],
+  "goal_transition_rules": [
+    {
+      "condition": "goal_progress >= 1.0",
+      "effect": "mark_goal_completed"
+    },
+    {
+      "condition": "goal_strength <= 0.15",
+      "effect": "mark_goal_dropped"
+    },
+    {
+      "condition": "completed_or_dropped_goal",
+      "effect": "sample_replacement_goal"
+    }
+  ],
+  "social_graph_rules": [
+    {
+      "signal": "follow",
+      "effect": "add_follow_edge"
+    },
+    {
+      "signal": "repeated_positive_actions_on_author",
+      "effect": "increase_social_bonus_to_author"
+    },
+    {
+      "signal": "hide_on_author",
+      "effect": "decrease_social_bonus_to_author"
+    }
+  ],
+  "interest_update_rules": [
+    {
+      "signal": "repeated_save_on_topic",
+      "effect": "temporary_topic_reinforcement"
+    },
+    {
+      "signal": "focus_session_on_topic",
+      "effect": "medium_term_topic_reinforcement"
+    },
+    {
+      "signal": "repeated_hide_on_topic",
+      "effect": "temporary_topic_suppression"
+    }
+  ],
+  "quality_update_rules": [
+    {
+      "signal": "view_rate",
+      "effect": "update_observed_quality"
+    },
+    {
+      "signal": "save_rate",
+      "effect": "update_observed_quality"
+    },
+    {
+      "signal": "hide_rate",
+      "effect": "decrease_observed_quality"
+    }
+  ]
+}

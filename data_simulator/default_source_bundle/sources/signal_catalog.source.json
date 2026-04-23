@@ -1,0 +1,558 @@
+{
+  "version": "1.0",
+  "purpose": "Canonical signal definitions for the simulator.",
+  "signals": [
+    {
+      "name": "primary_interest",
+      "type": "taxonomy_label",
+      "range_or_values": "one theme from interest_taxonomy.source.json",
+      "generated_in_step": 1,
+      "source": "interest_taxonomy.source.json",
+      "usage_mode": "hard prior plus weighted scoring input",
+      "used_by": [
+        "goal sampling",
+        "candidate retrieval",
+        "topic match scoring"
+      ]
+    },
+    {
+      "name": "secondary_interests",
+      "type": "taxonomy_label_array",
+      "range_or_values": "1 to 3 themes from interest_taxonomy.source.json",
+      "generated_in_step": 1,
+      "source": "interest_taxonomy.source.json",
+      "usage_mode": "weighted scoring input",
+      "used_by": [
+        "candidate retrieval",
+        "exploration around adjacent topics"
+      ]
+    },
+    {
+      "name": "learning_intensity",
+      "type": "enum",
+      "range_or_values": [
+        "light",
+        "medium",
+        "heavy"
+      ],
+      "generated_in_step": 1,
+      "source": "persona_axes.source.json",
+      "usage_mode": "branching prior",
+      "used_by": [
+        "goal count",
+        "session frequency"
+      ]
+    },
+    {
+      "name": "sleep_habit_skew",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 1,
+      "source": "persona_axes.source.json",
+      "definition": "0.0 means morning-oriented, 1.0 means night-oriented.",
+      "usage_mode": "time-window bias",
+      "used_by": [
+        "session time sampling"
+      ]
+    },
+    {
+      "name": "curiosity_level",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 1,
+      "source": "persona_axes.source.json",
+      "usage_mode": "probability bonus",
+      "used_by": [
+        "exploration candidate retrieval",
+        "off-interest click floor"
+      ]
+    },
+    {
+      "name": "diligence_level",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 1,
+      "source": "persona_axes.source.json",
+      "usage_mode": "probability multiplier",
+      "used_by": [
+        "focus probability",
+        "task completion probability"
+      ]
+    },
+    {
+      "name": "social_affinity",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 1,
+      "source": "persona_axes.source.json",
+      "usage_mode": "probability bonus",
+      "used_by": [
+        "comment probability",
+        "follow probability"
+      ]
+    },
+    {
+      "name": "exploration_rate",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 0.5]",
+      "generated_in_step": 1,
+      "source": "persona_axes.source.json",
+      "usage_mode": "share constraint and score bonus",
+      "used_by": [
+        "candidate pool construction",
+        "fresh content exposure"
+      ]
+    },
+    {
+      "name": "drift_rate",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 0.3]",
+      "generated_in_step": 1,
+      "source": "persona_axes.source.json",
+      "usage_mode": "state update modifier",
+      "used_by": [
+        "topic reinforcement decay",
+        "goal replacement sampling"
+      ]
+    },
+    {
+      "name": "writing_style_family",
+      "type": "enum",
+      "range_or_values": [
+        "concise",
+        "reflective",
+        "analytical",
+        "casual",
+        "question_asking"
+      ],
+      "generated_in_step": 1,
+      "source": "persona_axes.source.json",
+      "definition": "Lightweight persona signal for how a user tends to phrase posts and comments.",
+      "usage_mode": "text-style control input",
+      "used_by": [
+        "post prompt building",
+        "comment prompt building",
+        "surface-text calibration"
+      ]
+    },
+    {
+      "name": "register_level",
+      "type": "enum",
+      "range_or_values": [
+        "plain",
+        "polished",
+        "technical"
+      ],
+      "generated_in_step": 1,
+      "source": "persona_axes.source.json",
+      "definition": "Preferred language register independent of topic interest.",
+      "usage_mode": "text-style control input",
+      "used_by": [
+        "post prompt building",
+        "comment prompt building",
+        "surface-text calibration"
+      ]
+    },
+    {
+      "name": "goal_priority",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 2,
+      "source": "derived during goal generation",
+      "usage_mode": "ranking weight",
+      "used_by": [
+        "active goal selection",
+        "urgency sampling"
+      ]
+    },
+    {
+      "name": "goal_strength",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 2,
+      "source": "derived during goal generation",
+      "usage_mode": "probability multiplier and state variable",
+      "used_by": [
+        "goal persistence",
+        "focus probability",
+        "state mutation"
+      ]
+    },
+    {
+      "name": "activity_intent",
+      "type": "taxonomy_label",
+      "range_or_values": "one value from activity_intent_taxonomy.source.json",
+      "generated_in_step": 6,
+      "source": "goal_activity_bridge.source.json plus topic_activity_bridge.source.json",
+      "usage_mode": "hard contextual signal",
+      "used_by": [
+        "candidate retrieval",
+        "activity alignment scoring",
+        "save/comment propensities"
+      ]
+    },
+    {
+      "name": "urgency",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 6,
+      "source": "derived from active goal and time context",
+      "usage_mode": "probability modifier",
+      "used_by": [
+        "intent transition",
+        "session duration",
+        "save vs skim behavior"
+      ]
+    },
+    {
+      "name": "target_difficulty",
+      "type": "bounded_integer",
+      "range_or_values": "[1, 5]",
+      "generated_in_step": 6,
+      "source": "derived from user state and active goal",
+      "usage_mode": "distance penalty or bonus",
+      "used_by": [
+        "difficulty match scoring",
+        "view probability",
+        "save probability"
+      ]
+    },
+    {
+      "name": "true_latent_quality",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 3,
+      "source": "post generation",
+      "usage_mode": "hidden ground truth",
+      "used_by": [
+        "observed quality updates",
+        "oracle analysis"
+      ]
+    },
+    {
+      "name": "observed_quality",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 3,
+      "source": "bootstrapped at post creation then mutated by content memory",
+      "usage_mode": "ranking input",
+      "used_by": [
+        "exposure ranking",
+        "view probability"
+      ]
+    },
+    {
+      "name": "post_style",
+      "type": "enum",
+      "range_or_values": [
+        "knowledge_share",
+        "progress_update",
+        "achievement_update",
+        "question_help",
+        "resource_share",
+        "reflection",
+        "build_in_public"
+      ],
+      "generated_in_step": 3,
+      "source": "content_taxonomy.source.json",
+      "definition": "Semantic communication intent of the post, distinct from the packaging format.",
+      "usage_mode": "hard metadata plus text-style control input",
+      "used_by": [
+        "post generation",
+        "post prompt building",
+        "surface-text validation"
+      ]
+    },
+    {
+      "name": "goal_relation_type",
+      "type": "enum",
+      "range_or_values": [
+        "on_goal",
+        "interest_adjacent",
+        "off_topic_noise"
+      ],
+      "generated_in_step": 3,
+      "source": "content_taxonomy.source.json",
+      "definition": "Whether a post or comment is tightly aligned to the user's goal, adjacent to their interest space, or intentionally weakly related noise.",
+      "usage_mode": "mixture-control field",
+      "used_by": [
+        "topic sampling",
+        "post generation",
+        "text rendering constraints",
+        "distribution validation"
+      ]
+    },
+    {
+      "name": "candidate_score",
+      "type": "bounded_float",
+      "range_or_values": "recommended normalized score in [0.0, 1.0]",
+      "generated_in_step": 8,
+      "source": "scoring function over previously generated signals",
+      "usage_mode": "ranking score",
+      "used_by": [
+        "exposure ranking"
+      ]
+    },
+    {
+      "name": "topic_match",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 8,
+      "source": "computed from user interests and post topic overlap",
+      "usage_mode": "score component",
+      "used_by": [
+        "exposure score",
+        "like probability"
+      ]
+    },
+    {
+      "name": "goal_alignment",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 8,
+      "source": "computed from active goal and post topic/utility match",
+      "usage_mode": "score component",
+      "used_by": [
+        "exposure score",
+        "save probability",
+        "focus probability"
+      ]
+    },
+    {
+      "name": "activity_alignment",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 8,
+      "source": "computed from activity_intent and content metadata",
+      "usage_mode": "score component",
+      "used_by": [
+        "exposure score",
+        "like/save/comment probabilities"
+      ]
+    },
+    {
+      "name": "freshness_bonus",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 8,
+      "source": "computed from content age and content_lifecycle_rules.source.json",
+      "usage_mode": "score component",
+      "used_by": [
+        "exposure score"
+      ]
+    },
+    {
+      "name": "social_bonus",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 8,
+      "source": "computed from follow graph and author familiarity",
+      "usage_mode": "score component",
+      "used_by": [
+        "exposure score"
+      ]
+    },
+    {
+      "name": "exploration_bonus",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 8,
+      "source": "computed from exploration_rate and content novelty",
+      "usage_mode": "score component",
+      "used_by": [
+        "exposure score"
+      ]
+    },
+    {
+      "name": "deterministic_exposure_score",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 8,
+      "source": "decision_formulas.source.json",
+      "usage_mode": "pre-jitter ranking score",
+      "used_by": [
+        "candidate ranking"
+      ]
+    },
+    {
+      "name": "deterministic_view_prob",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 10,
+      "source": "decision_formulas.source.json",
+      "usage_mode": "pre-jitter probability component",
+      "used_by": [
+        "view sampling"
+      ]
+    },
+    {
+      "name": "hook_strength",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 10,
+      "source": "derived from title/card attractiveness heuristics",
+      "usage_mode": "probability component",
+      "used_by": [
+        "view probability"
+      ]
+    },
+    {
+      "name": "utility_match",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 10,
+      "source": "computed from activity_intent and post utility_style",
+      "usage_mode": "probability component",
+      "used_by": [
+        "save probability"
+      ]
+    },
+    {
+      "name": "discussion_affordance",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 10,
+      "source": "computed from post social_affordance",
+      "usage_mode": "probability component",
+      "used_by": [
+        "comment probability"
+      ]
+    },
+    {
+      "name": "detail_dwell_norm",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 10,
+      "source": "normalized from detail_dwell_ms",
+      "usage_mode": "probability component",
+      "used_by": [
+        "like/save/comment probabilities",
+        "focus probability"
+      ]
+    },
+    {
+      "name": "fatigue",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 1.0]",
+      "generated_in_step": 10,
+      "source": "session_dynamics.source.json plus session history",
+      "usage_mode": "probability penalty",
+      "used_by": [
+        "view probability decay",
+        "intent transition",
+        "post-view action reduction"
+      ]
+    },
+    {
+      "name": "feed_dwell_ms",
+      "type": "bounded_integer",
+      "range_or_values": "milliseconds from session_dynamics.source.json",
+      "generated_in_step": 10,
+      "source": "sampled at exposure processing time",
+      "usage_mode": "observed behavioral measurement",
+      "used_by": [
+        "scroll_past strength"
+      ]
+    },
+    {
+      "name": "detail_dwell_ms",
+      "type": "bounded_integer",
+      "range_or_values": "milliseconds from session_dynamics.source.json",
+      "generated_in_step": 10,
+      "source": "sampled after view",
+      "usage_mode": "observed behavioral measurement",
+      "used_by": [
+        "quick bounce detection",
+        "deep engagement estimation"
+      ]
+    },
+    {
+      "name": "reply_to_interaction_id",
+      "type": "nullable_id",
+      "range_or_values": "interaction_id of an earlier comment on the same post, or null",
+      "generated_in_step": 10,
+      "source": "derived during comment-event generation",
+      "definition": "Parent comment pointer for threaded replies.",
+      "usage_mode": "causal linkage field",
+      "used_by": [
+        "thread reconstruction",
+        "reply consistency validation"
+      ]
+    },
+    {
+      "name": "reply_to_user_id",
+      "type": "nullable_id",
+      "range_or_values": "user_id of the parent comment author, or null",
+      "generated_in_step": 10,
+      "source": "derived during comment-event generation",
+      "definition": "Target user for directed replies when a comment is not top-level.",
+      "usage_mode": "causal linkage field",
+      "used_by": [
+        "thread reconstruction",
+        "reply consistency validation"
+      ]
+    },
+    {
+      "name": "thread_depth",
+      "type": "bounded_integer",
+      "range_or_values": "[0, 3]",
+      "generated_in_step": 10,
+      "source": "derived during comment-event generation",
+      "definition": "Depth of a comment within a reply chain; 0 means top-level comment on the post.",
+      "usage_mode": "structural metadata",
+      "used_by": [
+        "thread reconstruction",
+        "reply consistency validation",
+        "comment rendering"
+      ]
+    },
+    {
+      "name": "reply_delay_seconds",
+      "type": "bounded_integer",
+      "range_or_values": "non-negative integer delay from parent comment or viewed post event",
+      "generated_in_step": 10,
+      "source": "derived during comment-event generation",
+      "definition": "Observed lag before a comment is posted.",
+      "usage_mode": "temporal metadata",
+      "used_by": [
+        "timestamp derivation",
+        "comment timing analysis",
+        "reply consistency validation"
+      ]
+    },
+    {
+      "name": "small_jitter",
+      "type": "bounded_float",
+      "range_or_values": "small additive or multiplicative noise from jitter_noise_rules.source.json",
+      "generated_in_step": "where needed",
+      "source": "jitter_noise_rules.source.json",
+      "usage_mode": "bounded micro-noise only",
+      "used_by": [
+        "candidate score perturbation",
+        "view probability perturbation"
+      ]
+    },
+    {
+      "name": "action_prob_jitter",
+      "type": "bounded_float",
+      "range_or_values": "small additive noise from jitter_noise_rules.source.json",
+      "generated_in_step": 10,
+      "source": "jitter_noise_rules.source.json",
+      "usage_mode": "bounded micro-noise only",
+      "used_by": [
+        "like/save/comment probabilities"
+      ]
+    },
+    {
+      "name": "off_interest_click_floor",
+      "type": "bounded_float",
+      "range_or_values": "[0.0, 0.05]",
+      "generated_in_step": 10,
+      "source": "jitter_noise_rules.source.json plus curiosity_level",
+      "usage_mode": "minimum click-through floor",
+      "used_by": [
+        "rare unexpected views on weakly relevant items"
+      ]
+    }
+  ]
+}

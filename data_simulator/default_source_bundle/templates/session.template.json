@@ -1,0 +1,39 @@
+{
+  "template_name": "session_context",
+  "required_fields": [
+    "session_id",
+    "user_id",
+    "activity_id",
+    "surface",
+    "started_at",
+    "wall_clock_time",
+    "hour_segment",
+    "day_type",
+    "academic_season",
+    "goal_topic",
+    "activity_intent",
+    "candidate_pool_size",
+    "items_exposed_count",
+    "session_duration_seconds",
+    "fatigue_start",
+    "activity_transition_count"
+  ],
+  "example": {
+    "session_id": "s_001",
+    "user_id": "u_001",
+    "activity_id": "a_001",
+    "surface": "feed",
+    "started_at": "2026-04-21T20:00:00Z",
+    "wall_clock_time": "2026-04-21T20:00:00Z",
+    "hour_segment": "evening",
+    "day_type": "weekday",
+    "academic_season": "regular_term",
+    "goal_topic": "Software Development",
+    "activity_intent": "Project_Execution",
+    "candidate_pool_size": 80,
+    "items_exposed_count": 12,
+    "session_duration_seconds": 840,
+    "fatigue_start": 0.18,
+    "activity_transition_count": 1
+  }
+}

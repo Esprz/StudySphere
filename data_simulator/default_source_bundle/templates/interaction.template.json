@@ -1,0 +1,47 @@
+{
+  "template_name": "interaction",
+  "required_fields": [
+    "interaction_id",
+    "event_type",
+    "user_id",
+    "post_id",
+    "session_id",
+    "exposure_id",
+    "timestamp"
+  ],
+  "optional_fields": [
+    "view_depth",
+    "feed_dwell_ms",
+    "dwell_ms",
+    "comment_text",
+    "reply_to_interaction_id",
+    "reply_to_user_id",
+    "thread_depth",
+    "reply_delay_seconds",
+    "reason_code",
+    "negative_signal_strength",
+    "deterministic_prob",
+    "final_prob",
+    "prob_jitter",
+    "sampling_policy",
+    "sampling_policy_version",
+    "sampled_outcome"
+  ],
+  "example": {
+    "interaction_id": "i_001",
+    "event_type": "scroll_past",
+    "user_id": "u_001",
+    "post_id": "p_001",
+    "session_id": "s_001",
+    "exposure_id": "e_001",
+    "timestamp": "2026-04-21T20:01:08Z",
+    "feed_dwell_ms": 920,
+    "deterministic_prob": 0.14,
+    "final_prob": 0.15,
+    "prob_jitter": 0.01,
+    "sampling_policy": "internal_heuristic_v1",
+    "sampled_outcome": false,
+    "reason_code": "low_relevance_after_exposure",
+    "negative_signal_strength": "weak_negative"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "template_name": "user_profile",
+  "required_fields": [
+    "user_id",
+    "primary_interest",
+    "secondary_interests",
+    "learning_intensity",
+    "sleep_habit_skew",
+    "posting_tendency",
+    "interaction_tendency",
+    "writing_style_family",
+    "register_level",
+    "curiosity_level",
+    "diligence_level",
+    "social_affinity",
+    "exploration_rate",
+    "drift_rate",
+    "created_at"
+  ],
+  "example": {
+    "user_id": "u_001",
+    "primary_interest": "Software Development",
+    "secondary_interests": [
+      "Data Science & AI",
+      "Critical Thinking"
+    ],
+    "learning_intensity": "heavy",
+    "sleep_habit_skew": 0.74,
+    "posting_tendency": "medium",
+    "interaction_tendency": "likes_and_saves",
+    "writing_style_family": "reflective",
+    "register_level": "plain",
+    "curiosity_level": 0.68,
+    "diligence_level": 0.81,
+    "social_affinity": 0.42,
+    "exploration_rate": 0.18,
+    "drift_rate": 0.07,
+    "created_at": "2026-04-01T09:00:00Z"
+  }
+}

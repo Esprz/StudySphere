@@ -1,0 +1,42 @@
+{
+  "version": "1.0",
+  "axis": "activity_intent",
+  "categories": [
+    {
+      "category": "Mastery_And_Learning",
+      "intents": [
+        "Concept_Learning",
+        "Problem_Solving",
+        "Exam_Preparation",
+        "Research_Exploration"
+      ]
+    },
+    {
+      "category": "Output_And_Application",
+      "intents": [
+        "Portfolio_Building",
+        "Project_Execution",
+        "Writing_And_Synthesis",
+        "Skill_Demonstration"
+      ]
+    },
+    {
+      "category": "Collection_And_Planning",
+      "intents": [
+        "Resource_Collecting",
+        "Study_Planning",
+        "Revision_Queueing",
+        "Reference_Saving"
+      ]
+    },
+    {
+      "category": "Reflection_And_Social",
+      "intents": [
+        "Reflection",
+        "Discussion",
+        "Accountability_Checkin",
+        "Peer_Support"
+      ]
+    }
+  ]
+}

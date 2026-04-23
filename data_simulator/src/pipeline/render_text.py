@@ -462,12 +462,12 @@ def collect_openai_seed_batch_results(
     return report
 
 
-def prepare_openai_seed_retry_batches(
+def prepare_batch_retry_artifacts(
     *,
     collect_report_path: str | Path,
     output_dir: str | Path,
 ) -> dict[str, str]:
-    """Prepare a retry batch from a prior collect report, without auto-submitting it."""
+    """Prepare a retry shard from a prior collect report, without auto-submitting it."""
     report = json.loads(Path(collect_report_path).expanduser().resolve().read_text(encoding="utf-8"))
     failed_custom_ids = list(report.get("failed_custom_ids", []))
     if not failed_custom_ids:
@@ -487,22 +487,25 @@ def prepare_openai_seed_retry_batches(
         [item["batch_request"] for item in selected],
         root / f"{report['batch_kind']}_retry_batch_input.jsonl",
     )
+    retry_manifest_payload = {
+        "provider": manifest["provider"],
+        "model_name": manifest["model_name"],
+        "request_kind": manifest["request_kind"],
+        "request_count": len(selected),
+        "batch_input_path": str(retry_input_path),
+        "prompt_registry_path": str(retry_registry_path),
+        "source_collect_report_path": str(Path(collect_report_path).expanduser().resolve()),
+        "notes": [
+            "This retry batch was prepared from failed_custom_ids only.",
+            "Submission is manual and separate from preparation.",
+        ],
+    }
+    if "endpoint" in manifest:
+        retry_manifest_payload["endpoint"] = manifest["endpoint"]
+    if "completion_window" in manifest:
+        retry_manifest_payload["completion_window"] = manifest["completion_window"]
     retry_manifest_path = _write_json(
-        {
-            "provider": manifest["provider"],
-            "model_name": manifest["model_name"],
-            "endpoint": manifest["endpoint"],
-            "completion_window": manifest["completion_window"],
-            "request_kind": manifest["request_kind"],
-            "request_count": len(selected),
-            "batch_input_path": str(retry_input_path),
-            "prompt_registry_path": str(retry_registry_path),
-            "source_collect_report_path": str(Path(collect_report_path).expanduser().resolve()),
-            "notes": [
-                "This retry batch was prepared from failed_custom_ids only.",
-                "Submission is manual and separate from preparation.",
-            ],
-        },
+        retry_manifest_payload,
         root / f"{report['batch_kind']}_retry_submit_manifest.json",
     )
     return {
@@ -510,6 +513,18 @@ def prepare_openai_seed_retry_batches(
         "retry_prompt_registry": str(retry_registry_path),
         "retry_submit_manifest": str(retry_manifest_path),
     }
+
+
+def prepare_openai_seed_retry_batches(
+    *,
+    collect_report_path: str | Path,
+    output_dir: str | Path,
+) -> dict[str, str]:
+    """Backward-compatible wrapper for seed retry preparation."""
+    return prepare_batch_retry_artifacts(
+        collect_report_path=collect_report_path,
+        output_dir=output_dir,
+    )
 
 
 def _repair_or_discard_posts(
@@ -1392,6 +1407,8 @@ def _collect_failed_custom_ids(error_jsonl_path: str | Path, *, provider: str) -
     """Collect failed request ids from provider-specific error JSONL files."""
     failed: list[str] = []
     source = Path(error_jsonl_path).expanduser().resolve()
+    if not source.is_file():
+        return failed
     with source.open("r", encoding="utf-8") as handle:
         for line in handle:
             stripped = line.strip()

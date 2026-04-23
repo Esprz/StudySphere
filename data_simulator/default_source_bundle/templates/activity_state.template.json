@@ -1,0 +1,32 @@
+{
+  "template_name": "activity_state",
+  "required_fields": [
+    "activity_id",
+    "user_id",
+    "goal_id",
+    "activity_intent",
+    "topic",
+    "urgency",
+    "available_minutes",
+    "target_difficulty",
+    "session_id",
+    "timestamp"
+  ],
+  "example": {
+    "activity_id": "a_001",
+    "user_id": "u_001",
+    "goal_id": "g_001",
+    "activity_intent": "Project_Execution",
+    "topic": "Software Development",
+    "urgency": 0.76,
+    "available_minutes": 45,
+    "target_difficulty": 3,
+    "session_id": "s_001",
+    "timestamp": "2026-04-21T20:00:00Z"
+  },
+  "field_notes": {
+    "urgency": "Bounded float in [0.0, 1.0]. Higher means the user is more deadline-driven in this session.",
+    "available_minutes": "Integer time budget for the current session window.",
+    "target_difficulty": "Bounded integer in [1, 5]. Used for difficulty-match scoring against content."
+  }
+}

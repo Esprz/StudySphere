@@ -1,0 +1,41 @@
+{
+  "version": "1.0",
+  "axis": "negative_interaction",
+  "events": [
+    {
+      "event_type": "scroll_past",
+      "description": "The item was exposed but not opened.",
+      "stage": "after_exposure",
+      "strength": "weak_negative"
+    },
+    {
+      "event_type": "quick_bounce",
+      "description": "The detail page was opened, but dwell was too short to imply meaningful consumption.",
+      "stage": "after_view",
+      "strength": "medium_negative"
+    },
+    {
+      "event_type": "hide",
+      "description": "The user explicitly asks to avoid this content or author.",
+      "stage": "after_exposure_or_view",
+      "strength": "strong_negative"
+    }
+  ],
+  "suppression_rules": [
+    {
+      "trigger": "hide",
+      "target": "post_topic",
+      "effect": "temporary_topic_suppression"
+    },
+    {
+      "trigger": "hide",
+      "target": "author_id",
+      "effect": "temporary_author_suppression"
+    },
+    {
+      "trigger": "repeated_scroll_past",
+      "target": "post_topic",
+      "effect": "soft_topic_penalty"
+    }
+  ]
+}
