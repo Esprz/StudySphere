@@ -1,6 +1,12 @@
 """Pipeline entrypoints for simulator runtime flows."""
 
 from .build_truth import build_truth
+from .render_text import (
+    collect_openai_seed_batch_results,
+    prepare_openai_seed_batches,
+    prepare_openai_seed_retry_batches,
+    render_seed_text,
+)
 from .validate import validate_and_write, validate_world_state, write_validation_report
 
 
@@ -13,6 +19,10 @@ def run_simulation(*args, **kwargs):
 
 __all__ = [
     "build_truth",
+    "collect_openai_seed_batch_results",
+    "prepare_openai_seed_batches",
+    "prepare_openai_seed_retry_batches",
+    "render_seed_text",
     "run_simulation",
     "validate_and_write",
     "validate_world_state",

@@ -1,4 +1,4 @@
-"""Top-level simulator run pipeline for Phase 7 export bundle output."""
+"""Top-level simulator run pipeline with optional Phase 8 seed-text artifacts."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from config.models import RunConfig
 from exporters.analytics_logs import export_analytics_logs
 from exporters.simulator_json import export_simulator_jsonl
 from pipeline.build_truth import build_truth
+from pipeline.render_text import render_seed_text
 from pipeline.validate import validate_world_state, write_validation_report
 
 
@@ -25,9 +26,6 @@ def run_simulation(
     now: datetime | None = None,
 ) -> dict[str, Any]:
     """Run build/validate/export pipeline and write a complete output directory."""
-    if config.render_text:
-        raise NotImplementedError("render_text pipeline starts in Phase 8")
-
     root = Path(output_dir).expanduser().resolve()
     root.mkdir(parents=True, exist_ok=True)
 
@@ -39,6 +37,13 @@ def run_simulation(
 
     validation_report = validate_world_state(world_state, sources)
     validation_report_path = write_validation_report(validation_report, root / "validation_report.json")
+    text_artifacts = None
+    if config.render_text:
+        text_artifacts = render_seed_text(
+            world_state,
+            output_dir=root,
+            seed_model_name="gpt-5.4-nano",
+        )
 
     summary = _build_run_summary(
         config=config,
@@ -47,6 +52,7 @@ def run_simulation(
         analytics_files=analytics_files,
         validation_report=validation_report,
         validation_report_path=validation_report_path,
+        text_artifacts=text_artifacts,
     )
     summary_path = root / "run_summary.json"
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
@@ -63,6 +69,7 @@ def _build_run_summary(
     analytics_files: dict[str, Path],
     validation_report: dict[str, Any],
     validation_report_path: Path,
+    text_artifacts: dict[str, Any] | None,
 ) -> dict[str, Any]:
     """Build one compact run summary payload for output bundle introspection."""
     return {
@@ -75,6 +82,14 @@ def _build_run_summary(
             "total_soft_fails": validation_report.get("total_soft_fails", 0),
             "hard_fail_count_by_validator": validation_report.get("hard_fail_count_by_validator", {}),
             "soft_fail_count_by_validator": validation_report.get("soft_fail_count_by_validator", {}),
+        },
+        "text_render": None
+        if text_artifacts is None
+        else {
+            "status": text_artifacts.get("status"),
+            "rendered_post_count": len(text_artifacts.get("rendered_posts", [])),
+            "rendered_comment_count": len(text_artifacts.get("rendered_comments", [])),
+            "files": text_artifacts.get("files", {}),
         },
         "files": {
             "entities": {name: str(path) for name, path in entity_files.items()},
@@ -106,6 +121,11 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--output-dir", type=Path, required=True, help="Output directory for exported artifacts")
     parser.add_argument(
+        "--render-text",
+        action="store_true",
+        help="Render seed text sidecars and OpenAI Batch input artifacts",
+    )
+    parser.add_argument(
         "--now",
         type=str,
         default=None,
@@ -125,7 +145,7 @@ def main() -> None:
         timeline_ticks=args.timeline_ticks,
         items_per_session=args.items_per_session,
         max_candidate_pool_size=args.max_candidate_pool_size,
-        render_text=False,
+        render_text=args.render_text,
     )
     summary = run_simulation(
         config=config,

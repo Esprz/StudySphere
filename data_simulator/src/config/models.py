@@ -211,6 +211,79 @@ class PropensityLogRecord:
 
 
 @dataclass(frozen=True)
+class PromptMessage:
+    """Chat-style prompt message used for render requests."""
+
+    role: str
+    content: str
+
+
+@dataclass(frozen=True)
+class PostRenderPrompt:
+    """Prompt package for rendering one post title/body sidecar record."""
+
+    prompt_id: str
+    post_id: str
+    topic: str
+    content_format: str
+    difficulty: int
+    messages: list[PromptMessage]
+
+
+@dataclass(frozen=True)
+class CommentRenderTarget:
+    """One target comment slot inside a post-level comment-set request."""
+
+    interaction_id: str
+    user_id: str
+    interaction_type: str
+    primary_interest: str
+    interaction_tendency: str
+    curiosity_level: float
+    social_affinity: float
+    exploration_rate: float
+
+
+@dataclass(frozen=True)
+class CommentSetRenderPrompt:
+    """Prompt package for rendering a set of comments under one target post."""
+
+    prompt_id: str
+    post_id: str
+    topic: str
+    comment_targets: list[CommentRenderTarget]
+    messages: list[PromptMessage]
+
+
+@dataclass(frozen=True)
+class RenderedPostText:
+    """Rendered post-sidecar text attached by post id rather than mutating truth."""
+
+    render_id: str
+    post_id: str
+    prompt_id: str
+    model_name: str
+    provider: str
+    title: str
+    content: str
+    validator_status: str = "pending"
+
+
+@dataclass(frozen=True)
+class RenderedCommentText:
+    """Rendered comment-sidecar text attached by interaction id."""
+
+    render_id: str
+    interaction_id: str
+    post_id: str
+    prompt_id: str
+    model_name: str
+    provider: str
+    comment_text: str
+    validator_status: str = "pending"
+
+
+@dataclass(frozen=True)
 class SourceBundle:
     base_path: Path
     sources: dict[str, dict[str, Any]]
