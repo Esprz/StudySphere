@@ -1,3 +1,7 @@
+VENV_PYTHON := /home/sy/projects/personal/StudySphere/data_simulator/.venv/bin/python
+SIM_ROOT := /home/sy/projects/personal/StudySphere/data_simulator
+SIM_PY := PYTHONPATH=src $(VENV_PYTHON)
+
 # Start all services (build and run in background)
 up:
 	docker compose up --build -d
@@ -48,6 +52,12 @@ logs-etl:
 logs-kafka:
 	docker compose logs -f kafka
 
+logs-offline:
+	docker compose --profile offline logs -f offline-pipeline
+
+logs-simulator:
+	docker compose --profile offline logs -f data-simulator
+
 # Optional: open Prisma Studio (GUI for DB)
 studio:
 	docker compose exec backend npx prisma studio
@@ -59,3 +69,72 @@ prisma-status:
 # Optional: run seed script if defined
 prisma-seed:
 	docker compose exec backend npx prisma db seed
+
+offline-health:
+	docker compose --profile offline run --rm offline-pipeline python -m src.main healthcheck
+
+offline-run:
+	docker compose --profile offline run --rm offline-pipeline python -m src.main run-all
+
+simulator-test:
+	cd $(SIM_ROOT) && $(SIM_PY) -m unittest discover -s tests
+
+simulator-run:
+	cd $(SIM_ROOT) && $(SIM_PY) -m pipeline.run \
+		--seed 1001 \
+		--user-count 100 \
+		--timeline-ticks 30 \
+		--items-per-session 12 \
+		--max-candidate-pool-size 80 \
+		--output-dir tmp_runs/make_structured_100u
+
+simulator-prepare-seed:
+	cd $(SIM_ROOT) && $(SIM_PY) -m pipeline.batch_cli prepare-seed \
+		--seed 1001 \
+		--user-count 100 \
+		--timeline-ticks 30 \
+		--items-per-session 12 \
+		--max-candidate-pool-size 80 \
+		--seed-post-target-count 12 \
+		--seed-comment-target-count 12 \
+		--output-dir tmp_runs/make_seed_prepare_100u
+
+simulator-prepare-scale:
+	cd $(SIM_ROOT) && $(SIM_PY) -m pipeline.batch_cli prepare-scale \
+		--seed 1001 \
+		--user-count 1000 \
+		--timeline-ticks 30 \
+		--items-per-session 12 \
+		--max-candidate-pool-size 80 \
+		--scale-openai-model-name gpt-5-nano \
+		--scale-gemini-model-name gemini-2.5-flash-lite \
+		--scale-gemini-share-percentage 20 \
+		--output-dir tmp_runs/make_scale_prepare_1000u
+
+simulator-docker-run:
+	docker compose --profile offline run --rm data-simulator
+
+simulator-docker-prepare-seed:
+	docker compose --profile offline run --rm data-simulator \
+		python -m pipeline.batch_cli prepare-seed \
+		--seed 1001 \
+		--user-count 100 \
+		--timeline-ticks 30 \
+		--items-per-session 12 \
+		--max-candidate-pool-size 80 \
+		--seed-post-target-count 12 \
+		--seed-comment-target-count 12 \
+		--output-dir /app/output/docker_seed_prepare_100u
+
+simulator-docker-prepare-scale:
+	docker compose --profile offline run --rm data-simulator \
+		python -m pipeline.batch_cli prepare-scale \
+		--seed 1001 \
+		--user-count 1000 \
+		--timeline-ticks 30 \
+		--items-per-session 12 \
+		--max-candidate-pool-size 80 \
+		--scale-openai-model-name gpt-5-nano \
+		--scale-gemini-model-name gemini-2.5-flash-lite \
+		--scale-gemini-share-percentage 20 \
+		--output-dir /app/output/docker_scale_prepare_1000u

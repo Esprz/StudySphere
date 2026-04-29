@@ -238,6 +238,53 @@ services:
       retries: 3
       start_period: 40s
 
+  offline-pipeline:
+    build:
+      context: ./offline_pipeline
+      dockerfile: Dockerfile
+    container_name: offline-pipeline
+    profiles: ["offline"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+      - REDIS_CACHE_HOST=redis-cache
+      - REDIS_CACHE_PORT=6379
+      - REDIS_CACHE_DB=1
+      - REDIS_PASSWORD=
+      - KAFKA_BROKERS=kafka:9092
+    volumes:
+      - ./offline_pipeline:/app
+    command: ["python", "-m", "src.main", "run-all"]
+
+  data-simulator:
+    build:
+      context: ./data_simulator
+      dockerfile: Dockerfile
+    container_name: data-simulator
+    profiles: ["offline"]
+    working_dir: /app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app/src
+      - DATA_SIM_SEED=1001
+      - DATA_SIM_USER_COUNT=100
+      - DATA_SIM_TIMELINE_TICKS=30
+      - DATA_SIM_ITEMS_PER_SESSION=12
+      - DATA_SIM_MAX_CANDIDATE_POOL_SIZE=80
+      - DATA_SIM_OUTPUT_DIR=/app/output/compose_run
+    volumes:
+      - ./data_simulator:/app
+    command:
+      [
+        "bash",
+        "-lc",
+        "python -m pipeline.run --seed ${DATA_SIM_SEED} --user-count ${DATA_SIM_USER_COUNT} --timeline-ticks ${DATA_SIM_TIMELINE_TICKS} --items-per-session ${DATA_SIM_ITEMS_PER_SESSION} --max-candidate-pool-size ${DATA_SIM_MAX_CANDIDATE_POOL_SIZE} --output-dir ${DATA_SIM_OUTPUT_DIR}",
+      ]
+
 volumes:
   postgres_data:
   kafka_data:
