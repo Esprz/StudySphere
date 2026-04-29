@@ -27,12 +27,19 @@ class RunConfig:
     items_per_session: int = 12
     max_candidate_pool_size: int = 80
     render_text: bool = False
+    seed_model_name: str = "gpt-5.4-nano"
+    seed_post_target_count: int = 12
+    seed_comment_target_count: int = 12
+    seed_max_comments_per_post_request: int = 4
     seed_rendered_posts_path: str | None = None
     render_scale_text: bool = False
     render_scale_text_strict: bool = False
     scale_openai_model_name: str = "gpt-5-nano"
     scale_gemini_model_name: str = "gemini-2.5-flash-lite"
     scale_gemini_share_percentage: int = 0
+    scale_post_target_count: int | None = None
+    scale_comment_target_count: int | None = None
+    scale_max_comments_per_post_request: int = 6
     scale_rendered_posts_path: str | None = None
 
 

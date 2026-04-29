@@ -16,6 +16,7 @@ from pipeline.render_text import (
     prepare_openai_seed_batches,
     prepare_openai_seed_retry_batches,
     render_seed_text,
+    select_seed_post_targets,
     select_seed_comment_target_groups,
 )
 from renderers.prompts import build_comment_render_prompt, build_comment_render_target, build_post_render_prompt
@@ -100,6 +101,36 @@ class TestPhase8SeedText(unittest.TestCase):
         self.assertIn("comment: 12-40 words", combined)
         self.assertNotIn("Seed examples:", combined)
         self.assertNotIn("json_schema", combined)
+
+    def test_seed_post_target_selection_spreads_across_topics_before_repeating(self) -> None:
+        """Small seed budgets should prioritize topic coverage rather than only newest posts."""
+        world_state = build_truth(
+            RunConfig(seed=8103, user_count=48, timeline_ticks=5, items_per_session=10),
+            self.sources,
+            now=self.now,
+        )
+
+        selected = select_seed_post_targets(world_state, limit=6)
+
+        self.assertEqual(len(selected), 6)
+        self.assertEqual(len({post.topic for post in selected}), 6)
+
+    def test_seed_comment_target_selection_spreads_across_posts_before_deeper_chunks(self) -> None:
+        """Small seed comment budgets should cover more posts before repeating the same post thread."""
+        world_state = build_truth(
+            RunConfig(seed=8104, user_count=56, timeline_ticks=6, items_per_session=12),
+            self.sources,
+            now=self.now,
+        )
+
+        selected = select_seed_comment_target_groups(
+            world_state,
+            limit=4,
+            max_comments_per_post_request=1,
+        )
+
+        self.assertEqual(len(selected), 4)
+        self.assertEqual(len({post.post_id for post, _ in selected}), 4)
 
     def test_text_validator_catches_obvious_contradictions(self) -> None:
         """Rule-based text validator should fail clear topic/difficulty contradictions."""

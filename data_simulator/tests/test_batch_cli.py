@@ -93,6 +93,9 @@ class TestBatchCli(unittest.TestCase):
                     user_count=16,
                     timeline_ticks=2,
                     items_per_session=8,
+                    seed_post_target_count=5,
+                    seed_comment_target_count=4,
+                    seed_max_comments_per_post_request=2,
                     seed_rendered_posts_path=str(rendered_posts_path),
                 ),
                 design_root=self.design_final_dir,
@@ -101,7 +104,33 @@ class TestBatchCli(unittest.TestCase):
             )
 
             self.assertEqual(summary["run_config"]["seed_rendered_posts_path"], str(rendered_posts_path))
+            self.assertEqual(summary["run_config"]["seed_post_target_count"], 5)
+            self.assertEqual(summary["run_config"]["seed_comment_target_count"], 4)
+            self.assertEqual(summary["run_config"]["seed_max_comments_per_post_request"], 2)
             self.assertGreater(summary["seed_text_batch"]["prepared_comment_request_count"], 0)
+
+    def test_prepare_scale_bundle_forwards_recipe_counts(self) -> None:
+        """Prepare-scale wrapper should forward calibrated target-count controls into runtime config."""
+        with tempfile.TemporaryDirectory(prefix="sim_batch_prepare_scale_recipe_") as tmp:
+            summary = prepare_scale_bundle(
+                config=RunConfig(
+                    seed=9906,
+                    user_count=16,
+                    timeline_ticks=2,
+                    items_per_session=8,
+                    scale_gemini_share_percentage=25,
+                    scale_post_target_count=7,
+                    scale_comment_target_count=5,
+                    scale_max_comments_per_post_request=3,
+                ),
+                design_root=self.design_final_dir,
+                output_dir=tmp,
+                now=self.now,
+            )
+
+            self.assertEqual(summary["run_config"]["scale_post_target_count"], 7)
+            self.assertEqual(summary["run_config"]["scale_comment_target_count"], 5)
+            self.assertEqual(summary["run_config"]["scale_max_comments_per_post_request"], 3)
 
     def test_write_openai_submit_script_uses_batch_and_file_endpoints(self) -> None:
         """OpenAI submit helper should emit a runnable shell script without jq dependency."""

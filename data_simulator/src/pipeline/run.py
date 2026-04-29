@@ -42,7 +42,10 @@ def run_simulation(
         text_artifacts = prepare_openai_seed_batches(
             world_state,
             output_dir=root,
-            seed_model_name="gpt-5.4-nano",
+            seed_model_name=config.seed_model_name,
+            post_target_count=config.seed_post_target_count,
+            comment_target_count=config.seed_comment_target_count,
+            max_comments_per_post_request=config.seed_max_comments_per_post_request,
             rendered_posts_path=config.seed_rendered_posts_path,
         )
     scale_text_artifacts = None
@@ -53,6 +56,9 @@ def run_simulation(
             openai_model_name=config.scale_openai_model_name,
             gemini_model_name=config.scale_gemini_model_name,
             gemini_share_percentage=config.scale_gemini_share_percentage,
+            post_target_count=config.scale_post_target_count,
+            comment_target_count=config.scale_comment_target_count,
+            max_comments_per_post_request=config.scale_max_comments_per_post_request,
             rendered_posts_path=config.scale_rendered_posts_path,
         )
 
@@ -155,6 +161,30 @@ def _parse_args() -> argparse.Namespace:
         help="Prepare OpenAI Batch artifacts for seed post/comment text",
     )
     parser.add_argument(
+        "--seed-model-name",
+        type=str,
+        default="gpt-5.4-nano",
+        help="OpenAI core model used for seed post/comment batches",
+    )
+    parser.add_argument(
+        "--seed-post-target-count",
+        type=int,
+        default=12,
+        help="Number of seed posts to render into text during prepare",
+    )
+    parser.add_argument(
+        "--seed-comment-target-count",
+        type=int,
+        default=12,
+        help="Number of seed comment-set requests to prepare",
+    )
+    parser.add_argument(
+        "--seed-max-comments-per-post-request",
+        type=int,
+        default=4,
+        help="Maximum comments packed into one seed comment-set request",
+    )
+    parser.add_argument(
         "--seed-rendered-posts-path",
         type=str,
         default=None,
@@ -182,6 +212,24 @@ def _parse_args() -> argparse.Namespace:
         type=int,
         default=0,
         help="Percentage of scale prompts routed to Gemini; remaining prompts go to OpenAI",
+    )
+    parser.add_argument(
+        "--scale-post-target-count",
+        type=int,
+        default=None,
+        help="Optional number of scale posts to prepare; default prepares all eligible posts",
+    )
+    parser.add_argument(
+        "--scale-comment-target-count",
+        type=int,
+        default=None,
+        help="Optional number of scale comment-set requests to prepare; default prepares all eligible groups",
+    )
+    parser.add_argument(
+        "--scale-max-comments-per-post-request",
+        type=int,
+        default=6,
+        help="Maximum comments packed into one scale comment-set request",
     )
     parser.add_argument(
         "--scale-rendered-posts-path",
@@ -234,12 +282,19 @@ def main() -> None:
         items_per_session=args.items_per_session,
         max_candidate_pool_size=args.max_candidate_pool_size,
         render_text=args.render_text,
+        seed_model_name=args.seed_model_name,
+        seed_post_target_count=args.seed_post_target_count,
+        seed_comment_target_count=args.seed_comment_target_count,
+        seed_max_comments_per_post_request=args.seed_max_comments_per_post_request,
         seed_rendered_posts_path=args.seed_rendered_posts_path,
         render_scale_text=args.render_scale_text,
         render_scale_text_strict=args.render_scale_text_strict,
         scale_openai_model_name=args.scale_openai_model_name,
         scale_gemini_model_name=args.scale_gemini_model_name,
         scale_gemini_share_percentage=args.scale_gemini_share_percentage,
+        scale_post_target_count=args.scale_post_target_count,
+        scale_comment_target_count=args.scale_comment_target_count,
+        scale_max_comments_per_post_request=args.scale_max_comments_per_post_request,
         scale_rendered_posts_path=args.scale_rendered_posts_path,
     )
     summary = run_simulation(

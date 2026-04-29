@@ -37,6 +37,10 @@ def prepare_seed_bundle(
             items_per_session=config.items_per_session,
             max_candidate_pool_size=config.max_candidate_pool_size,
             render_text=True,
+            seed_model_name=config.seed_model_name,
+            seed_post_target_count=config.seed_post_target_count,
+            seed_comment_target_count=config.seed_comment_target_count,
+            seed_max_comments_per_post_request=config.seed_max_comments_per_post_request,
             seed_rendered_posts_path=config.seed_rendered_posts_path,
         ),
         design_root=design_root,
@@ -64,6 +68,9 @@ def prepare_scale_bundle(
             scale_openai_model_name=config.scale_openai_model_name,
             scale_gemini_model_name=config.scale_gemini_model_name,
             scale_gemini_share_percentage=config.scale_gemini_share_percentage,
+            scale_post_target_count=config.scale_post_target_count,
+            scale_comment_target_count=config.scale_comment_target_count,
+            scale_max_comments_per_post_request=config.scale_max_comments_per_post_request,
             scale_rendered_posts_path=config.scale_rendered_posts_path,
         ),
         design_root=design_root,
@@ -445,11 +452,18 @@ def _add_prepare_args(parser: argparse.ArgumentParser, *, include_scale_args: bo
     )
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--now", type=str, default=None)
+    parser.add_argument("--seed-model-name", type=str, default="gpt-5.4-nano")
+    parser.add_argument("--seed-post-target-count", type=int, default=12)
+    parser.add_argument("--seed-comment-target-count", type=int, default=12)
+    parser.add_argument("--seed-max-comments-per-post-request", type=int, default=4)
     parser.add_argument("--seed-rendered-posts-path", type=str, default=None)
     if include_scale_args:
         parser.add_argument("--scale-openai-model-name", type=str, default="gpt-5-nano")
         parser.add_argument("--scale-gemini-model-name", type=str, default="gemini-2.5-flash-lite")
         parser.add_argument("--scale-gemini-share-percentage", type=int, default=0)
+        parser.add_argument("--scale-post-target-count", type=int, default=None)
+        parser.add_argument("--scale-comment-target-count", type=int, default=None)
+        parser.add_argument("--scale-max-comments-per-post-request", type=int, default=6)
         parser.add_argument("--scale-rendered-posts-path", type=str, default=None)
 
 
@@ -490,10 +504,17 @@ def main() -> None:
             timeline_ticks=args.timeline_ticks,
             items_per_session=args.items_per_session,
             max_candidate_pool_size=args.max_candidate_pool_size,
+            seed_model_name=getattr(args, "seed_model_name", "gpt-5.4-nano"),
+            seed_post_target_count=getattr(args, "seed_post_target_count", 12),
+            seed_comment_target_count=getattr(args, "seed_comment_target_count", 12),
+            seed_max_comments_per_post_request=getattr(args, "seed_max_comments_per_post_request", 4),
             seed_rendered_posts_path=getattr(args, "seed_rendered_posts_path", None),
             scale_openai_model_name=getattr(args, "scale_openai_model_name", "gpt-5-nano"),
             scale_gemini_model_name=getattr(args, "scale_gemini_model_name", "gemini-2.5-flash-lite"),
             scale_gemini_share_percentage=getattr(args, "scale_gemini_share_percentage", 0),
+            scale_post_target_count=getattr(args, "scale_post_target_count", None),
+            scale_comment_target_count=getattr(args, "scale_comment_target_count", None),
+            scale_max_comments_per_post_request=getattr(args, "scale_max_comments_per_post_request", 6),
             scale_rendered_posts_path=getattr(args, "scale_rendered_posts_path", None),
         )
         if args.command == "prepare-seed":

@@ -931,11 +931,50 @@ def write_render_scale_artifacts(
 
 
 def select_seed_post_targets(world_state: WorldState, *, limit: int | None) -> list[PostRecord]:
-    """Select a deterministic small post subset for seed rendering."""
-    ordered = sorted(world_state.posts, key=lambda post: (post.created_at, post.post_id), reverse=True)
-    if limit is None:
+    """Select a deterministic, topic-spread post subset for seed rendering.
+
+    Seed text should act as a small coverage bank, not merely the most recent
+    records. We therefore round-robin across topic buckets first, while keeping
+    per-topic ordering deterministic by recency and observed quality.
+    """
+    ordered = sorted(
+        world_state.posts,
+        key=lambda post: (post.created_at, post.observed_quality, post.post_id),
+        reverse=True,
+    )
+    if limit is None or limit >= len(ordered):
         return ordered
-    return ordered[:limit]
+
+    grouped: dict[str, list[PostRecord]] = {}
+    for post in ordered:
+        grouped.setdefault(post.topic, []).append(post)
+
+    topic_order = sorted(
+        grouped,
+        key=lambda topic: (
+            grouped[topic][0].created_at,
+            grouped[topic][0].observed_quality,
+            topic,
+        ),
+        reverse=True,
+    )
+
+    selected: list[PostRecord] = []
+    index = 0
+    while len(selected) < limit:
+        progressed = False
+        for topic in topic_order:
+            bucket = grouped[topic]
+            if index >= len(bucket):
+                continue
+            selected.append(bucket[index])
+            progressed = True
+            if len(selected) >= limit:
+                break
+        if not progressed:
+            break
+        index += 1
+    return selected
 
 
 def select_seed_comment_target_groups(
@@ -944,7 +983,12 @@ def select_seed_comment_target_groups(
     limit: int | None,
     max_comments_per_post_request: int,
 ) -> list[tuple[PostRecord, list[InteractionRecord]]]:
-    """Select comment targets grouped by post for one-post-per-request rendering."""
+    """Select comment targets with post-level spread before deeper thread coverage.
+
+    We first build deterministic per-post chunks, then round-robin across posts
+    so a small seed budget covers more post threads instead of being monopolized
+    by the newest highly-commented post.
+    """
     posts_by_id = {post.post_id: post for post in world_state.posts}
     grouped: dict[str, list[InteractionRecord]] = {}
     for interaction in sorted(world_state.interactions, key=lambda item: (item.timestamp, item.interaction_id)):
@@ -952,15 +996,35 @@ def select_seed_comment_target_groups(
             continue
         grouped.setdefault(interaction.post_id, []).append(interaction)
 
-    groups: list[tuple[PostRecord, list[InteractionRecord]]] = []
+    per_post_chunks: dict[str, list[tuple[PostRecord, list[InteractionRecord]]]] = {}
     for post_id, interactions in grouped.items():
         post = posts_by_id.get(post_id)
         if post is None:
             continue
         for start in range(0, len(interactions), max(1, max_comments_per_post_request)):
             chunk = interactions[start : start + max(1, max_comments_per_post_request)]
-            groups.append((post, chunk))
-    groups.sort(key=lambda item: (item[0].created_at, item[0].post_id), reverse=True)
+            per_post_chunks.setdefault(post_id, []).append((post, chunk))
+
+    post_order = sorted(
+        per_post_chunks,
+        key=lambda post_id: (posts_by_id[post_id].created_at, post_id),
+        reverse=True,
+    )
+
+    groups: list[tuple[PostRecord, list[InteractionRecord]]] = []
+    index = 0
+    while True:
+        progressed = False
+        for post_id in post_order:
+            chunks = per_post_chunks[post_id]
+            if index >= len(chunks):
+                continue
+            groups.append(chunks[index])
+            progressed = True
+        if not progressed:
+            break
+        index += 1
+
     if limit is None:
         return groups
     return groups[:limit]
