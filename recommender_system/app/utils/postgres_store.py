@@ -18,9 +18,29 @@ class PostgresStore:
 
     # ---------- SINGLE-ENTITY QUERIES (fixed to return id + score) ----------
 
+    def get_active_feature_version(
+        self, feature_name: str, fallback: str = "v1"
+    ) -> str:
+        sql = """
+            SELECT active_version
+            FROM feature_metadata
+            WHERE feature_name = %s
+        """
+        try:
+            with self.psycopg_conn.cursor() as cur:
+                cur.execute(sql, (feature_name,))
+                row = cur.fetchone()
+            return row["active_version"] if row and row.get("active_version") else fallback
+        except Exception:
+            return fallback
+
+    def _resolve_version(self, feature_name: str, version: Optional[str]) -> str:
+        return version or self.get_active_feature_version(feature_name)
+
     def get_user_topk_posts(
-        self, user_id: str, k: int, version: str = "v1"
+        self, user_id: str, k: int, version: Optional[str] = None
     ) -> List[Dict[str, Any]]:
+        version = self._resolve_version("cf", version)
         sql = """
             SELECT item_id, interest_score, rank
             FROM user_interested_items
@@ -34,12 +54,13 @@ class PostgresStore:
         return rows
 
     def get_user_topk_neighbors(
-        self, user_id: str, k: int, version: str = "v1"
+        self, user_id: str, k: int, version: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
         Return the user's top-K similar users with scores.
         Output: [{similar_user_id, similarity_score, rank}]
         """
+        version = self._resolve_version("cf", version)
         sql = """
             SELECT similar_user_id, similarity_score, rank
             FROM user_similar_users
@@ -53,12 +74,13 @@ class PostgresStore:
         return rows
 
     def get_item_topk_similar_items(
-        self, item_id: str, k: int, version: str = "v1"
+        self, item_id: str, k: int, version: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
         Return an item's top-K similar items with scores.
         Output: [{similar_item_id, similarity_score, rank}]
         """
+        version = self._resolve_version("cf", version)
         sql = """
             SELECT similar_item_id, similarity_score, rank
             FROM item_similar_items
@@ -74,7 +96,7 @@ class PostgresStore:
     # ---------- BATCH QUERIES (avoid N+1 in recall) ----------
 
     def get_items_topk_similar_items(
-        self, seed_item_ids: List[str], per_seed_k: int, version: str = "v1"
+        self, seed_item_ids: List[str], per_seed_k: int, version: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
         Batch: for many seeds, fetch each seed's top-K similar items.
@@ -82,6 +104,7 @@ class PostgresStore:
         """
         if not seed_item_ids:
             return []
+        version = self._resolve_version("cf", version)
 
         sql = """
             WITH seeds(item_id) AS (
@@ -112,12 +135,13 @@ class PostgresStore:
         return rows
 
     def get_user_interacted_item_ids(
-        self, user_id: str, version: str = "v1"
+        self, user_id: str, version: Optional[str] = None
     ) -> List[str]:
         """
         Return items the user already interacted with for filtering.
         Uses user_item_interest to reflect CF-versioned interactions.
         """
+        version = self._resolve_version("cf", version)
         sql = """
             SELECT item_id
             FROM user_item_interest

@@ -1,3 +1,11 @@
+CREATE TABLE IF NOT EXISTS feature_metadata (
+    feature_name VARCHAR(100) PRIMARY KEY,
+    active_version VARCHAR(50) NOT NULL,
+    computed_at TIMESTAMP NOT NULL,
+    row_count INTEGER,
+    status VARCHAR(20) NOT NULL DEFAULT 'active'
+);
+
 /* 
 Collaborative Filtering Recommendations
 Tables to store similar users and similar items
@@ -72,12 +80,13 @@ CREATE TABLE IF NOT EXISTS item_popularity (
 );
 
 CREATE TABLE IF NOT EXISTS trending_items (
-    item_id VARCHAR(255) PRIMARY KEY,
+    item_id VARCHAR(255) NOT NULL,
     popularity FLOAT NOT NULL,
     version VARCHAR(50) NOT NULL,
     rank INTEGER NOT NULL,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (item_id, version)
 );
 
 CREATE INDEX IF NOT EXISTS trending_items_popularity_idx ON trending_items (popularity DESC);
-
+CREATE INDEX IF NOT EXISTS feature_metadata_computed_at_idx ON feature_metadata (computed_at DESC);

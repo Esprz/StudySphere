@@ -6,8 +6,9 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
 COPY src/ ./src/
+COPY scheduler.py ./scheduler.py
+COPY sql/ ./sql/
 
 ENV PYTHONPATH=/app
 
-CMD ["python", "-m", "src.main", "run-all"]
-
+CMD ["python", "scheduler.py"]

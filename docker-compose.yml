@@ -249,16 +249,23 @@ services:
         condition: service_healthy
       redis-cache:
         condition: service_healthy
+      redis-session:
+        condition: service_healthy
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
       - REDIS_CACHE_HOST=redis-cache
       - REDIS_CACHE_PORT=6379
       - REDIS_CACHE_DB=1
+      - REDIS_SESSION_HOST=redis-session
+      - REDIS_SESSION_PORT=6379
+      - REDIS_SESSION_DB=0
       - REDIS_PASSWORD=
       - KAFKA_BROKERS=kafka:9092
+      - OFFLINE_SIMILARITY_TOP_K=10
+      - OFFLINE_TRENDING_LIMIT=50
+      - OFFLINE_WARM_USER_LIMIT=100
     volumes:
       - ./offline_pipeline:/app
-    command: ["python", "-m", "src.main", "run-all"]
 
   data-simulator:
     build:

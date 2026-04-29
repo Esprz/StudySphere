@@ -76,8 +76,14 @@ offline-health:
 offline-run:
 	docker compose --profile offline run --rm offline-pipeline python -m src.main run-all
 
+offline-scheduler:
+	docker compose --profile offline up offline-pipeline
+
 simulator-test:
 	cd $(SIM_ROOT) && $(SIM_PY) -m unittest discover -s tests
+
+simulator-db-adapter-export:
+	python3 -m simulator_db_adapter --input-dir $(SIM_ROOT)/tmp_runs/seed_openai_batch_100u_20260423_023107
 
 simulator-run:
 	cd $(SIM_ROOT) && $(SIM_PY) -m pipeline.run \

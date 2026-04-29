@@ -19,7 +19,7 @@ class ItemCollaborativeRecall(RecallBase):
         if self.db is None:
             return []
 
-        version = context.get("cf_version", "v1")
+        version = context.get("cf_version")
 
         try:
             seed_item_ids = self.db.get_user_interacted_item_ids(

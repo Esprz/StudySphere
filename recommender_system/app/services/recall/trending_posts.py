@@ -12,6 +12,7 @@ class TrendingPostsRecall(RecallBase):
     async def get_candidates(
         self, user_id: str, context: Dict[str, Any], k: int = 50
     ) -> List[Dict[str, Any]]:
+        del user_id, context
         if self.db is None:
             return []
 
@@ -20,35 +21,58 @@ class TrendingPostsRecall(RecallBase):
             with session.cursor() as cursor:
                 cursor.execute(
                     """
-                    SELECT
-                        p.post_id AS item_id,
-                        (
-                            COALESCE(l.like_count, 0) * 2
-                            + COALESCE(s.save_count, 0) * 3
-                            + COALESCE(c.comment_count, 0)
-                        )::float AS popularity
-                    FROM "Post" p
-                    LEFT JOIN (
-                        SELECT post_id, COUNT(*) AS like_count
-                        FROM "Like"
-                        GROUP BY post_id
-                    ) l ON l.post_id = p.post_id
-                    LEFT JOIN (
-                        SELECT post_id, COUNT(*) AS save_count
-                        FROM "Save"
-                        GROUP BY post_id
-                    ) s ON s.post_id = p.post_id
-                    LEFT JOIN (
-                        SELECT post_id, COUNT(*) AS comment_count
-                        FROM "Comment"
-                        GROUP BY post_id
-                    ) c ON c.post_id = p.post_id
-                    ORDER BY popularity DESC, p.created_at DESC
-                    LIMIT %s
-                    """,
-                    (k,),
+                    SELECT active_version
+                    FROM feature_metadata
+                    WHERE feature_name = 'trending'
+                    """
                 )
-                rows = cursor.fetchall()
+                version_row = cursor.fetchone()
+                if version_row and version_row.get("active_version"):
+                    cursor.execute(
+                        """
+                        SELECT item_id, popularity
+                        FROM trending_items
+                        WHERE version = %s
+                        ORDER BY rank ASC
+                        LIMIT %s
+                        """,
+                        (version_row["active_version"], k),
+                    )
+                    rows = cursor.fetchall()
+                else:
+                    rows = []
+                if not rows:
+                    cursor.execute(
+                        """
+                        SELECT
+                            p.post_id AS item_id,
+                            (
+                                COALESCE(l.like_count, 0) * 2
+                                + COALESCE(s.save_count, 0) * 3
+                                + COALESCE(c.comment_count, 0)
+                            )::float AS popularity
+                        FROM "Post" p
+                        LEFT JOIN (
+                            SELECT post_id, COUNT(*) AS like_count
+                            FROM "Like"
+                            GROUP BY post_id
+                        ) l ON l.post_id = p.post_id
+                        LEFT JOIN (
+                            SELECT post_id, COUNT(*) AS save_count
+                            FROM "Save"
+                            GROUP BY post_id
+                        ) s ON s.post_id = p.post_id
+                        LEFT JOIN (
+                            SELECT post_id, COUNT(*) AS comment_count
+                            FROM "Comment"
+                            GROUP BY post_id
+                        ) c ON c.post_id = p.post_id
+                        ORDER BY popularity DESC, p.created_at DESC
+                        LIMIT %s
+                        """,
+                        (k,),
+                    )
+                    rows = cursor.fetchall()
 
             return [
                 {

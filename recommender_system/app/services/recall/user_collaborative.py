@@ -19,7 +19,7 @@ class UserCollaborativeRecall(RecallBase):
         if self.db is None:
             return []
 
-        version = context.get("cf_version", "v1")
+        version = context.get("cf_version")
         per_neighbor_k = context.get("per_neighbor_k", 10)
 
         try:

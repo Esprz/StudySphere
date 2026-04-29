@@ -1,4 +1,4 @@
-"""CLI entrypoint for offline batch jobs."""
+"""CLI entrypoint for offline batch jobs and one-shot Spec 4 orchestration."""
 
 from __future__ import annotations
 
@@ -7,40 +7,32 @@ import json
 from typing import Iterable
 
 from .config import OfflinePipelineConfig
-from .database import get_connection
-from .jobs import CacheWarmupJob, ItemSimilarityJob, TrendingJob, UserSimilarityJob
-from .redis_client import CacheRedis
-
-
-def build_jobs(connection, cache, config: OfflinePipelineConfig):
-    return {
-        "trending": TrendingJob(connection, cache, config.trending_limit),
-        "user-similarity": UserSimilarityJob(connection, cache, config.similarity_top_k),
-        "item-similarity": ItemSimilarityJob(connection, cache, config.similarity_top_k),
-        "cache-warmup": CacheWarmupJob(
-            connection,
-            cache,
-            config.warm_user_limit,
-            config.trending_limit,
-        ),
-    }
+from .service import (
+    open_runtime,
+    run_cache_warmup,
+    run_cf_refresh,
+    run_partition_maintenance,
+    run_popularity,
+    run_version_cleanup,
+)
 
 
 def run_job_names(job_names: Iterable[str]) -> int:
     config = OfflinePipelineConfig.from_env()
-    cache = CacheRedis(
-        host=config.redis_cache_host,
-        port=config.redis_cache_port,
-        db=config.redis_cache_db,
-        password=config.redis_password,
-    )
-
-    with get_connection(config.database_url) as connection:
-        jobs = build_jobs(connection, cache, config)
-        results = []
-        for job_name in job_names:
-            result = jobs[job_name].run()
-            results.append(result)
+    jobs = {
+        "cf-refresh": lambda: run_cf_refresh(config),
+        "popularity": lambda: run_popularity(config),
+        "cache-warmup": lambda: run_cache_warmup(config),
+        "partition-maintenance": lambda: run_partition_maintenance(config),
+        # Compatibility aliases for the previous lighter CLI.
+        "trending": lambda: run_popularity(config),
+        "user-similarity": lambda: run_cf_refresh(config),
+        "item-similarity": lambda: run_cf_refresh(config),
+    }
+    results = []
+    for job_name in job_names:
+        result = jobs[job_name]()
+        results.append(result)
 
     print(json.dumps({"results": results}, indent=2))
     return 0
@@ -54,21 +46,26 @@ def main() -> int:
     run_parser = subparsers.add_parser("run", help="Run a single offline job")
     run_parser.add_argument(
         "job_name",
-        choices=["trending", "user-similarity", "item-similarity", "cache-warmup"],
+        choices=[
+            "cf-refresh",
+            "popularity",
+            "cache-warmup",
+            "partition-maintenance",
+            "trending",
+            "user-similarity",
+            "item-similarity",
+        ],
     )
     subparsers.add_parser("run-all", help="Run all offline jobs")
+    cleanup_parser = subparsers.add_parser("cleanup-versions", help="Delete non-active historical versions")
+    cleanup_parser.add_argument("feature_name", choices=["cf", "trending"])
+    cleanup_parser.add_argument("keep_version")
 
     args = parser.parse_args()
     config = OfflinePipelineConfig.from_env()
 
     if args.command == "healthcheck":
-        cache = CacheRedis(
-            host=config.redis_cache_host,
-            port=config.redis_cache_port,
-            db=config.redis_cache_db,
-            password=config.redis_password,
-        )
-        with get_connection(config.database_url) as connection:
+        with open_runtime(config) as (connection, cache, session_cache, _):
             with connection.cursor() as cursor:
                 cursor.execute("SELECT 1")
                 cursor.fetchone()
@@ -78,6 +75,7 @@ def main() -> int:
                 {
                     "database": "ok",
                     "redis_cache": "ok" if cache.ping() else "error",
+                    "redis_session": "ok" if session_cache.ping() else "error",
                     "kafka": config.kafka_brokers,
                 },
                 indent=2,
@@ -90,12 +88,23 @@ def main() -> int:
 
     if args.command == "run-all":
         return run_job_names(
-            ["trending", "user-similarity", "item-similarity", "cache-warmup"]
+            ["cf-refresh", "popularity", "cache-warmup", "partition-maintenance"]
         )
+    if args.command == "cleanup-versions":
+        print(
+            json.dumps(
+                run_version_cleanup(
+                    config,
+                    feature_name=args.feature_name,
+                    keep_version=args.keep_version,
+                ),
+                indent=2,
+            )
+        )
+        return 0
 
     return 1
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
