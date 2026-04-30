@@ -1,7 +1,7 @@
 import os
 import json
 import asyncio
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 import redis.asyncio as redis
 from loguru import logger
 
@@ -9,11 +9,16 @@ from loguru import logger
 class RedisConfig:
     """Redis configuration and connection management for recommender system"""
 
-    def __init__(self):
-        self.host = os.getenv("REDIS_CACHE_HOST", os.getenv("REDIS_HOST", "localhost"))
-        self.port = int(os.getenv("REDIS_CACHE_PORT", os.getenv("REDIS_PORT", "6379")))
+    def __init__(
+        self,
+        host_env: str = "REDIS_CACHE_HOST",
+        port_env: str = "REDIS_CACHE_PORT",
+        db_env: str = "REDIS_CACHE_DB",
+    ):
+        self.host = os.getenv(host_env, os.getenv("REDIS_HOST", "localhost"))
+        self.port = int(os.getenv(port_env, os.getenv("REDIS_PORT", "6379")))
         self.password = os.getenv("REDIS_PASSWORD")
-        self.db = int(os.getenv("REDIS_CACHE_DB", os.getenv("REDIS_DB", "1")))
+        self.db = int(os.getenv(db_env, os.getenv("REDIS_DB", "1")))
         self.max_connections = int(os.getenv("REDIS_MAX_CONNECTIONS", "20"))
 
         # Connection pool settings
@@ -224,5 +229,10 @@ class RedisConfig:
             logger.error(f"Failed to close Redis connection: {e}")
 
 
-# Global Redis instance
+# Global Redis instances
 redis_config = RedisConfig()
+session_redis_config = RedisConfig(
+    host_env="REDIS_SESSION_HOST",
+    port_env="REDIS_SESSION_PORT",
+    db_env="REDIS_SESSION_DB",
+)

@@ -18,6 +18,16 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT;
+const DEPENDENCY_TIMEOUT_MS = 2000;
+
+const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
+    return await Promise.race([
+        promise,
+        new Promise<T>((_, reject) =>
+            setTimeout(() => reject(new Error('timeout')), timeoutMs)
+        ),
+    ]);
+};
 
 app.use(cors({
     origin: 'http://localhost:5173',
@@ -42,7 +52,7 @@ app.get('/api/health', async (_req, res) => {
     };
 
     try {
-        await prisma.$queryRaw`SELECT 1`;
+        await withTimeout(prisma.$queryRaw`SELECT 1`, DEPENDENCY_TIMEOUT_MS);
         dependencies.postgres = 'ok';
     } catch {
         dependencies.postgres = 'error';
@@ -50,7 +60,8 @@ app.get('/api/health', async (_req, res) => {
 
     try {
         const redisHealthy =
-            isRedisCacheConnected() && (await cacheRedis.ping()) === 'PONG';
+            isRedisCacheConnected() &&
+            (await withTimeout(cacheRedis.ping(), DEPENDENCY_TIMEOUT_MS)) === 'PONG';
         dependencies.redis_cache = redisHealthy ? 'ok' : 'error';
     } catch {
         dependencies.redis_cache = 'error';
@@ -58,14 +69,18 @@ app.get('/api/health', async (_req, res) => {
 
     try {
         const sessionHealthy =
-            isRedisSessionConnected() && (await sessionRedis.ping()) === 'PONG';
+            isRedisSessionConnected() &&
+            (await withTimeout(sessionRedis.ping(), DEPENDENCY_TIMEOUT_MS)) === 'PONG';
         dependencies.redis_session = sessionHealthy ? 'ok' : 'error';
     } catch {
         dependencies.redis_session = 'error';
     }
 
     try {
-        const kafkaClient = KafkaClient.getInstance();
+        const kafkaClient = await withTimeout(
+            Promise.resolve(KafkaClient.getInstance()),
+            DEPENDENCY_TIMEOUT_MS
+        );
         dependencies.kafka = kafkaClient.isKafkaAvailable() ? 'ok' : 'error';
     } catch {
         dependencies.kafka = 'error';

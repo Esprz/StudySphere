@@ -15,6 +15,7 @@ import { signIn, signUp, getCurrentUser,
     getUserInfo,
     getFolloweePosts,
     getSuggestedToFollow,
+    getRecommendedUsers,
     followUser,
     unfollowUser,
     getFollowees,
@@ -80,6 +81,13 @@ export const useGetRecommendedFeed = () => {
     return useQuery({
         queryKey: [QUERY_KEYS.GET_RECOMMENDED_FEED],
         queryFn: () => getRecommendedFeed(),
+    })
+}
+
+export const useGetRecommendedUsers = () => {
+    return useQuery({
+        queryKey: [QUERY_KEYS.GET_RECOMMENDED_USERS],
+        queryFn: () => getRecommendedUsers(),
     })
 }
 

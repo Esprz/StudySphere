@@ -11,7 +11,7 @@ class UserCollaborativeRecall(RecallBase):
     """
 
     def __init__(self, vector_store=None, db=None):
-        super().__init__(name="user_collaborative", vector_store=vector_store, db=db)
+        super().__init__(name="user_cf", vector_store=vector_store, db=db)
 
     async def get_candidates(
         self, user_id: str, context: Dict[str, Any], k: int = 50

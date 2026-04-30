@@ -15,4 +15,7 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["npm", "run", "dev"]
+RUN npm install -g pm2
+RUN npm run build
+
+CMD ["npx", "pm2-runtime", "start", "ecosystem.config.js"]

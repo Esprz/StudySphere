@@ -68,11 +68,12 @@ class EventProcessor:
 
         user_success = True
         if post_success and author_id and timestamp:
+            priority = self._embedding_priority_for_user(author_id)
             user_success = self.user_embedder.update_from_post_interaction(
                 author_id, post_id, "POST_CREATED", timestamp
             )
             if user_success:
-                self._notify_embedding_updated("user", author_id)
+                self._notify_embedding_updated("user", author_id, priority=priority)
 
             self.postgres_store.store_behavior_event(
                 user_id=author_id,
@@ -107,11 +108,12 @@ class EventProcessor:
 
         user_success = True
         if post_success and author_id and timestamp:
+            priority = self._embedding_priority_for_user(author_id)
             user_success = self.user_embedder.update_from_post_interaction(
                 author_id, post_id, "POST_UPDATED", timestamp
             )
             if user_success:
-                self._notify_embedding_updated("user", author_id)
+                self._notify_embedding_updated("user", author_id, priority=priority)
 
             self.postgres_store.store_behavior_event(
                 user_id=author_id,
@@ -148,7 +150,11 @@ class EventProcessor:
             user_id, post_id, behavior_type, timestamp
         )
         if success:
-            self._notify_embedding_updated("user", user_id)
+            self._notify_embedding_updated(
+                "user",
+                user_id,
+                priority=self._embedding_priority_for_user(user_id),
+            )
             self.postgres_store.store_behavior_event(
                 user_id=user_id,
                 post_id=post_id,
@@ -174,7 +180,11 @@ class EventProcessor:
     ) -> bool:
         success = self.user_embedder.update_from_search(user_id, search_query, timestamp)
         if success:
-            self._notify_embedding_updated("user", user_id)
+            self._notify_embedding_updated(
+                "user",
+                user_id,
+                priority=self._embedding_priority_for_user(user_id),
+            )
             self.postgres_store.store_behavior_event(
                 user_id=user_id,
                 event_type="SEARCH_PERFORMED",
@@ -201,7 +211,11 @@ class EventProcessor:
             user_id, post_id, "POST_COMMENTED", timestamp
         )
         if success:
-            self._notify_embedding_updated("user", user_id)
+            self._notify_embedding_updated(
+                "user",
+                user_id,
+                priority=self._embedding_priority_for_user(user_id),
+            )
 
         self.postgres_store.store_behavior_event(
             user_id=user_id,
@@ -247,6 +261,7 @@ class EventProcessor:
         entity_type: str,
         entity_id: str,
         source_event_id: str | None = None,
+        priority: str = "NORMAL",
     ):
         if self.embedding_producer:
             try:
@@ -254,9 +269,21 @@ class EventProcessor:
                     entity_type,
                     entity_id,
                     source_event_id=source_event_id,
+                    priority=priority,
                 )
             except Exception as e:
                 logger.warning(f"Failed to publish embedding update: {e}")
+
+    def _embedding_priority_for_user(self, user_id: str) -> str:
+        try:
+            existing_vector = self.user_embedder.get_user_embedding(user_id)
+            if not existing_vector:
+                return "HIGH"
+
+            magnitude = sum(abs(float(value)) for value in existing_vector)
+            return "HIGH" if magnitude == 0.0 else "NORMAL"
+        except Exception:
+            return "NORMAL"
 
     def get_post_embedding(self, post_id: str) -> Optional[List[float]]:
         return self.post_embedder.get_post_embedding(post_id)

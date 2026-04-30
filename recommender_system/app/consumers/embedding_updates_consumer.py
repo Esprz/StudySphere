@@ -70,7 +70,14 @@ class EmbeddingUpdatesConsumer:
                     data = payload.get("data", {})
                     entity_type = data.get("embeddingType") or data.get("entityType", "")
                     entity_id = payload.get("aggregateId") or data.get("entityId", "")
+                    priority = data.get("priority", "NORMAL")
                     if entity_type == "user" and entity_id:
+                        if priority == "HIGH":
+                            asyncio.run_coroutine_threadsafe(
+                                self._recompute_user(entity_id),
+                                loop,
+                            )
+                            continue
                         with self._lock:
                             self._pending[entity_id] = time.monotonic()
                 except Exception as e:
@@ -92,12 +99,15 @@ class EmbeddingUpdatesConsumer:
                         del self._pending[user_id]
 
             for user_id in to_flush:
-                try:
-                    await self.pipeline.recommend(
-                        user_id=user_id,
-                        context={},
-                        use_cache=False,
-                    )
-                    logger.info(f"Recomputed recommendation feed for user {user_id}")
-                except Exception as e:
-                    logger.error(f"Recommendation recompute failed for {user_id}: {e}")
+                await self._recompute_user(user_id)
+
+    async def _recompute_user(self, user_id: str):
+        try:
+            await self.pipeline.recommend(
+                user_id=user_id,
+                context={},
+                use_cache=False,
+            )
+            logger.info(f"Recomputed recommendation feed for user {user_id}")
+        except Exception as e:
+            logger.error(f"Recommendation recompute failed for {user_id}: {e}")

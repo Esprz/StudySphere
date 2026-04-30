@@ -20,12 +20,14 @@ class RecommendationPipeline:
         diversity_service: DiversityBase,
         postgres_store=None,
         redis=None,
+        session_redis=None,
     ):
         self.recall_services = recall_services
         self.filter_services = filter_services
         self.diversity_service = diversity_service
         self.postgres_store = postgres_store
         self.redis = redis
+        self.session_redis = session_redis
 
     async def recommend(
         self,
@@ -53,10 +55,15 @@ class RecommendationPipeline:
         start_time = time.time()
         metrics = {}
 
+        context = await self._prepare_context(user_id, context)
+
         recall_start_time = time.time()
-        candidates = await self._get_candidates_from_all_sources(user_id, context)
+        candidates, source_metrics = await self._get_candidates_from_all_sources(
+            user_id, context
+        )
         metrics["recall_time"] = time.time() - recall_start_time
         metrics["total_candidates"] = len(candidates)
+        metrics["source_metrics"] = source_metrics
 
         filter_start_time = time.time()
         filtered_candidates = await self._apply_filters(user_id, candidates, context)
@@ -110,30 +117,26 @@ class RecommendationPipeline:
 
     async def _get_candidates_from_all_sources(
         self, user_id: str, context: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+    ) -> tuple[List[Dict[str, Any]], Dict[str, Dict[str, Any]]]:
         all_candidates = []
         source_metrics = {}
 
-        is_cold_start = await self._is_cold_start_user(user_id)
+        interaction_count = int(context.get("interaction_count", 0))
+        active_services = self._select_recall_services(interaction_count)
+        logger.info(
+            f"User {user_id} interaction_count={interaction_count}, "
+            f"using sources={[svc.name for svc in active_services]}"
+        )
 
-        if is_cold_start:
-            active_services = [
-                svc
-                for svc in self.recall_services
-                if svc.name in ("cold_start", "trending_posts", "content_based")
-            ]
-            logger.info(
-                f"User {user_id} is cold-start, using {len(active_services)} sources"
-            )
-        else:
-            active_services = self.recall_services
-
-        RECALL_TIMEOUT = 2.0
+        recall_timeout = 0.5
 
         results = await asyncio.gather(
             *[
-                asyncio.wait_for(
-                    svc.get_candidates(user_id, context), timeout=RECALL_TIMEOUT
+                self._run_recall_service(
+                    svc=svc,
+                    user_id=user_id,
+                    context=context,
+                    timeout=recall_timeout,
                 )
                 for svc in active_services
             ],
@@ -143,32 +146,26 @@ class RecommendationPipeline:
         for svc, result in zip(active_services, results):
             if isinstance(result, Exception):
                 logger.error(f"Recall source {svc.name} failed: {result}")
+                source_metrics[svc.name] = {
+                    "count": 0,
+                    "latency_ms": None,
+                    "status": "failed",
+                }
                 continue
-            source_metrics[svc.name] = {"count": len(result)}
-            all_candidates.extend(result)
-            logger.info(f"Got {len(result)} candidates from {svc.name}")
+            candidates = result.get("candidates", [])
+            source_metrics[svc.name] = {
+                "count": len(candidates),
+                "latency_ms": result.get("latency_ms"),
+                "status": result.get("status", "ok"),
+            }
+            all_candidates.extend(candidates)
+            logger.info(
+                f"Got {len(candidates)} candidates from {svc.name} "
+                f"in {result.get('latency_ms')}ms"
+            )
 
-        unique_candidates = self._deduplicate_candidates(all_candidates)
-
-        logger.info(f"Total unique candidates: {len(unique_candidates)}")
-        return unique_candidates
-
-    def _deduplicate_candidates(
-        self, candidates: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
-        item_map: Dict[str, Dict[str, Any]] = {}
-
-        for candidate in candidates:
-            item_id = candidate.get("item_id")
-            if not item_id:
-                continue
-
-            score = candidate.get("score", 0.0)
-
-            if item_id not in item_map or score > item_map[item_id].get("score", 0.0):
-                item_map[item_id] = candidate
-
-        return list(item_map.values())
+        logger.info(f"Total raw candidates: {len(all_candidates)}")
+        return all_candidates, source_metrics
 
     async def _apply_filters(
         self, user_id: str, candidates: List[Dict[str, Any]], context: Dict[str, Any]
@@ -224,30 +221,97 @@ class RecommendationPipeline:
         return f"rec:user:{user_id}:{context_hash}:{limit}"
 
     async def _is_cold_start_user(self, user_id: str) -> bool:
-        cache_key = f"cold_start:{user_id}"
+        return await self._get_interaction_count(user_id) < 5
+
+    async def _get_interaction_count(self, user_id: str) -> int:
+        cache_key = f"rec:cold:{user_id}"
 
         try:
             if self.redis:
                 cached_status = await self.redis.get(cache_key)
                 if cached_status is not None:
-                    return cached_status
+                    return int(cached_status)
 
             if self.postgres_store is None:
-                return True
+                return 0
 
             interaction_count = self.postgres_store.get_user_interaction_count(user_id)
-            is_cold_start = interaction_count < 5
 
             if self.redis:
                 await self.redis.set(
-                    cache_key, is_cold_start, ttl=self.redis.CACHE_TTL["cold_start"]
+                    cache_key,
+                    interaction_count,
+                    ttl=self.redis.CACHE_TTL["cold_start"],
                 )
 
-            return is_cold_start
+            return interaction_count
 
         except Exception as e:
-            logger.warning(f"Cold start check failed, defaulting to True: {e}")
-            return True
+            logger.warning(f"Cold start check failed, defaulting to 0: {e}")
+            return 0
+
+    async def _prepare_context(
+        self, user_id: str, context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        prepared = dict(context)
+        prepared["interaction_count"] = await self._get_interaction_count(user_id)
+        prepared["cf_version"] = await self._get_feature_version(
+            feature_name="cf", redis_key="offline:cf:active_version"
+        )
+        prepared["trending_version"] = await self._get_feature_version(
+            feature_name="trending", redis_key="offline:trending:active_version"
+        )
+        return prepared
+
+    async def _get_feature_version(self, feature_name: str, redis_key: str) -> str | None:
+        try:
+            if self.session_redis:
+                cached = await self.session_redis.get(redis_key)
+                if isinstance(cached, str) and cached:
+                    return cached
+        except Exception as e:
+            logger.warning(f"Failed to read {redis_key} from session redis: {e}")
+
+        if self.postgres_store:
+            return self.postgres_store.get_active_feature_version(feature_name, fallback=None)
+        return None
+
+    def _select_recall_services(self, interaction_count: int) -> List[RecallBase]:
+        if interaction_count <= 0:
+            allowed = {"cold_start_interest", "trending"}
+        elif interaction_count <= 5:
+            allowed = {"cold_start_interest", "content_based", "trending"}
+        else:
+            allowed = None
+
+        if allowed is None:
+            return self.recall_services
+        return [svc for svc in self.recall_services if svc.name in allowed]
+
+    async def _run_recall_service(
+        self,
+        svc: RecallBase,
+        user_id: str,
+        context: Dict[str, Any],
+        timeout: float,
+    ) -> Dict[str, Any]:
+        start = time.time()
+        try:
+            candidates = await asyncio.wait_for(
+                svc.get_candidates(user_id, context), timeout=timeout
+            )
+            return {
+                "candidates": candidates,
+                "latency_ms": round((time.time() - start) * 1000, 2),
+                "status": "ok",
+            }
+        except asyncio.TimeoutError:
+            logger.warning(f"Recall source {svc.name} timed out after {timeout}s")
+            return {
+                "candidates": [],
+                "latency_ms": round((time.time() - start) * 1000, 2),
+                "status": "timeout",
+            }
 
     async def invalidate_user_cache(self, user_id: str) -> None:
         if not self.redis:
@@ -256,6 +320,8 @@ class RecommendationPipeline:
             pattern = f"rec:user:{user_id}:*"
             deleted_count = await self.redis.invalidate_pattern(pattern)
             deleted_count += await self.redis.delete(f"rec:feed:{user_id}")
+            deleted_count += await self.redis.delete(f"rec:cold:{user_id}")
+            deleted_count += await self.redis.delete(f"rec:seen:{user_id}")
             logger.info(f"Invalidated {deleted_count} cache entries for user {user_id}")
         except Exception as e:
             logger.error(f"Failed to invalidate cache for user {user_id}: {e}")

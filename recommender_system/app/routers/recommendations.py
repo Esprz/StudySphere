@@ -1,7 +1,11 @@
 from fastapi import APIRouter, Query, HTTPException
 from typing import Dict, List, Any, Optional
 
-from ..config import recommendation_pipeline, postgres_store
+from ..config import (
+    recommendation_pipeline,
+    postgres_store,
+    user_recommendation_pipeline,
+)
 from ..utils.env_config import EnvConfig
 
 router = APIRouter(prefix="/recommendations", tags=["recommendations"])
@@ -73,3 +77,20 @@ async def invalidate_user_cache(user_id: str):
         return {"message": f"Cache invalidated for user {user_id}"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/users/{user_id}")
+async def get_user_recommendations(
+    user_id: str,
+    limit: int = Query(5, ge=1, le=20),
+):
+    try:
+        return await user_recommendation_pipeline.recommend_users(
+            user_id=user_id,
+            limit=limit,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating user recommendations: {str(e)}",
+        )

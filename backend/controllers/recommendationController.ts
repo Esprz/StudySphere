@@ -3,6 +3,10 @@ import { HTTP } from '../constants/httpStatus';
 import { GENERAL_ERRORS } from '../constants/errorMessages';
 import prisma from '../utils/prisma';
 import { readCacheValue } from '../utils/redis';
+import {
+  getRecommendedFeedFromRecommender,
+  getRecommendedUsers,
+} from '../services/recommendationService';
 
 const REC_FEED_PREFIX = 'rec:feed:';
 const DEFAULT_LIMIT = 20;
@@ -10,6 +14,10 @@ const DEFAULT_LIMIT = 20;
 export const getFeed = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
+    if (!userId) {
+      res.status(HTTP.UNAUTHORIZED.code).json({ message: 'Unauthorized' });
+      return;
+    }
     const limit = Math.min(
       parseInt(req.query.limit as string, 10) || DEFAULT_LIMIT,
       100
@@ -49,6 +57,16 @@ export const getFeed = async (req: Request, res: Response): Promise<void> => {
       console.error('Redis read failed, falling back:', err);
     }
 
+    const recommenderResult = await getRecommendedFeedFromRecommender(userId, limit);
+    if (
+      recommenderResult &&
+      Array.isArray(recommenderResult.posts) &&
+      recommenderResult.posts.length > 0
+    ) {
+      res.status(HTTP.OK.code).json({ posts: recommenderResult.posts, source: 'recommender' });
+      return;
+    }
+
     const posts = await prisma.post.findMany({
       take: limit,
       orderBy: { created_at: 'desc' },
@@ -70,6 +88,29 @@ export const getSimilarPosts = async (req: Request, res: Response): Promise<void
     res.status(HTTP.OK.code).json({ posts: [], source: 'stub' });
   } catch (error) {
     console.error('Error fetching similar posts:', error);
+    res.status(HTTP.INTERNAL_ERROR.code).json({ message: GENERAL_ERRORS.UNKNOWN });
+  }
+};
+
+export const getUserRecommendations = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      res.status(HTTP.UNAUTHORIZED.code).json({ message: 'Unauthorized' });
+      return;
+    }
+    const limit = Math.min(
+      parseInt(req.query.limit as string, 10) || 5,
+      20
+    );
+
+    const result = await getRecommendedUsers(userId, limit);
+    res.status(HTTP.OK.code).json(result);
+  } catch (error) {
+    console.error('Error fetching user recommendations:', error);
     res.status(HTTP.INTERNAL_ERROR.code).json({ message: GENERAL_ERRORS.UNKNOWN });
   }
 };

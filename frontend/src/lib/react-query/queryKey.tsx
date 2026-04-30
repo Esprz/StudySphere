@@ -28,6 +28,7 @@ export enum QUERY_KEYS {
 
     // RECOMMENDATION KEYS
     GET_RECOMMENDED_FEED = "getRecommendedFeed",
+    GET_RECOMMENDED_USERS = "getRecommendedUsers",
 
     // SAVE KEYS
     SAVED_POSTS = 'savedPosts',

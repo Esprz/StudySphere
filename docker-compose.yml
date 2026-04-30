@@ -45,6 +45,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
+      - RECOMMENDER_URL=http://recommender:8000
       - KAFKA_BROKERS=kafka:9092
       - REDIS_CACHE_HOST=redis-cache
       - REDIS_CACHE_PORT=6379
@@ -218,6 +219,8 @@ services:
         condition: service_healthy
       redis-cache:
         condition: service_healthy
+      redis-session:
+        condition: service_healthy
     volumes:
       - ./recommender_system:/app
       - ./kafka_config:/app/kafka_config:ro
@@ -231,6 +234,9 @@ services:
       - REDIS_CACHE_PORT=6379
       - REDIS_PASSWORD=
       - REDIS_CACHE_DB=1
+      - REDIS_SESSION_HOST=redis-session
+      - REDIS_SESSION_PORT=6379
+      - REDIS_SESSION_DB=0
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s

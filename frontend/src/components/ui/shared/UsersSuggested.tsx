@@ -1,35 +1,45 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useFollowUser, useGetSuggestedToFollow, useUnfollowUser } from "@/lib/react-query/queriesAndMutations";
+import { useFollowUser, useGetRecommendedUsers, useUnfollowUser } from "@/lib/react-query/queriesAndMutations";
 import Loader from "./Loader";
 import { Link } from "react-router-dom";
 
+type SuggestedUser = {
+  user_id?: string;
+  username: string;
+  display_name: string;
+  avatar_url?: string | null;
+  bio?: string | null;
+  isFollowing: boolean;
+};
 
 
 const UsersSuggested = () => {
 
-  const { data: suggestedUsers, isPending: isUsersLoading, isError } = useGetSuggestedToFollow();
-  const [users, setUsers] = useState(suggestedUsers);
+  const { data, isPending: isUsersLoading, isError } = useGetRecommendedUsers();
+  const suggestedUsers = data?.users;
+  const [users, setUsers] = useState<SuggestedUser[] | undefined>(suggestedUsers);
 
   useEffect(() => {
     if (!isUsersLoading && !isError && suggestedUsers) {
-      setUsers(suggestedUsers.map((user) => ({ ...user, isFollowing: false })));
+      setUsers(
+        suggestedUsers.map((user: Omit<SuggestedUser, "isFollowing">) => ({
+          ...user,
+          isFollowing: false,
+        }))
+      );
     }
   }, [suggestedUsers, isUsersLoading, isError]);
 
   const followUserMutation = useFollowUser();
   const unfollowUserMutation = useUnfollowUser();
 
-  if (suggestedUsers){
-    console.log("suggestedUsers:", suggestedUsers);
-  }
-
   const handleFollow = async (username: string, isFollowing: boolean) => {
     // Optimistically update local state
     setUsers((prevUsers) =>
-      prevUsers.map((user) =>
+      prevUsers?.map((user) =>
         user.username === username ? { ...user, isFollowing: !isFollowing } : user
-      )
+      ) ?? prevUsers
     );
 
     try {
@@ -45,9 +55,9 @@ const UsersSuggested = () => {
 
       // Rollback local state if API call fails
       setUsers((prevUsers) =>
-        prevUsers.map((user) =>
+        prevUsers?.map((user) =>
           user.username === username ? { ...user, isFollowing: isFollowing } : user
-        )
+        ) ?? prevUsers
       );
     }
   };
@@ -69,13 +79,13 @@ const UsersSuggested = () => {
               <div className="mb-4">
                 <h2 className="text-lg font-bold text-primary-500">Suggested Users</h2>
                 <p className="text-sm text-gray-500">
-                  Follow these users to expand your network!
+                  Follow these users to expand your network.
                 </p>
               </div>
 
               {/* User List */}
               <ul className="flex flex-col gap-4">
-                {users.map((user) => (                  
+                {users.map((user: SuggestedUser) => (                  
                   <li key={user.username} className="flex items-center gap-4">
                     {/* Avatar */}
                     <Link to={`/profile/${user.username}`}>

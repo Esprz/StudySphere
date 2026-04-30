@@ -59,6 +59,12 @@ class VectorStore:
             logger.error(f"❌ Failed to search users: {e}")
             return [], []
 
+    def search_users_by_user_id(self, user_id: str, k: int = 5) -> tuple:
+        user_vector = self.get_user_vector(user_id)
+        if user_vector is None:
+            return [], []
+        return self.search_users(user_vector, k)
+
     # ==================== HELPER METHODS ====================
 
     def _validate_vector(self, vector: List[float]) -> bool:
