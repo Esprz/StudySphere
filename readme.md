@@ -5,6 +5,11 @@ Inspired by the idea of turning peer pressure into a positive force, the app was
 
 The platform now features an **AI-powered recommendation system** with real-time event processing, vector similarity search, and intelligent caching for optimal performance.
 
+The current stack also includes:
+- a versioned **offline feature pipeline** for CF/trending computation
+- a **synthetic data simulator** plus DB adapter for local dataset generation
+- a multi-source **recommendation pipeline** with cold-start handling and user recommendations
+
 ## Quick Start
 
 ```bash
@@ -24,6 +29,12 @@ docker-compose up -d
 # Redis: localhost:6379
 ```
 
+Start the offline feature service when you need CF/trending refresh jobs:
+
+```bash
+docker compose --profile offline up -d offline-pipeline
+```
+
 ## Tech Stack
 
 ### **Frontend**
@@ -35,8 +46,10 @@ docker-compose up -d
 - **API Server**: Node.js, Express, PostgreSQL, Prisma ORM, JWT
 - **Recommendation Engine**: Python FastAPI with ML algorithms
 - **ETL Service**: Real-time event processing with Kafka
+- **Offline Pipeline**: APScheduler-based batch feature computation
+- **Simulator + DB Adapter**: Structured synthetic data generation and DB bundle import/export
 - **Vector Database**: Qdrant (migrated from FAISS for better performance)
-- **Caching**: Redis for high-performance caching
+- **Caching**: Redis cache + Redis session separation
 - **Message Queue**: Apache Kafka for event streaming
 
 ### **Infrastructure**
@@ -59,11 +72,12 @@ docker-compose up -d
 - **📱 Responsive UI**: Built with Tailwind CSS & ShadCN for mobile-friendly design  
 
 ### **AI-Powered Recommendations**
-- **🤖 Smart Recommendations**: ML-based content recommendations using collaborative filtering
+- **🤖 Smart Recommendations**: Multi-source feed recommendations with collaborative filtering, content-based recall, following activity, trending, and interest-aware cold start
 - **🔍 Vector Search**: Semantic search powered by Qdrant vector database (migrated from FAISS)
 - **⚡ Real-time Processing**: Event-driven architecture with Kafka for instant updates
-- **🎯 Personalized Content**: Content-based and user-based recommendation algorithms
-- **📊 Trending Analysis**: Real-time trending content detection and ranking
+- **🎯 Personalized Content**: Tiered cold-start logic, seen filtering, duplicate handling, and diversity control
+- **👥 User Recommendations**: Dedicated user-recommendation pipeline backing the Friends page
+- **📊 Trending Analysis**: Offline-computed trending content pushed into Redis and versioned Postgres tables
 
 ### **Performance & Scalability**
 - **⚙️ Lazy Loading**: Efficient frontend data fetching via React Query  
@@ -112,18 +126,20 @@ The platform is built using a **microservices architecture** with event-driven c
                                 │                       │
                     ┌─────────────────┐    ┌─────────────────┐
                     │   ETL Service   │    │   Redis Cache   │
-                    │   (Kafka Consumer)│   │   (6379)       │
+                    │ (Kafka Consumer)│    │   (rec cache)   │
                     └─────────────────┘    └─────────────────┘
-                                ▲
-                    ┌─────────────────┐
-                    │   Kafka         │
-                    │   (Message Queue)│
-                    └─────────────────┘
-                                ▲
-                    ┌─────────────────┐
-                    │   Kafka UI      │
-                    │   (8080)         │
-                    └─────────────────┘
+                                ▲                       ▲
+                                │                       │
+                    ┌─────────────────┐    ┌─────────────────┐
+                    │   Kafka         │    │ Redis Session   │
+                    │ (Message Queue) │    │ (active version)│
+                    └─────────────────┘    └─────────────────┘
+                                ▲                       ▲
+                                │                       │
+                    ┌─────────────────┐    ┌─────────────────┐
+                    │   Kafka UI      │    │ Offline Pipeline│
+                    │    (8080)       │    │   (scheduler)   │
+                    └─────────────────┘    └─────────────────┘
 ```
 
 ### **Backend API (Node.js/Express)**
@@ -133,10 +149,16 @@ The platform is built using a **microservices architecture** with event-driven c
 - **Authentication**: JWT-based security with middleware validation
 
 ### **Recommendation Engine (Python/FastAPI)**
-- **ML Algorithms**: Collaborative filtering, content-based recommendations
+- **ML Algorithms**: Collaborative filtering, content-based recall, following recall, trending recall, and interest-aware cold start
 - **Vector Search**: Qdrant vector database for semantic similarity (migrated from FAISS)
 - **Real-time Processing**: Event-driven updates via Kafka consumers
 - **Performance Optimization**: Redis caching for sub-second response times
+
+### **Offline Pipeline (Python/APScheduler)**
+- **Versioned Features**: Computes active CF and trending versions into Postgres
+- **Cutover Safety**: Updates `feature_metadata` and Redis-session version markers
+- **Trending Push**: Publishes `rec:trending` and warms `rec:feed:{user_id}`
+- **Partition Maintenance**: Maintains partitioned `etl_behavior_events`
 
 ### **ETL Service (Python)**
 - **Event Processing**: Consumes events from Kafka (published by Backend API)
@@ -148,7 +170,8 @@ The platform is built using a **microservices architecture** with event-driven c
 1. **User Actions** → Frontend → Backend API → **Kafka Events**
 2. **ETL Service** → Consumes Kafka → Processes Data → **PostgreSQL/Qdrant**
 3. **Recommendation Engine** → Reads from DB/Vector Store → **Generates Recommendations**
-4. **Redis Cache** → Caches frequent queries → **Sub-second responses**
+4. **Offline Pipeline** → Builds CF/trending features → **Postgres + Redis-session/cache**
+5. **Redis Cache** → Caches frequent queries → **Sub-second responses**
 
 ### **Infrastructure**
 - **Containerization**: Docker Compose for local development
@@ -162,15 +185,19 @@ The platform is built using a **microservices architecture** with event-driven c
 
 ### **Completed Features**
 - ✅ **Backend API**: Complete refactor with Prisma ORM and Jest testing
-- ✅ **Recommendation Engine**: ML-powered recommendation system with FastAPI
+- ✅ **Recommendation Engine**: Multi-source feed recommendations with FastAPI
 - ✅ **Vector Database**: Migrated from FAISS to Qdrant for better performance and scalability
 - ✅ **Event Streaming**: Real-time event processing with Apache Kafka
 - ✅ **Caching System**: Redis-based multi-level caching for optimal performance
 - ✅ **ETL Pipeline**: Automated data processing and vector embedding generation
+- ✅ **Offline Feature Pipeline**: APScheduler service for CF/trending with active-version cutover
+- ✅ **Synthetic Data Pipeline**: Structured simulator plus DB adapter for local/offline datasets
+- ✅ **User Recommendations**: Friends-page recommendation path backed by recommender + Redis
 
 ### **In Progress**
 - 🛠️ **Frontend Refactoring**: Improving modularity and user experience
-- 🛠️ **Performance Optimization**: Fine-tuning recommendation algorithms and caching strategies
+- 🛠️ **Frontend TypeScript Cleanup**: Existing build-time TS issues still need cleanup outside the recommendation path
+- 🛠️ **E2E Automation**: Docker-level end-to-end test harness is still being formalized
 
 ### **Known Limitations**
 - 🚫 **Image Transformations**: Currently bypassed using Appwrite's `getFileView()` due to plan restrictions
